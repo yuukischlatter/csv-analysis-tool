@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { calculateLinearRegression, generateRegressionLine, calculateSmoothCurve, calculateDynamicYScale, getStatistics } from '../../services/regressionAnalysis';
+import { calculateLinearRegression, generateRegressionLine, calculateSmoothCurve, getStatistics } from '../../services/regressionAnalysis';
 
 const RegressionChart = ({ data, width = 800, height = 400 }) => {
   const svgRef = useRef(null);
@@ -14,48 +14,68 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
     d3.select(svgRef.current).selectAll("*").remove();
 
     const margin = { top: 20, right: 30, bottom: 60, left: 80 };
+    
+    // STEP 1: Fixed width for X-axis (-10V to +10V)
     const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
+    const xDomain = [-10, 10]; // Always -10V to +10V
+    const xRange = xDomain[1] - xDomain[0]; // 20V
+    
+    // STEP 2: Calculate pixels per unit (this determines square size)
+    const pixelsPerUnit = chartWidth / xRange; // e.g., 720px / 20V = 36px per volt
+    
+    // STEP 3: Calculate Y-domain from actual data
+    const velocities = data.map(point => point.velocity);
+    const maxAbsVelocity = Math.max(...velocities.map(v => Math.abs(v)));
+    const buffer = 2; // 2mm/s buffer as specified
+    const yMax = maxAbsVelocity + buffer;
+    const yDomain = [-yMax, yMax];
+    const yRange = yDomain[1] - yDomain[0]; // Total mm/s range
+    
+    // STEP 4: Calculate required height for perfect squares
+    const chartHeight = yRange * pixelsPerUnit; // e.g., 28mm/s × 36px = 1008px
+    const totalHeight = chartHeight + margin.top + margin.bottom;
+    
+    console.log(`Square Grid: ${pixelsPerUnit.toFixed(1)}px per unit (both axes)`);
+    console.log(`Chart dimensions: ${chartWidth}px × ${chartHeight.toFixed(0)}px`);
+    console.log(`Y-domain: ${yDomain[0].toFixed(1)} to ${yDomain[1].toFixed(1)} mm/s`);
 
+    // STEP 5: Set SVG to calculated height
     const svg = d3.select(svgRef.current)
       .attr("width", width)
-      .attr("height", height);
+      .attr("height", totalHeight);
 
     const g = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Calculate 1:1 scale - both axes use same domain range
-    const yScale = calculateDynamicYScale(data);
-    const maxAbsoluteValue = Math.max(10, Math.abs(yScale.min), Math.abs(yScale.max)); // At least 10 to match voltage range
-    
-    // Use symmetric domain for 1:1 scaling
-    const domain = [-maxAbsoluteValue, maxAbsoluteValue];
-    
+    // STEP 6: Create scales with perfect square ratio
     const xScale = d3.scaleLinear()
-      .domain(domain) // Same domain as Y for 1:1 ratio
+      .domain(xDomain)
       .range([0, chartWidth]);
 
-    const yScaleD3 = d3.scaleLinear()
-      .domain(domain) // Same domain as X for 1:1 ratio
+    const yScale = d3.scaleLinear()
+      .domain(yDomain)
       .range([chartHeight, 0]);
 
-    // Calculate pixels per unit to ensure 1:1 visual ratio
-    const xPixelsPerUnit = chartWidth / (domain[1] - domain[0]);
-    const yPixelsPerUnit = chartHeight / (domain[1] - domain[0]);
+    // STEP 7: Create grid lines with 1-unit spacing (perfect squares)
+    const xGridValues = [];
+    const yGridValues = [];
     
-    console.log(`1:1 Scale: X=${xPixelsPerUnit.toFixed(2)} px/unit, Y=${yPixelsPerUnit.toFixed(2)} px/unit`);
-
-    // Add grid lines with equal spacing
-    const gridTickValues = [];
-    for (let i = Math.ceil(domain[0]); i <= Math.floor(domain[1]); i++) {
-      gridTickValues.push(i);
+    // X-axis: every 1V
+    for (let i = Math.ceil(xDomain[0]); i <= Math.floor(xDomain[1]); i++) {
+      xGridValues.push(i);
+    }
+    
+    // Y-axis: every 1mm/s
+    for (let i = Math.ceil(yDomain[0]); i <= Math.floor(yDomain[1]); i++) {
+      yGridValues.push(i);
     }
 
+    // Add grid lines
     g.append("g")
       .attr("class", "grid")
       .attr("transform", `translate(0,${chartHeight})`)
       .call(d3.axisBottom(xScale)
-        .tickValues(gridTickValues)
+        .tickValues(xGridValues)
         .tickSize(-chartHeight)
         .tickFormat("")
       )
@@ -65,8 +85,8 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
 
     g.append("g")
       .attr("class", "grid")
-      .call(d3.axisLeft(yScaleD3)
-        .tickValues(gridTickValues)
+      .call(d3.axisLeft(yScale)
+        .tickValues(yGridValues)
         .tickSize(-chartWidth)
         .tickFormat("")
       )
@@ -74,18 +94,18 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
       .style("opacity", 0.3)
       .style("stroke", "#ccc");
 
-    // Add axes with equal tick spacing
+    // Add axes
     g.append("g")
       .attr("transform", `translate(0,${chartHeight})`)
       .call(d3.axisBottom(xScale)
-        .tickValues(gridTickValues)
+        .tickValues(xGridValues)
       )
       .style("stroke", "black")
       .style("stroke-width", "1px");
 
     g.append("g")
-      .call(d3.axisLeft(yScaleD3)
-        .tickValues(gridTickValues)
+      .call(d3.axisLeft(yScale)
+        .tickValues(yGridValues)
       )
       .style("stroke", "black")
       .style("stroke-width", "1px");
@@ -117,8 +137,8 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
     if (smoothCurveData.length > 1) {
       const line = d3.line()
         .x(d => xScale(d.voltage))
-        .y(d => yScaleD3(d.velocity))
-        .curve(d3.curveCatmullRom); // Smooth curve interpolation
+        .y(d => yScale(d.velocity))
+        .curve(d3.curveCatmullRom);
 
       g.append("path")
         .datum(smoothCurveData)
@@ -128,13 +148,13 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
         .attr("d", line);
     }
 
-    // Add regression line (thin red line) - extend across full domain
+    // Add regression line (thin red line) - extend across full X domain
     if (regression) {
-      const regressionLineData = generateRegressionLine(regression, domain[0], domain[1]);
+      const regressionLineData = generateRegressionLine(regression, xDomain[0], xDomain[1]);
       
       const regressionLine = d3.line()
         .x(d => xScale(d.voltage))
-        .y(d => yScaleD3(d.velocity));
+        .y(d => yScale(d.velocity));
 
       g.append("path")
         .datum(regressionLineData)
@@ -150,7 +170,7 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
       .enter().append("circle")
       .attr("class", "data-point")
       .attr("cx", d => xScale(d.voltage))
-      .attr("cy", d => yScaleD3(d.velocity))
+      .attr("cy", d => yScale(d.velocity))
       .attr("r", 3)
       .attr("fill", "black")
       .attr("stroke", "white")
@@ -166,28 +186,26 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
       .style("fill", "black")
       .text("Diagramm der Messwerte und Regressionsgerade");
 
-    // Add zero lines for reference (if zero is within domain)
-    if (domain[0] <= 0 && domain[1] >= 0) {
-      // Vertical zero line (0V)
-      g.append("line")
-        .attr("x1", xScale(0))
-        .attr("x2", xScale(0))
-        .attr("y1", 0)
-        .attr("y2", chartHeight)
-        .attr("stroke", "#999")
-        .attr("stroke-width", 1)
-        .attr("opacity", 0.5);
+    // Add zero lines for reference
+    // Vertical zero line (0V)
+    g.append("line")
+      .attr("x1", xScale(0))
+      .attr("x2", xScale(0))
+      .attr("y1", 0)
+      .attr("y2", chartHeight)
+      .attr("stroke", "#999")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.5);
 
-      // Horizontal zero line (0 mm/s)
-      g.append("line")
-        .attr("x1", 0)
-        .attr("x2", chartWidth)
-        .attr("y1", yScaleD3(0))
-        .attr("y2", yScaleD3(0))
-        .attr("stroke", "#999")
-        .attr("stroke-width", 1)
-        .attr("opacity", 0.5);
-    }
+    // Horizontal zero line (0 mm/s)
+    g.append("line")
+      .attr("x1", 0)
+      .attr("x2", chartWidth)
+      .attr("y1", yScale(0))
+      .attr("y2", yScale(0))
+      .attr("stroke", "#999")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.5);
 
   }, [data, width, height]);
 
@@ -201,9 +219,9 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
         borderRadius: '4px',
         backgroundColor: '#f9f9f9'
       }}>
-        No approved data available for regression analysis.
+        No approved voltage assignments available for regression analysis.
         <br />
-        <small>Approve at least one file to see the regression chart.</small>
+        <small>Approve files with voltage selection to see the regression chart.</small>
       </div>
     );
   }
@@ -211,8 +229,9 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
   // Calculate statistics for display
   const regression = calculateLinearRegression(data);
   const stats = getStatistics(data, regression);
-  const yScale = calculateDynamicYScale(data);
-  const maxAbsoluteValue = Math.max(10, Math.abs(yScale.min), Math.abs(yScale.max));
+  const velocities = data.map(point => point.velocity);
+  const maxAbsVelocity = Math.max(...velocities.map(v => Math.abs(v)));
+  const pixelsPerUnit = (width - 110) / 20; // Approximate pixels per unit
 
   return (
     <div style={{ marginTop: '20px' }}>
@@ -226,7 +245,7 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
           UE vs Velocity Regression Analysis
         </h4>
         <div style={{ fontSize: '12px', color: '#666' }}>
-          {data.length} approved measurements (1:1 scale)
+          {data.length} user-assigned measurements (perfect squares)
         </div>
       </div>
 
@@ -275,11 +294,13 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
                 </div>
 
                 <div>
-                  <strong>Scale Info:</strong>
+                  <strong>Perfect Square Grid:</strong>
                   <br />
-                  Domain: ±{maxAbsoluteValue.toFixed(1)} units
+                  X: -10V to +10V (fixed)
                   <br />
-                  1:1 ratio maintained
+                  Y: ±{(maxAbsVelocity + 2).toFixed(1)} mm/s (dynamic)
+                  <br />
+                  Grid: {pixelsPerUnit.toFixed(0)}px × {pixelsPerUnit.toFixed(0)}px squares
                 </div>
               </>
             )}
@@ -293,7 +314,9 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
           borderTop: '1px solid #eee',
           paddingTop: '8px'
         }}>
-          <strong>Legend:</strong> Black points = measured data, Black line = natural curve through points, Red line = linear regression, Gray lines = zero reference
+          <strong>Legend:</strong> Black points = user-assigned measurements, Black line = natural curve through points, Red line = linear regression, Gray lines = zero reference
+          <br />
+          <strong>Grid:</strong> Perfect squares with equal pixel spacing for X and Y axes. Chart height adjusts automatically for 1:1 scale.
         </div>
       </div>
     </div>

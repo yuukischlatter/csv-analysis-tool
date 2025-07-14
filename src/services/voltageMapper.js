@@ -1,7 +1,7 @@
 /**
- * Dual Voltage Mapper Service
- * Maps velocities to bidirectional voltage values (-10V to +10V)
- * Handles ramp up and ramp down pairs
+ * User-Controlled Voltage Mapper Service
+ * Maps user-assigned voltages to CSV files instead of automatic sorting
+ * Handles voltage pairs (±9V → both -9V and +9V entries)
  */
 
 export const VOLTAGE_SCALE = [
@@ -12,43 +12,20 @@ export const VOLTAGE_SCALE = [
   1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 9.00, 10.00
 ];
 
-export const mapDualVelocitiesToVoltages = (dualSlopeResults) => {
-  if (!dualSlopeResults || dualSlopeResults.length === 0) {
+/**
+ * Creates voltage mapping based on user assignments during approval
+ * @param {Array} dualSlopeResults - Array of processed CSV results
+ * @param {Object} voltageAssignments - Object mapping fileName -> voltage magnitude
+ * @returns {Array} Mapped results with user-assigned voltages
+ */
+export const createUserAssignedVoltageMapping = (dualSlopeResults, voltageAssignments) => {
+  if (!dualSlopeResults || dualSlopeResults.length === 0 || !voltageAssignments) {
     return [];
   }
 
-  // Create combined velocity array for sorting
-  const velocityEntries = [];
-  
-  dualSlopeResults.forEach(result => {
-    // Add ramp up entry
-    velocityEntries.push({
-      fileName: result.fileName,
-      rampType: 'up',
-      velocity: result.rampUp.velocity,
-      rampData: result.rampUp,
-      originalResult: result
-    });
-    
-    // Add ramp down entry
-    velocityEntries.push({
-      fileName: result.fileName,
-      rampType: 'down',
-      velocity: result.rampDown.velocity,
-      rampData: result.rampDown,
-      originalResult: result
-    });
-  });
-
-  // Sort by velocity (highest first)
-  const sortedEntries = velocityEntries.sort((a, b) => b.velocity - a.velocity);
-
-  // Assign voltages symmetrically
   const mappedResults = [];
-  const positiveVoltages = VOLTAGE_SCALE.filter(v => v > 0).reverse(); // Start with highest positive
-  const negativeVoltages = VOLTAGE_SCALE.filter(v => v < 0); // Start with highest negative (closest to 0)
-  
-  // Add zero voltage entry
+
+  // Add reference row (0V)
   mappedResults.push({
     fileName: 'REFERENCE',
     voltage: 0.00,
@@ -60,52 +37,74 @@ export const mapDualVelocitiesToVoltages = (dualSlopeResults) => {
     rank: 'REF'
   });
 
-  let positiveIndex = 0;
-  let negativeIndex = 0;
-
-  sortedEntries.forEach((entry, index) => {
-    let assignedVoltage;
+  // Process each file that has been assigned a voltage
+  Object.entries(voltageAssignments).forEach(([fileName, voltageMagnitude]) => {
+    const result = dualSlopeResults.find(r => r.fileName === fileName);
     
-    if (entry.rampType === 'up') {
-      // Assign positive voltage
-      if (positiveIndex < positiveVoltages.length) {
-        assignedVoltage = positiveVoltages[positiveIndex];
-        positiveIndex++;
-      } else {
-        assignedVoltage = positiveVoltages[positiveVoltages.length - 1]; // Use highest if we run out
-      }
-    } else {
-      // Assign negative voltage
-      if (negativeIndex < negativeVoltages.length) {
-        assignedVoltage = negativeVoltages[negativeIndex];
-        negativeIndex++;
-      } else {
-        assignedVoltage = negativeVoltages[negativeVoltages.length - 1]; // Use lowest if we run out
-      }
+    if (!result) {
+      console.warn(`No dual slope result found for ${fileName}`);
+      return;
     }
 
+    // Handle special case: 0V only creates one entry
+    if (voltageMagnitude === 0) {
+      mappedResults.push({
+        fileName: fileName,
+        voltage: 0.00,
+        velocity: 0.000000, // 0V should be 0 velocity
+        rampType: 'reference',
+        duration: 0,
+        startTime: 0,
+        endTime: 0,
+        rank: 'ZERO',
+        detectionMethod: result.detectionMethod
+      });
+      return;
+    }
+
+    // Create positive voltage entry (ramp up)
     mappedResults.push({
-      fileName: entry.fileName,
-      voltage: assignedVoltage,
-      velocity: entry.velocity,
-      rampType: entry.rampType,
-      duration: entry.rampData.duration,
-      startTime: entry.rampData.startTime,
-      endTime: entry.rampData.endTime,
-      startIndex: entry.rampData.startIndex,
-      endIndex: entry.rampData.endIndex,
-      startPosition: entry.rampData.startPosition,
-      endPosition: entry.rampData.endPosition,
-      rank: index + 1,
-      detectionMethod: entry.originalResult.detectionMethod
+      fileName: fileName,
+      voltage: voltageMagnitude, // Positive voltage
+      velocity: result.rampUp.velocity, // Positive velocity from ramp up
+      rampType: 'up',
+      duration: result.rampUp.duration,
+      startTime: result.rampUp.startTime,
+      endTime: result.rampUp.endTime,
+      startIndex: result.rampUp.startIndex,
+      endIndex: result.rampUp.endIndex,
+      startPosition: result.rampUp.startPosition,
+      endPosition: result.rampUp.endPosition,
+      rank: `+${voltageMagnitude}V`,
+      detectionMethod: result.detectionMethod
+    });
+
+    // Create negative voltage entry (ramp down)
+    mappedResults.push({
+      fileName: fileName,
+      voltage: -voltageMagnitude, // Negative voltage
+      velocity: -Math.abs(result.rampDown.velocity), // Negative velocity for regression
+      rampType: 'down',
+      duration: result.rampDown.duration,
+      startTime: result.rampDown.startTime,
+      endTime: result.rampDown.endTime,
+      startIndex: result.rampDown.startIndex,
+      endIndex: result.rampDown.endIndex,
+      startPosition: result.rampDown.startPosition,
+      endPosition: result.rampDown.endPosition,
+      rank: `-${voltageMagnitude}V`,
+      detectionMethod: result.detectionMethod
     });
   });
 
-  // Sort final results by voltage (positive to negative)
+  // Sort by voltage (positive to negative) for display
   return mappedResults.sort((a, b) => b.voltage - a.voltage);
 };
 
-export const exportDualToCSV = (mappedResults, testFormData = null) => {
+/**
+ * Export user-assigned voltage data to CSV format
+ */
+export const exportUserAssignedToCSV = (mappedResults, testFormData = null) => {
   if (!mappedResults || mappedResults.length === 0) {
     return '';
   }
@@ -145,7 +144,7 @@ export const exportDualToCSV = (mappedResults, testFormData = null) => {
     csvLines.push(`Druck am Ventil / an der Pumpe,${testFormData.druckVentil || ''} Bar`);
     csvLines.push(`Öltemperatur vor Start der Messung,${testFormData.oeltemperatur || ''} °C`);
     csvLines.push('');
-    csvLines.push('=== MESSERGEBNISSE BIDIREKTIONAL ===');
+    csvLines.push('=== MESSERGEBNISSE USER-ASSIGNED ===');
     csvLines.push('');
   }
 
@@ -158,12 +157,12 @@ export const exportDualToCSV = (mappedResults, testFormData = null) => {
     'Duration (s)',
     'Start Time (s)',
     'End Time (s)',
-    'Rank'
+    'Assignment'
   ];
 
   csvLines.push(headers.join(','));
 
-  // Add data rows
+  // Add data rows (exclude reference)
   const dataRows = mappedResults.filter(result => result.rampType !== 'reference');
   dataRows.forEach(result => {
     const row = [
@@ -179,52 +178,49 @@ export const exportDualToCSV = (mappedResults, testFormData = null) => {
     csvLines.push(row.join(','));
   });
 
-  // Add summary statistics if test data is available
+  // Add summary statistics
   if (testFormData && dataRows.length > 0) {
     csvLines.push('');
-    csvLines.push('=== STATISTIK BIDIREKTIONAL ===');
+    csvLines.push('=== STATISTIK USER-ASSIGNED ===');
     csvLines.push('');
     
+    const uniqueFiles = [...new Set(dataRows.map(r => r.fileName))];
     const upRamps = dataRows.filter(r => r.rampType === 'up');
     const downRamps = dataRows.filter(r => r.rampType === 'down');
     
     const allVelocities = dataRows.map(r => r.velocity);
-    const upVelocities = upRamps.map(r => r.velocity);
-    const downVelocities = downRamps.map(r => r.velocity);
+    const voltages = dataRows.map(r => r.voltage);
     
-    csvLines.push(`Anzahl CSV-Dateien,${mappedResults.filter(r => r.rampType !== 'reference').length / 2}`);
+    csvLines.push(`Anzahl CSV-Dateien (User-Assigned),${uniqueFiles.length}`);
+    csvLines.push(`Anzahl Voltage Assignments,${dataRows.length}`);
     csvLines.push(`Anzahl Ramp Up Messungen,${upRamps.length}`);
     csvLines.push(`Anzahl Ramp Down Messungen,${downRamps.length}`);
     csvLines.push('');
     
     if (allVelocities.length > 0) {
-      csvLines.push(`Geschwindigkeit Min (gesamt),${Math.min(...allVelocities).toFixed(6)} mm/s`);
-      csvLines.push(`Geschwindigkeit Max (gesamt),${Math.max(...allVelocities).toFixed(6)} mm/s`);
-      csvLines.push(`Geschwindigkeit Durchschnitt (gesamt),${(allVelocities.reduce((sum, v) => sum + v, 0) / allVelocities.length).toFixed(6)} mm/s`);
+      csvLines.push(`Geschwindigkeit Min,${Math.min(...allVelocities).toFixed(6)} mm/s`);
+      csvLines.push(`Geschwindigkeit Max,${Math.max(...allVelocities).toFixed(6)} mm/s`);
+      csvLines.push(`Geschwindigkeit Durchschnitt,${(allVelocities.reduce((sum, v) => sum + v, 0) / allVelocities.length).toFixed(6)} mm/s`);
     }
     
-    if (upVelocities.length > 0) {
-      csvLines.push(`Geschwindigkeit Durchschnitt (Up),${(upVelocities.reduce((sum, v) => sum + v, 0) / upVelocities.length).toFixed(6)} mm/s`);
-    }
-    
-    if (downVelocities.length > 0) {
-      csvLines.push(`Geschwindigkeit Durchschnitt (Down),${(downVelocities.reduce((sum, v) => sum + v, 0) / downVelocities.length).toFixed(6)} mm/s`);
-    }
-    
-    const voltageRange = dataRows.map(r => r.voltage);
-    csvLines.push(`Spannungsbereich,${Math.min(...voltageRange).toFixed(2)}V bis ${Math.max(...voltageRange).toFixed(2)}V`);
+    csvLines.push(`Spannungsbereich,${Math.min(...voltages).toFixed(2)}V bis ${Math.max(...voltages).toFixed(2)}V`);
+    csvLines.push(`User-Assignment Methode,Manual voltage selection during approval`);
     
     // Add timestamp
     const timestamp = new Date().toLocaleString('de-DE');
     csvLines.push('');
     csvLines.push(`Export Zeitstempel,${timestamp}`);
+    csvLines.push(`Export Typ,User-Assigned Voltage Mapping`);
   }
 
   return csvLines.join('\n');
 };
 
+/**
+ * Download user-assigned voltage mapping as CSV
+ */
 export const downloadDualCSV = (mappedResults, testFormData = null, filename = null) => {
-  const csvContent = exportDualToCSV(mappedResults, testFormData);
+  const csvContent = exportUserAssignedToCSV(mappedResults, testFormData);
   
   if (!csvContent) {
     console.error('No data to export');
@@ -235,9 +231,9 @@ export const downloadDualCSV = (mappedResults, testFormData = null, filename = n
   let finalFilename = filename;
   if (!finalFilename) {
     if (testFormData && testFormData.auftragsNr) {
-      finalFilename = `Ventil_Analyse_Bidirektional_${testFormData.auftragsNr}_${new Date().toISOString().split('T')[0]}.csv`;
+      finalFilename = `Ventil_Analyse_UserAssigned_${testFormData.auftragsNr}_${new Date().toISOString().split('T')[0]}.csv`;
     } else {
-      finalFilename = `dual_voltage_velocity_mapping_${new Date().toISOString().split('T')[0]}.csv`;
+      finalFilename = `user_assigned_voltage_mapping_${new Date().toISOString().split('T')[0]}.csv`;
     }
   }
 
@@ -255,28 +251,42 @@ export const downloadDualCSV = (mappedResults, testFormData = null, filename = n
     URL.revokeObjectURL(url);
   }
 
-  console.log(`Dual export completed: ${finalFilename}`);
+  console.log(`User-assigned export completed: ${finalFilename}`);
   if (testFormData) {
-    console.log('Export includes test form data and bidirectional statistics');
+    console.log('Export includes test form data and user-assignment statistics');
   }
 };
 
-export const validateDualMapping = (mappedResults) => {
+/**
+ * Validate user-assigned voltage mapping
+ */
+export const validateUserAssignedMapping = (mappedResults, voltageAssignments) => {
   if (!mappedResults || mappedResults.length === 0) {
     throw new Error('No results to validate');
   }
 
   const dataRows = mappedResults.filter(r => r.rampType !== 'reference');
   
-  // Check for duplicate voltages
-  const voltages = dataRows.map(r => r.voltage);
-  const uniqueVoltages = new Set(voltages);
-  
-  if (voltages.length !== uniqueVoltages.size) {
-    throw new Error('Duplicate voltage assignments detected');
+  // Check that we have voltage assignments
+  if (!voltageAssignments || Object.keys(voltageAssignments).length === 0) {
+    throw new Error('No voltage assignments found');
   }
 
+  // Check for expected voltage pairs (except 0V)
+  const assignedMagnitudes = Object.values(voltageAssignments);
+  assignedMagnitudes.forEach(magnitude => {
+    if (magnitude === 0) return; // 0V is special case
+    
+    const positiveEntry = dataRows.find(r => r.voltage === magnitude);
+    const negativeEntry = dataRows.find(r => r.voltage === -magnitude);
+    
+    if (!positiveEntry || !negativeEntry) {
+      throw new Error(`Missing voltage pair for ±${magnitude}V`);
+    }
+  });
+
   // Check voltage range
+  const voltages = dataRows.map(r => r.voltage);
   const maxVoltage = Math.max(...voltages);
   const minVoltage = Math.min(...voltages);
   
@@ -284,48 +294,44 @@ export const validateDualMapping = (mappedResults) => {
     throw new Error(`Voltage out of range: ${minVoltage}V - ${maxVoltage}V (should be -10V to +10V)`);
   }
 
-  // Check that we have both up and down ramps
-  const upRamps = dataRows.filter(r => r.rampType === 'up');
-  const downRamps = dataRows.filter(r => r.rampType === 'down');
-  
-  if (upRamps.length === 0 || downRamps.length === 0) {
-    throw new Error('Missing ramp up or ramp down measurements');
-  }
-
   return true;
 };
 
-export const getDualVoltageStatistics = (mappedResults) => {
-  if (!mappedResults || mappedResults.length === 0) {
+/**
+ * Get statistics for user-assigned voltage mapping
+ */
+export const getUserAssignedStatistics = (mappedResults, voltageAssignments) => {
+  if (!mappedResults || mappedResults.length === 0 || !voltageAssignments) {
     return null;
   }
 
   const dataRows = mappedResults.filter(r => r.rampType !== 'reference');
+  const uniqueFiles = [...new Set(dataRows.map(r => r.fileName))];
   const upRamps = dataRows.filter(r => r.rampType === 'up');
   const downRamps = dataRows.filter(r => r.rampType === 'down');
   
   const allVelocities = dataRows.map(r => r.velocity);
-  const upVelocities = upRamps.map(r => r.velocity);
-  const downVelocities = downRamps.map(r => r.velocity);
   const voltages = dataRows.map(r => r.voltage);
+  const assignedMagnitudes = Object.values(voltageAssignments);
 
   return {
-    totalFiles: dataRows.length / 2,
-    totalMeasurements: dataRows.length,
+    totalFiles: uniqueFiles.length,
+    totalAssignments: Object.keys(voltageAssignments).length,
+    totalVoltageEntries: dataRows.length,
     upRampCount: upRamps.length,
     downRampCount: downRamps.length,
+    assignedVoltageMagnitudes: assignedMagnitudes.sort((a, b) => b - a),
     velocityRange: {
-      min: Math.min(...allVelocities),
-      max: Math.max(...allVelocities),
-      average: allVelocities.reduce((sum, v) => sum + v, 0) / allVelocities.length,
-      upAverage: upVelocities.length > 0 ? upVelocities.reduce((sum, v) => sum + v, 0) / upVelocities.length : 0,
-      downAverage: downVelocities.length > 0 ? downVelocities.reduce((sum, v) => sum + v, 0) / downVelocities.length : 0
+      min: allVelocities.length > 0 ? Math.min(...allVelocities) : 0,
+      max: allVelocities.length > 0 ? Math.max(...allVelocities) : 0,
+      average: allVelocities.length > 0 ? allVelocities.reduce((sum, v) => sum + v, 0) / allVelocities.length : 0
     },
     voltageRange: {
-      min: Math.min(...voltages),
-      max: Math.max(...voltages),
+      min: voltages.length > 0 ? Math.min(...voltages) : 0,
+      max: voltages.length > 0 ? Math.max(...voltages) : 0,
       positiveCount: voltages.filter(v => v > 0).length,
-      negativeCount: voltages.filter(v => v < 0).length
+      negativeCount: voltages.filter(v => v < 0).length,
+      zeroCount: voltages.filter(v => v === 0).length
     }
   };
 };

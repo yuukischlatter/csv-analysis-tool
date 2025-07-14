@@ -1,11 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const ApprovalButton = ({ fileName, isApproved, onApprove }) => {
-  const handleClick = () => {
-    if (!isApproved && onApprove) {
-      onApprove(fileName);
+const ApprovalButton = ({ 
+  fileName, 
+  isApproved, 
+  onApproveWithVoltage, 
+  availableVoltages, 
+  assignedVoltage 
+}) => {
+  const [selectedVoltage, setSelectedVoltage] = useState('');
+
+  const handleVoltageChange = (event) => {
+    setSelectedVoltage(parseFloat(event.target.value));
+  };
+
+  const handleApprove = () => {
+    if (selectedVoltage !== '' && onApproveWithVoltage) {
+      onApproveWithVoltage(fileName, selectedVoltage);
+      setSelectedVoltage(''); // Reset for next file
     }
   };
+
+  const formatVoltage = (voltage) => {
+    if (voltage === 0) {
+      return '0V';
+    }
+    return `±${voltage}V`;
+  };
+
+  const canApprove = !isApproved && selectedVoltage !== '';
 
   return (
     <div style={{ 
@@ -13,54 +35,115 @@ const ApprovalButton = ({ fileName, isApproved, onApprove }) => {
       paddingTop: '15px', 
       borderTop: '1px solid #eee',
       display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
+      flexDirection: 'column',
+      gap: '15px'
     }}>
+      
+      {/* Status and Instructions */}
       <div style={{ fontSize: '14px', color: '#666' }}>
         {isApproved ? (
           <span style={{ color: 'green', fontWeight: 'bold' }}>
-            ✓ This file has been approved
+            ✓ This file has been approved for {formatVoltage(assignedVoltage)}
           </span>
         ) : (
           <span>
-            Review the chart and click "Approve" when satisfied with the analysis
+            Review the chart, select the voltage this measurement represents, then click "Approve"
           </span>
         )}
       </div>
-      
-      <button
-        onClick={handleClick}
-        disabled={isApproved}
-        style={{
-          padding: '10px 20px',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          border: 'none',
+
+      {/* Voltage Selection and Approval */}
+      {!isApproved && (
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '15px',
+          flexWrap: 'wrap'
+        }}>
+          
+          {/* Voltage Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ 
+              fontSize: '14px', 
+              fontWeight: 'bold',
+              color: '#333',
+              minWidth: 'max-content'
+            }}>
+              Voltage Tested:
+            </label>
+            <select
+              value={selectedVoltage}
+              onChange={handleVoltageChange}
+              style={{
+                padding: '8px 12px',
+                fontSize: '14px',
+                border: '2px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                minWidth: '120px',
+                color: selectedVoltage === '' ? '#999' : '#333'
+              }}
+            >
+              <option value="" disabled>
+                Select voltage...
+              </option>
+              {availableVoltages.map(voltage => (
+                <option key={voltage} value={voltage}>
+                  {formatVoltage(voltage)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Approve Button */}
+          <button
+            onClick={handleApprove}
+            disabled={!canApprove}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: canApprove ? 'pointer' : 'not-allowed',
+              backgroundColor: canApprove ? '#4CAF50' : '#e0e0e0',
+              color: canApprove ? 'white' : '#999',
+              transition: 'all 0.2s ease',
+              opacity: canApprove ? 1 : 0.6,
+              minWidth: '100px'
+            }}
+            onMouseEnter={(e) => {
+              if (canApprove) {
+                e.target.style.backgroundColor = '#45a049';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (canApprove) {
+                e.target.style.backgroundColor = '#4CAF50';
+              }
+            }}
+          >
+            {canApprove ? 'Approve' : 'Select Voltage'}
+          </button>
+        </div>
+      )}
+
+      {/* No Available Voltages Warning */}
+      {!isApproved && availableVoltages.length === 0 && (
+        <div style={{ 
+          fontSize: '12px', 
+          color: '#d32f2f',
+          backgroundColor: '#ffebee',
+          padding: '8px 12px',
           borderRadius: '4px',
-          cursor: isApproved ? 'not-allowed' : 'pointer',
-          backgroundColor: isApproved ? '#e0e0e0' : '#4CAF50',
-          color: isApproved ? '#999' : 'white',
-          transition: 'all 0.2s ease',
-          opacity: isApproved ? 0.6 : 1,
-          ...(isApproved ? {} : {
-            ':hover': {
-              backgroundColor: '#45a049'
-            }
-          })
-        }}
-        onMouseEnter={(e) => {
-          if (!isApproved) {
-            e.target.style.backgroundColor = '#45a049';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isApproved) {
-            e.target.style.backgroundColor = '#4CAF50';
-          }
-        }}
-      >
-        {isApproved ? 'Approved ✓' : 'Approve'}
-      </button>
+          border: '1px solid #f44336'
+        }}>
+          <strong>⚠️ No voltages available</strong>
+          <br />
+          All voltage assignments have been used. Unapprove other files to free up voltages.
+        </div>
+      )}
     </div>
   );
 };

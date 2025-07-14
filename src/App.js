@@ -5,10 +5,16 @@ import ChartContainer from './components/charts/ChartContainer';
 import ApprovalButton from './components/common/ApprovalButton';
 import TestDataForm from './components/forms/TestDataForm';
 import RegressionChart from './components/charts/RegressionChart';
+import VoltageOverview from './components/charts/VoltageOverview';
 import { detectDualSlopes, recalculateDualVelocity } from './services/slopeDetection';
-import { mapDualVelocitiesToVoltages, downloadDualCSV } from './services/voltageMapper';
+import { createUserAssignedVoltageMapping, downloadDualCSV } from './services/voltageMapper';
 import { prepareRegressionData } from './services/regressionAnalysis';
 import { createDualLineChart } from './components/charts/LineChart';
+
+// Available voltage magnitudes for assignment (removed 0V)
+const AVAILABLE_VOLTAGES = [
+  0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.0, 9.0, 10.0
+];
 
 function App() {
   const [processedFiles, setProcessedFiles] = useState([]);
@@ -17,6 +23,7 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [approvalStatus, setApprovalStatus] = useState({});
   const [manuallyAdjusted, setManuallyAdjusted] = useState({});
+  const [voltageAssignments, setVoltageAssignments] = useState({}); // fileName -> voltage magnitude
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
   const [testFormData, setTestFormData] = useState(null);
@@ -28,31 +35,41 @@ function App() {
   };
 
   const updateRegressionData = () => {
-    if (dualSlopeResults.length > 0) {
-      const mappedResults = mapDualVelocitiesToVoltages(dualSlopeResults);
+    if (Object.keys(voltageAssignments).length > 0) {
+      const mappedResults = createUserAssignedVoltageMapping(dualSlopeResults, voltageAssignments);
       const approvedData = prepareRegressionData(mappedResults, approvalStatus);
       setRegressionData(approvedData);
       console.log(`Regression data updated: ${approvedData.length} approved points`);
     }
   };
 
+  const checkForDuplicateFiles = (newFiles, existingFiles) => {
+    const existingFileNames = new Set(existingFiles.map(f => f.fileName));
+    return newFiles.filter(file => !existingFileNames.has(file.fileName));
+  };
+
   const handleFilesProcessed = async (files) => {
-    setProcessedFiles(files);
+    // Silent duplicate check - only process new files
+    const uniqueFiles = checkForDuplicateFiles(files, processedFiles);
+    
+    if (uniqueFiles.length === 0) {
+      console.log('All files already processed, skipping...');
+      return;
+    }
+
+    const allFiles = [...processedFiles, ...uniqueFiles];
+    setProcessedFiles(allFiles);
     setIsAnalyzing(true);
     setError(null);
-    setFailedFiles([]);
-    setApprovalStatus({}); // Reset approval status
-    setManuallyAdjusted({}); // Reset manual adjustment tracking
-    setRegressionData([]); // Reset regression data
 
     try {
-      const results = [];
+      const newResults = [];
       const failed = [];
       
-      for (const file of files) {
+      for (const file of uniqueFiles) {
         try {
           const dualSlopeResult = detectDualSlopes(file.data, file.fileName);
-          results.push(dualSlopeResult);
+          newResults.push(dualSlopeResult);
           console.log(`✓ Processed ${file.fileName}:`, dualSlopeResult.detectionMethod);
         } catch (error) {
           console.error(`✗ Failed to process ${file.fileName}:`, error);
@@ -63,37 +80,44 @@ function App() {
         }
       }
 
-      if (results.length === 0) {
+      if (newResults.length === 0 && dualSlopeResults.length === 0) {
         throw new Error('No files could be processed successfully');
       }
 
-      setDualSlopeResults(results);
-      setFailedFiles(failed);
+      const allResults = [...dualSlopeResults, ...newResults];
+      setDualSlopeResults(allResults);
+      setFailedFiles([...failedFiles, ...failed]);
       
-      // Initialize approval status for all files
-      const initialApprovalStatus = {};
-      const initialManualAdjustment = {};
-      results.forEach(result => {
-        initialApprovalStatus[result.fileName] = false;
-        initialManualAdjustment[result.fileName] = result.detectionMethod !== 'automatic';
+      // Initialize approval status and manual adjustment tracking for new files
+      const newApprovalStatus = { ...approvalStatus };
+      const newManualAdjustment = { ...manuallyAdjusted };
+      
+      newResults.forEach(result => {
+        newApprovalStatus[result.fileName] = false;
+        newManualAdjustment[result.fileName] = result.detectionMethod !== 'automatic';
       });
-      setApprovalStatus(initialApprovalStatus);
-      setManuallyAdjusted(initialManualAdjustment);
       
-      // Auto-select first file for chart display
-      if (results.length > 0) {
-        const firstFile = files.find(f => f.fileName === results[0].fileName);
-        setSelectedFile({
-          data: firstFile,
-          dualSlope: results[0]
-        });
+      setApprovalStatus(newApprovalStatus);
+      setManuallyAdjusted(newManualAdjustment);
+      
+      // Auto-select first unapproved file for chart display
+      const getFirstUnapprovedFile = (results) => {
+        return results.find(result => !newApprovalStatus[result.fileName]);
+      };
+
+      const firstUnapprovedFile = getFirstUnapprovedFile(allResults);
+      if (firstUnapprovedFile) {
+        const fileData = allFiles.find(f => f.fileName === firstUnapprovedFile.fileName);
+        if (fileData) {
+          setSelectedFile({
+            data: fileData,
+            dualSlope: firstUnapprovedFile
+          });
+          console.log(`Auto-switched to unapproved file: ${firstUnapprovedFile.fileName}`);
+        }
       }
 
-      // Show summary
-      console.log(`Processed ${results.length}/${files.length} files successfully`);
-      if (failed.length > 0) {
-        console.warn(`Failed files:`, failed.map(f => f.fileName));
-      }
+      console.log(`Processed ${newResults.length} new files (${failed.length} failed)`);
 
     } catch (error) {
       setError(error.message);
@@ -122,7 +146,6 @@ function App() {
       const data = selectedFile.data.data;
       const currentDualSlope = selectedFile.dualSlope;
       
-      // Determine which indices to update based on marker type and ramp type
       let newRampUpIndices = {
         startIndex: currentDualSlope.rampUp.startIndex,
         endIndex: currentDualSlope.rampUp.endIndex
@@ -133,7 +156,6 @@ function App() {
         endIndex: currentDualSlope.rampDown.endIndex
       };
 
-      // Update the appropriate index
       if (rampType === 'up') {
         if (markerType === 'upStart') {
           newRampUpIndices.startIndex = newIndex;
@@ -148,7 +170,6 @@ function App() {
         }
       }
 
-      // Validate ranges
       if (newRampUpIndices.startIndex >= newRampUpIndices.endIndex || 
           newRampDownIndices.startIndex >= newRampDownIndices.endIndex ||
           newRampUpIndices.endIndex - newRampUpIndices.startIndex < 5 ||
@@ -156,7 +177,6 @@ function App() {
         return;
       }
 
-      // Recalculate velocities for both ramps
       const recalculated = recalculateDualVelocity(data, newRampUpIndices, newRampDownIndices);
       
       const updatedDualSlope = {
@@ -169,23 +189,20 @@ function App() {
           ...currentDualSlope.rampDown,
           ...recalculated.rampDown
         },
-        detectionMethod: 'manual' // Mark as manually adjusted
+        detectionMethod: 'manual'
       };
 
-      // Update local state
       setSelectedFile({
         ...selectedFile,
         dualSlope: updatedDualSlope
       });
 
-      // Update global dual slope results
       setDualSlopeResults(prev => 
         prev.map(result => 
           result.fileName === updatedDualSlope.fileName ? updatedDualSlope : result
         )
       );
 
-      // Mark as manually adjusted and unapprove
       const fileName = updatedDualSlope.fileName;
       setManuallyAdjusted(prev => ({
         ...prev,
@@ -199,10 +216,16 @@ function App() {
       };
       setApprovalStatus(newApprovalStatus);
 
-      // Update regression data immediately
+      // Remove voltage assignment if file was unapproved
+      if (voltageAssignments[fileName]) {
+        const newVoltageAssignments = { ...voltageAssignments };
+        delete newVoltageAssignments[fileName];
+        setVoltageAssignments(newVoltageAssignments);
+      }
+
       setTimeout(() => updateRegressionData(), 100);
 
-      console.log(`Updated ${fileName}: rampUp = ${updatedDualSlope.rampUp.velocity.toFixed(6)}, rampDown = ${updatedDualSlope.rampDown.velocity.toFixed(6)} (auto-unapproved due to manual adjustment)`);
+      console.log(`Updated ${fileName}: auto-unapproved due to manual adjustment`);
 
     } catch (error) {
       console.error('Error updating dual marker:', error);
@@ -210,7 +233,16 @@ function App() {
     }
   };
 
-  const handleApproval = (fileName) => {
+  const getAvailableVoltages = () => {
+    const assignedVoltages = new Set(Object.values(voltageAssignments));
+    return AVAILABLE_VOLTAGES.filter(voltage => !assignedVoltages.has(voltage));
+  };
+
+  const getAssignedVoltages = () => {
+    return new Set(Object.values(voltageAssignments));
+  };
+
+  const handleApprovalWithVoltage = (fileName, selectedVoltage) => {
     // Mark current file as approved
     const newApprovalStatus = {
       ...approvalStatus,
@@ -218,7 +250,14 @@ function App() {
     };
     setApprovalStatus(newApprovalStatus);
 
-    console.log(`✓ Approved: ${fileName} (both ramps)`);
+    // Assign voltage to this file
+    const newVoltageAssignments = {
+      ...voltageAssignments,
+      [fileName]: selectedVoltage
+    };
+    setVoltageAssignments(newVoltageAssignments);
+
+    console.log(`✓ Approved: ${fileName} for ±${selectedVoltage}V`);
 
     // Update regression data with new approval
     setTimeout(() => updateRegressionData(), 100);
@@ -241,43 +280,29 @@ function App() {
   };
 
   const getNextUnapprovedFile = (currentFileName) => {
-    const mappedResults = mapDualVelocitiesToVoltages(dualSlopeResults);
+    const unapprovedFiles = dualSlopeResults.filter(result => !approvalStatus[result.fileName]);
+    const currentIndex = unapprovedFiles.findIndex(result => result.fileName === currentFileName);
     
-    // Get unique file names from mapped results
-    const uniqueFiles = [...new Set(mappedResults
-      .filter(r => r.rampType !== 'reference')
-      .map(r => r.fileName))];
-    
-    const currentIndex = uniqueFiles.findIndex(fileName => fileName === currentFileName);
-    
-    // Look for next unapproved file starting from current position
-    for (let i = currentIndex + 1; i < uniqueFiles.length; i++) {
-      if (!approvalStatus[uniqueFiles[i]]) {
-        return { fileName: uniqueFiles[i] };
-      }
+    // Look for next unapproved file
+    if (currentIndex >= 0 && currentIndex < unapprovedFiles.length - 1) {
+      return unapprovedFiles[currentIndex + 1];
     }
     
-    // If no next file found, look from beginning
-    for (let i = 0; i < currentIndex; i++) {
-      if (!approvalStatus[uniqueFiles[i]]) {
-        return { fileName: uniqueFiles[i] };
-      }
-    }
-    
-    return null; // All files approved
+    // If no next file, return first unapproved file (excluding current)
+    const otherUnapproved = unapprovedFiles.filter(result => result.fileName !== currentFileName);
+    return otherUnapproved.length > 0 ? otherUnapproved[0] : null;
   };
 
   const handleExport = () => {
-    if (dualSlopeResults.length === 0) {
-      alert('No results to export');
+    if (Object.keys(voltageAssignments).length === 0) {
+      alert('No voltage assignments to export');
       return;
     }
 
     try {
-      const mappedResults = mapDualVelocitiesToVoltages(dualSlopeResults);
-      // Pass test form data to export function
+      const mappedResults = createUserAssignedVoltageMapping(dualSlopeResults, voltageAssignments);
       downloadDualCSV(mappedResults, testFormData);
-      console.log('Dual export successful');
+      console.log('User-assigned voltage export successful');
     } catch (error) {
       console.error('Export failed:', error);
       setError(`Export failed: ${error.message}`);
@@ -288,7 +313,8 @@ function App() {
     setError(null);
   };
 
-  const mappedResults = dualSlopeResults.length > 0 ? mapDualVelocitiesToVoltages(dualSlopeResults) : [];
+  const mappedResults = Object.keys(voltageAssignments).length > 0 ? 
+    createUserAssignedVoltageMapping(dualSlopeResults, voltageAssignments) : [];
   const isCurrentFileApproved = selectedFile ? approvalStatus[selectedFile.dualSlope.fileName] : false;
   const isCurrentFileManuallyAdjusted = selectedFile ? manuallyAdjusted[selectedFile.dualSlope.fileName] : false;
 
@@ -297,9 +323,8 @@ function App() {
       const chartElement = document.querySelector('#chart-svg');
       if (chartElement) {
         try {
-          // Get container width for responsive chart
           const container = chartElement.parentElement;
-          const containerWidth = container ? container.offsetWidth - 20 : 800; // 20px padding
+          const containerWidth = container ? container.offsetWidth - 20 : 800;
           
           createDualLineChart(
             chartElement,
@@ -316,10 +341,9 @@ function App() {
     }
   }, [selectedFile]);
 
-  // Update regression data when approval status changes
   React.useEffect(() => {
     updateRegressionData();
-  }, [dualSlopeResults, approvalStatus]);
+  }, [voltageAssignments, approvalStatus]);
 
   return (
     <div style={{ 
@@ -330,10 +354,10 @@ function App() {
     }}>
       <header style={{ marginBottom: '30px', borderBottom: '1px solid #ddd', paddingBottom: '20px' }}>
         <h1 style={{ margin: '0', fontSize: '24px' }}>
-          CSV Analysis Tool - Bidirectional
+          CSV Analysis Tool - Voltage Assignment System
         </h1>
         <p style={{ margin: '5px 0 0 0', color: '#666' }}>
-          Schlatter Industries - Dual Ramp Voltage/Velocity Analysis
+          Schlatter Industries - User-Controlled Voltage/Velocity Analysis
         </p>
       </header>
 
@@ -388,7 +412,6 @@ function App() {
         </div>
       )}
 
-      {/* Test Data Form */}
       <TestDataForm onFormDataChange={handleFormDataChange} />
 
       <FileUpload onFilesProcessed={handleFilesProcessed} />
@@ -399,29 +422,31 @@ function App() {
         </div>
       )}
 
-      {mappedResults.length > 0 && (
+      {dualSlopeResults.length > 0 && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0' }}>
             <div>
-              <h2 style={{ margin: '0' }}>Bidirectional Results</h2>
+              <h2 style={{ margin: '0' }}>Voltage Assignment Results</h2>
               <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#666' }}>
-                {dualSlopeResults.length} files analyzed ({mappedResults.filter(r => r.rampType !== 'reference').length} ramp measurements)
+                {dualSlopeResults.length} files analyzed, {Object.keys(voltageAssignments).length} voltage assignments completed
                 {failedFiles.length > 0 && ` (${failedFiles.length} with fallback markers)`}
               </p>
             </div>
-            <button 
-              onClick={handleExport}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Export Dual CSV
-            </button>
+            {Object.keys(voltageAssignments).length > 0 && (
+              <button 
+                onClick={handleExport}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Export Results
+              </button>
+            )}
           </div>
 
           <DualResultsTable 
@@ -442,7 +467,7 @@ function App() {
                       fontWeight: 'bold', 
                       fontSize: '14px' 
                     }}>
-                      ✓ Approved {isCurrentFileManuallyAdjusted ? '(manually adjusted)' : ''}
+                      ✓ Approved for ±{voltageAssignments[selectedFile.dualSlope.fileName]}V {isCurrentFileManuallyAdjusted ? '(manually adjusted)' : ''}
                     </span>
                   )}
                   <span style={{ 
@@ -481,7 +506,7 @@ function App() {
                   </div>
                   {!isCurrentFileApproved && isCurrentFileManuallyAdjusted && (
                     <p style={{ color: 'orange', fontWeight: 'bold', marginTop: '10px' }}>
-                      (Requires re-approval after manual adjustment)
+                      (Requires re-approval with voltage selection after manual adjustment)
                     </p>
                   )}
                 </div>
@@ -489,10 +514,16 @@ function App() {
                 <ApprovalButton
                   fileName={selectedFile.dualSlope.fileName}
                   isApproved={isCurrentFileApproved}
-                  onApprove={handleApproval}
+                  onApproveWithVoltage={handleApprovalWithVoltage}
+                  availableVoltages={getAvailableVoltages()}
+                  assignedVoltage={voltageAssignments[selectedFile.dualSlope.fileName]}
                 />
 
-                {/* NEW: Regression Chart Section */}
+                <VoltageOverview 
+                  availableVoltages={AVAILABLE_VOLTAGES}
+                  assignedVoltages={getAssignedVoltages()}
+                />
+
                 <RegressionChart 
                   data={regressionData}
                   width={800}
@@ -506,7 +537,7 @@ function App() {
 
       {processedFiles.length === 0 && !isAnalyzing && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-          Upload CSV files to begin dual ramp analysis
+          Upload CSV files to begin voltage assignment analysis
         </div>
       )}
     </div>

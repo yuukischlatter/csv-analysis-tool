@@ -9,18 +9,29 @@ const FileUpload = ({ onFilesProcessed }) => {
   const onDrop = useCallback(async (acceptedFiles) => {
     setIsProcessing(true);
     const processedResults = [];
+    const newUploadedFiles = [...uploadedFiles]; // Copy existing uploaded files
 
     try {
       for (const file of acceptedFiles) {
+        // Check if file is already uploaded (by name)
+        const isAlreadyUploaded = newUploadedFiles.some(f => f.name === file.name);
+        
+        if (isAlreadyUploaded) {
+          console.log(`File ${file.name} already uploaded, skipping...`);
+          continue; // Skip duplicate files
+        }
+
         try {
           const result = await processCSVFile(file);
           processedResults.push(result);
-          setUploadedFiles(prev => [...prev, { name: file.name, status: 'success' }]);
+          newUploadedFiles.push({ name: file.name, status: 'success' });
         } catch (error) {
           console.error(`Error processing ${file.name}:`, error);
-          setUploadedFiles(prev => [...prev, { name: file.name, status: 'error', error: error.message }]);
+          newUploadedFiles.push({ name: file.name, status: 'error', error: error.message });
         }
       }
+
+      setUploadedFiles(newUploadedFiles);
 
       if (processedResults.length > 0) {
         onFilesProcessed(processedResults);
@@ -28,7 +39,7 @@ const FileUpload = ({ onFilesProcessed }) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [onFilesProcessed]);
+  }, [onFilesProcessed, uploadedFiles]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

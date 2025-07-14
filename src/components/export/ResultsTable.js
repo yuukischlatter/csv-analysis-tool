@@ -1,19 +1,126 @@
 import React from 'react';
 
 const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect }) => {
+  // If no results, show empty state with just reference row
   if (!results || results.length === 0) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-        No results to display. Upload CSV files to see analysis.
+      <div style={{ margin: '20px 0' }}>
+        <h3>Voltage Assignment Results</h3>
+        <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+          No voltage assignments yet. Approve files with voltage selection to populate this table.
+        </p>
+        
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ 
+            width: '100%', 
+            borderCollapse: 'collapse', 
+            border: '1px solid #ddd',
+            fontSize: '14px'
+          }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f5f5f5' }}>
+                <th style={headerStyle}>Status</th>
+                <th style={headerStyle}>Eingangsspannung UE (V)</th>
+                <th style={headerStyle}>Ramp</th>
+                <th style={headerStyle}>File Name</th>
+                <th style={headerStyle}>Velocity (mm/s)</th>
+                <th style={headerStyle}>Duration (s)</th>
+                <th style={headerStyle}>Start Time (s)</th>
+                <th style={headerStyle}>End Time (s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Always show 0V reference row */}
+              <tr style={{ 
+                backgroundColor: '#f0f0f0',
+                fontWeight: 'bold',
+                borderTop: '2px solid #ddd',
+                borderBottom: '2px solid #ddd'
+              }}>
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  color: '#999'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                    <span style={{ fontSize: '18px' }}>⚪</span>
+                    <span style={{ 
+                      fontSize: '10px', 
+                      color: '#666',
+                      fontWeight: 'normal'
+                    }}>
+                      Reference
+                    </span>
+                  </div>
+                </td>
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '16px'
+                }}>
+                  0.00V
+                </td>
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'center',
+                  color: '#666'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '16px' }}>⚪</span>
+                    <span style={{ fontSize: '12px' }}>Reference</span>
+                  </div>
+                </td>
+                <td style={cellStyle}>-</td>
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'right',
+                  fontFamily: 'monospace'
+                }}>
+                  0.000000
+                </td>
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'right',
+                  fontFamily: 'monospace'
+                }}>
+                  -
+                </td>
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'right',
+                  fontFamily: 'monospace'
+                }}>
+                  -
+                </td>
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'right',
+                  fontFamily: 'monospace'
+                }}>
+                  -
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+          <p>
+            <strong>Instructions:</strong> Upload CSV files, review charts, select voltage assignments during approval.
+            Each approval will add both positive and negative voltage entries to this table.
+          </p>
+        </div>
       </div>
     );
   }
 
   const handleRowClick = (result) => {
     if (onFileSelect && result.rampType !== 'reference') {
-      // Find the original dual result for this file
       const fileName = result.fileName;
-      onFileSelect({ fileName }); // Pass fileName to load the dual chart
+      onFileSelect({ fileName });
     }
   };
 
@@ -30,13 +137,12 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
       return '#666'; // Gray for pending
     }
     
-    // Approved files: green for auto, orange for manually adjusted
     return isManuallyAdjusted ? 'orange' : 'green';
   };
 
   const getRowBackgroundColor = (result, index) => {
     if (result.rampType === 'reference') {
-      return '#f0f0f0'; // Light gray for reference row
+      return '#f0f0f0';
     }
 
     const fileName = result.fileName;
@@ -44,12 +150,11 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
     const isManuallyAdjusted = manuallyAdjusted && manuallyAdjusted[fileName];
     
     if (isApproved && !isManuallyAdjusted) {
-      return result.rampType === 'up' ? '#f0f8f0' : '#fff0f0'; // Light green for up, light red for down
+      return result.rampType === 'up' ? '#f0f8f0' : '#fff0f0';
     } else if (isApproved && isManuallyAdjusted) {
-      return '#fff8e1'; // Light orange for approved manually adjusted
+      return '#fff8e1';
     }
     
-    // Alternating rows for pending
     return index % 2 === 0 ? '#fff' : '#f9f9f9';
   };
 
@@ -69,7 +174,7 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
   const getRampIcon = (rampType) => {
     if (rampType === 'up') return '↗️';
     if (rampType === 'down') return '↘️';
-    return '⚪'; // Reference
+    return '⚪';
   };
 
   const getRampLabel = (rampType) => {
@@ -78,12 +183,19 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
     return 'Reference';
   };
 
+  // Count unique files and total assignments
+  const uniqueFiles = [...new Set(results
+    .filter(r => r.rampType !== 'reference')
+    .map(r => r.fileName))];
+  const totalAssignments = results.filter(r => r.rampType !== 'reference').length;
+
   return (
     <div style={{ margin: '20px 0' }}>
-      <h3>Bidirectional Analysis Results</h3>
+      <h3>Voltage Assignment Results</h3>
       <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
-        {Math.floor(results.filter(r => r.rampType !== 'reference').length / 2)} CSV files analyzed, 
-        sorted by voltage (-10V to +10V, 0V reference in center)
+        {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} approved, 
+        {totalAssignments} voltage assignments completed
+        {' '}(sorted by voltage: +10V to -10V)
       </p>
       
       <div style={{ overflowX: 'auto' }}>
@@ -235,17 +347,8 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
           <li><span style={{ color: '#666', fontWeight: 'bold' }}>⏳ Gray</span> = Pending review</li>
         </ul>
         <p>
-          <strong>Ramp Types:</strong>
-        </p>
-        <ul style={{ margin: '5px 0', paddingLeft: '20px', lineHeight: '1.5' }}>
-          <li><span style={{ color: 'green', fontWeight: 'bold' }}>↗️ Ramp Up</span> = Positive voltage, upward movement</li>
-          <li><span style={{ color: 'red', fontWeight: 'bold' }}>↘️ Ramp Down</span> = Negative voltage, downward movement</li>
-          <li><span style={{ color: '#666', fontWeight: 'bold' }}>⚪ Reference</span> = 0V baseline (0 mm/s)</li>
-        </ul>
-        <p>
-          Click on a row to view the corresponding dual-ramp chart. 
-          Each CSV file contains both ramp up and ramp down measurements.
-          Approval applies to both ramps of the same file simultaneously.
+          <strong>Voltage Assignment:</strong> Each CSV file approval creates both positive and negative voltage entries.
+          Click on a row to view the corresponding dual-ramp chart.
         </p>
       </div>
     </div>

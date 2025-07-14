@@ -1,13 +1,13 @@
 import * as d3 from 'd3';
 
 /**
- * D3.js Line Chart Implementation
- * Renders time/position data with vertical draggable marker lines
+ * D3.js Dual Line Chart Implementation
+ * Renders time/position data with 4 vertical draggable marker lines for dual ramps
  * Updates only on drag end for smoother performance
  * Responsive width sizing
  */
 
-export const createLineChart = (svgElement, data, slopeResult, onMarkerMove, width, height) => {
+export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerMove, width, height) => {
   // Clear previous content
   d3.select(svgElement).selectAll("*").remove();
 
@@ -90,215 +90,218 @@ export const createLineChart = (svgElement, data, slopeResult, onMarkerMove, wid
     .attr("stroke-width", 1.5)
     .attr("d", line);
 
-  if (slopeResult) {
-    const startX = xScale(slopeResult.startTime);
-    const endX = xScale(slopeResult.endTime);
+  if (dualSlopeResult && dualSlopeResult.rampUp && dualSlopeResult.rampDown) {
+    // Calculate positions for all 4 markers
+    const upStartX = xScale(dualSlopeResult.rampUp.startTime);
+    const upEndX = xScale(dualSlopeResult.rampUp.endTime);
+    const downStartX = xScale(dualSlopeResult.rampDown.startTime);
+    const downEndX = xScale(dualSlopeResult.rampDown.endTime);
 
-    // Add highlighted area between markers (transparent red)
+    // Add highlighted area for ramp up (green)
     g.append("rect")
-      .attr("class", "slope-area")
-      .attr("x", startX)
+      .attr("class", "ramp-up-area")
+      .attr("x", upStartX)
       .attr("y", 0)
-      .attr("width", endX - startX)
+      .attr("width", upEndX - upStartX)
+      .attr("height", minChartHeight)
+      .attr("fill", "green")
+      .attr("opacity", 0.1);
+
+    // Add highlighted area for ramp down (red)
+    g.append("rect")
+      .attr("class", "ramp-down-area")
+      .attr("x", downStartX)
+      .attr("y", 0)
+      .attr("width", downEndX - downStartX)
       .attr("height", minChartHeight)
       .attr("fill", "red")
       .attr("opacity", 0.1);
 
-    // Add highlighted slope line
-    const slopeData = data.slice(slopeResult.startIndex, slopeResult.endIndex + 1);
+    // Add highlighted ramp up line
+    const rampUpData = data.slice(dualSlopeResult.rampUp.startIndex, dualSlopeResult.rampUp.endIndex + 1);
     g.append("path")
-      .datum(slopeData)
+      .datum(rampUpData)
+      .attr("fill", "none")
+      .attr("stroke", "green")
+      .attr("stroke-width", 3)
+      .attr("d", line);
+
+    // Add highlighted ramp down line
+    const rampDownData = data.slice(dualSlopeResult.rampDown.startIndex, dualSlopeResult.rampDown.endIndex + 1);
+    g.append("path")
+      .datum(rampDownData)
       .attr("fill", "none")
       .attr("stroke", "red")
       .attr("stroke-width", 3)
       .attr("d", line);
 
-    // Create vertical drag lines
-    const startLine = g.append("g")
-      .attr("class", "start-marker")
-      .style("cursor", "ew-resize");
+    // Create 4 vertical drag lines
+    const markers = [
+      { type: 'upStart', x: upStartX, color: 'green', label: 'Up Start', ramp: 'up' },
+      { type: 'upEnd', x: upEndX, color: 'green', label: 'Up End', ramp: 'up' },
+      { type: 'downStart', x: downStartX, color: 'red', label: 'Down Start', ramp: 'down' },
+      { type: 'downEnd', x: downEndX, color: 'red', label: 'Down End', ramp: 'down' }
+    ];
 
-    startLine.append("line")
-      .attr("class", "visible-line")
-      .attr("x1", startX)
-      .attr("x2", startX)
-      .attr("y1", 0)
-      .attr("y2", minChartHeight)
-      .attr("stroke", "red")
-      .attr("stroke-width", 2)
-      .attr("opacity", 0.8);
+    markers.forEach(marker => {
+      const markerGroup = g.append("g")
+        .attr("class", `${marker.type}-marker`)
+        .style("cursor", "ew-resize");
 
-    // Invisible wider line for easier dragging
-    startLine.append("line")
-      .attr("class", "drag-area")
-      .attr("x1", startX)
-      .attr("x2", startX)
-      .attr("y1", 0)
-      .attr("y2", minChartHeight)
-      .attr("stroke", "transparent")
-      .attr("stroke-width", 20);
+      // Visible line
+      markerGroup.append("line")
+        .attr("class", "visible-line")
+        .attr("x1", marker.x)
+        .attr("x2", marker.x)
+        .attr("y1", 0)
+        .attr("y2", minChartHeight)
+        .attr("stroke", marker.color)
+        .attr("stroke-width", 2)
+        .attr("opacity", 0.8);
 
-    const endLine = g.append("g")
-      .attr("class", "end-marker")
-      .style("cursor", "ew-resize");
+      // Invisible wider line for easier dragging
+      markerGroup.append("line")
+        .attr("class", "drag-area")
+        .attr("x1", marker.x)
+        .attr("x2", marker.x)
+        .attr("y1", 0)
+        .attr("y2", minChartHeight)
+        .attr("stroke", "transparent")
+        .attr("stroke-width", 20);
 
-    endLine.append("line")
-      .attr("class", "visible-line")
-      .attr("x1", endX)
-      .attr("x2", endX)
-      .attr("y1", 0)
-      .attr("y2", minChartHeight)
-      .attr("stroke", "red")
-      .attr("stroke-width", 2)
-      .attr("opacity", 0.8);
+      // Label
+      g.append("text")
+        .attr("class", `${marker.type}-label`)
+        .attr("x", marker.x)
+        .attr("y", -5)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "10px")
+        .attr("fill", marker.color)
+        .attr("font-weight", "bold")
+        .text(marker.label);
+    });
 
-    // Invisible wider line for easier dragging
-    endLine.append("line")
-      .attr("class", "drag-area")
-      .attr("x1", endX)
-      .attr("x2", endX)
-      .attr("y1", 0)
-      .attr("y2", minChartHeight)
-      .attr("stroke", "transparent")
-      .attr("stroke-width", 20);
+    // Add intersection dots for ramp up
+    const upStartIntersection = findIntersection(data, dualSlopeResult.rampUp.startTime);
+    const upEndIntersection = findIntersection(data, dualSlopeResult.rampUp.endTime);
 
-    // Add intersection dots
-    const startIntersection = findIntersection(data, slopeResult.startTime);
-    const endIntersection = findIntersection(data, slopeResult.endTime);
+    g.append("circle")
+      .attr("class", "up-start-dot")
+      .attr("cx", xScale(upStartIntersection.time))
+      .attr("cy", yScale(upStartIntersection.position))
+      .attr("r", 4)
+      .attr("fill", "green")
+      .attr("stroke", "white")
+      .attr("stroke-width", 2);
 
-    const startDot = g.append("circle")
-      .attr("class", "start-dot")
-      .attr("cx", xScale(startIntersection.time))
-      .attr("cy", yScale(startIntersection.position))
+    g.append("circle")
+      .attr("class", "up-end-dot")
+      .attr("cx", xScale(upEndIntersection.time))
+      .attr("cy", yScale(upEndIntersection.position))
+      .attr("r", 4)
+      .attr("fill", "green")
+      .attr("stroke", "white")
+      .attr("stroke-width", 2);
+
+    // Add intersection dots for ramp down
+    const downStartIntersection = findIntersection(data, dualSlopeResult.rampDown.startTime);
+    const downEndIntersection = findIntersection(data, dualSlopeResult.rampDown.endTime);
+
+    g.append("circle")
+      .attr("class", "down-start-dot")
+      .attr("cx", xScale(downStartIntersection.time))
+      .attr("cy", yScale(downStartIntersection.position))
       .attr("r", 4)
       .attr("fill", "red")
       .attr("stroke", "white")
       .attr("stroke-width", 2);
 
-    const endDot = g.append("circle")
-      .attr("class", "end-dot")
-      .attr("cx", xScale(endIntersection.time))
-      .attr("cy", yScale(endIntersection.position))
+    g.append("circle")
+      .attr("class", "down-end-dot")
+      .attr("cx", xScale(downEndIntersection.time))
+      .attr("cy", yScale(downEndIntersection.position))
       .attr("r", 4)
       .attr("fill", "red")
       .attr("stroke", "white")
       .attr("stroke-width", 2);
 
-    // Add labels
-    g.append("text")
-      .attr("class", "start-label")
-      .attr("x", startX)
-      .attr("y", -5)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "10px")
-      .attr("fill", "red")
-      .attr("font-weight", "bold")
-      .text("Start");
-
-    g.append("text")
-      .attr("class", "end-label")
-      .attr("x", endX)
-      .attr("y", -5)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "10px")
-      .attr("fill", "red")
-      .attr("font-weight", "bold")
-      .text("End");
-
-    // Variables to store original positions for validation
-    let originalStartX = startX;
-    let originalEndX = endX;
-
-    // Add drag behavior to start line - UPDATE ONLY ON DRAG END
-    startLine.call(d3.drag()
-      .on("start", function() {
-        originalStartX = parseFloat(startLine.select(".visible-line").attr("x1"));
-      })
-      .on("drag", function(event) {
-        // Only move the line visually, no calculations
-        const newX = Math.max(0, Math.min(minChartWidth, event.x));
-        
-        // Update only the visual line position
-        startLine.selectAll("line")
-          .attr("x1", newX)
-          .attr("x2", newX);
-          
-        // Update label position
-        g.select(".start-label")
-          .attr("x", newX);
-      })
-      .on("end", function(event) {
-        // Now perform the actual calculation and validation
-        const newX = Math.max(0, Math.min(minChartWidth, event.x));
-        const newTime = xScale.invert(newX);
-        const newIndex = findNearestIndex(data, newTime);
-        
-        // Validate minimum distance from end marker
-        if (newIndex < slopeResult.endIndex - 5) {
-          // Valid position - update everything
-          const newDataPoint = data[newIndex];
-          updateMarkerComplete(g, "start", newX, newDataPoint, xScale, yScale, minChartHeight);
-          
-          if (onMarkerMove) {
-            onMarkerMove('start', newIndex);
-          }
-        } else {
-          // Invalid position - revert to original
-          console.warn("Start marker too close to end marker, reverting");
-          startLine.selectAll("line")
-            .attr("x1", originalStartX)
-            .attr("x2", originalStartX);
-          g.select(".start-label")
-            .attr("x", originalStartX);
-        }
-      })
-    );
-
-    // Add drag behavior to end line - UPDATE ONLY ON DRAG END
-    endLine.call(d3.drag()
-      .on("start", function() {
-        originalEndX = parseFloat(endLine.select(".visible-line").attr("x1"));
-      })
-      .on("drag", function(event) {
-        // Only move the line visually, no calculations
-        const newX = Math.max(0, Math.min(minChartWidth, event.x));
-        
-        // Update only the visual line position
-        endLine.selectAll("line")
-          .attr("x1", newX)
-          .attr("x2", newX);
-          
-        // Update label position
-        g.select(".end-label")
-          .attr("x", newX);
-      })
-      .on("end", function(event) {
-        // Now perform the actual calculation and validation
-        const newX = Math.max(0, Math.min(minChartWidth, event.x));
-        const newTime = xScale.invert(newX);
-        const newIndex = findNearestIndex(data, newTime);
-        
-        // Validate minimum distance from start marker
-        if (newIndex > slopeResult.startIndex + 5) {
-          // Valid position - update everything
-          const newDataPoint = data[newIndex];
-          updateMarkerComplete(g, "end", newX, newDataPoint, xScale, yScale, minChartHeight);
-          
-          if (onMarkerMove) {
-            onMarkerMove('end', newIndex);
-          }
-        } else {
-          // Invalid position - revert to original
-          console.warn("End marker too close to start marker, reverting");
-          endLine.selectAll("line")
-            .attr("x1", originalEndX)
-            .attr("x2", originalEndX);
-          g.select(".end-label")
-            .attr("x", originalEndX);
-        }
-      })
-    );
+    // Add drag behavior to all 4 markers
+    addDragBehavior(g, 'upStart', 'up', dualSlopeResult, data, xScale, yScale, minChartWidth, minChartHeight, onMarkerMove);
+    addDragBehavior(g, 'upEnd', 'up', dualSlopeResult, data, xScale, yScale, minChartWidth, minChartHeight, onMarkerMove);
+    addDragBehavior(g, 'downStart', 'down', dualSlopeResult, data, xScale, yScale, minChartWidth, minChartHeight, onMarkerMove);
+    addDragBehavior(g, 'downEnd', 'down', dualSlopeResult, data, xScale, yScale, minChartWidth, minChartHeight, onMarkerMove);
   }
+};
+
+const addDragBehavior = (g, markerType, rampType, dualSlopeResult, data, xScale, yScale, chartWidth, chartHeight, onMarkerMove) => {
+  const markerGroup = g.select(`.${markerType}-marker`);
+  let originalX;
+
+  markerGroup.call(d3.drag()
+    .on("start", function() {
+      originalX = parseFloat(markerGroup.select(".visible-line").attr("x1"));
+    })
+    .on("drag", function(event) {
+      // Only move the line visually, no calculations
+      const newX = Math.max(0, Math.min(chartWidth, event.x));
+      
+      // Update only the visual line position
+      markerGroup.selectAll("line")
+        .attr("x1", newX)
+        .attr("x2", newX);
+        
+      // Update label position
+      g.select(`.${markerType}-label`)
+        .attr("x", newX);
+    })
+    .on("end", function(event) {
+      // Now perform the actual calculation and validation
+      const newX = Math.max(0, Math.min(chartWidth, event.x));
+      const newTime = xScale.invert(newX);
+      const newIndex = findNearestIndex(data, newTime);
+      
+      // Validation logic based on marker type
+      const isValidPosition = validateMarkerPosition(markerType, rampType, newIndex, dualSlopeResult);
+      
+      if (isValidPosition) {
+        // Valid position - update everything
+        const newDataPoint = data[newIndex];
+        updateMarkerComplete(g, markerType, newX, newDataPoint, xScale, yScale, chartHeight);
+        
+        if (onMarkerMove) {
+          onMarkerMove(markerType, rampType, newIndex);
+        }
+      } else {
+        // Invalid position - revert to original
+        console.warn(`${markerType} marker position invalid, reverting`);
+        markerGroup.selectAll("line")
+          .attr("x1", originalX)
+          .attr("x2", originalX);
+        g.select(`.${markerType}-label`)
+          .attr("x", originalX);
+      }
+    })
+  );
+};
+
+const validateMarkerPosition = (markerType, rampType, newIndex, dualSlopeResult) => {
+  const minDistance = 5;
+  
+  if (rampType === 'up') {
+    if (markerType === 'upStart') {
+      return newIndex < dualSlopeResult.rampUp.endIndex - minDistance;
+    } else if (markerType === 'upEnd') {
+      return newIndex > dualSlopeResult.rampUp.startIndex + minDistance;
+    }
+  } else if (rampType === 'down') {
+    if (markerType === 'downStart') {
+      return newIndex < dualSlopeResult.rampDown.endIndex - minDistance;
+    } else if (markerType === 'downEnd') {
+      return newIndex > dualSlopeResult.rampDown.startIndex + minDistance;
+    }
+  }
+  
+  return false;
 };
 
 const findIntersection = (data, targetTime) => {
@@ -333,18 +336,35 @@ const findNearestIndex = (data, targetTime) => {
 };
 
 const updateMarkerComplete = (g, markerType, newX, dataPoint, xScale, yScale, chartHeight) => {
-  const dotClassName = `${markerType}-dot`;
+  const dotClassName = `${markerType.replace('Start', '-start').replace('End', '-end')}-dot`;
   
   // Update intersection dot to new data point
   g.select(`.${dotClassName}`)
     .attr("cx", xScale(dataPoint.time))
     .attr("cy", yScale(dataPoint.position));
   
-  // Update highlighted area between markers
-  const startX = parseFloat(g.select(".start-marker").select("line").attr("x1"));
-  const endX = parseFloat(g.select(".end-marker").select("line").attr("x1"));
+  // Update highlighted areas
+  updateHighlightedAreas(g, xScale, yScale, chartHeight);
+};
+
+const updateHighlightedAreas = (g, xScale, yScale, chartHeight) => {
+  // Update ramp up area
+  const upStartX = parseFloat(g.select(".upStart-marker").select("line").attr("x1"));
+  const upEndX = parseFloat(g.select(".upEnd-marker").select("line").attr("x1"));
   
-  g.select(".slope-area")
-    .attr("x", Math.min(startX, endX))
-    .attr("width", Math.abs(endX - startX));
+  if (!isNaN(upStartX) && !isNaN(upEndX)) {
+    g.select(".ramp-up-area")
+      .attr("x", Math.min(upStartX, upEndX))
+      .attr("width", Math.abs(upEndX - upStartX));
+  }
+  
+  // Update ramp down area
+  const downStartX = parseFloat(g.select(".downStart-marker").select("line").attr("x1"));
+  const downEndX = parseFloat(g.select(".downEnd-marker").select("line").attr("x1"));
+  
+  if (!isNaN(downStartX) && !isNaN(downEndX)) {
+    g.select(".ramp-down-area")
+      .attr("x", Math.min(downStartX, downEndX))
+      .attr("width", Math.abs(downEndX - downStartX));
+  }
 };

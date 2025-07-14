@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect }) => {
+const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect }) => {
   if (!results || results.length === 0) {
     return (
       <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
@@ -9,18 +9,11 @@ const ResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect 
     );
   }
 
-  // Sort results by voltage (fastest first)
-  const sortedResults = [...results].sort((a, b) => b.velocity - a.velocity);
-
-  // Assign voltages (1-24V)
-  const resultsWithVoltage = sortedResults.map((result, index) => ({
-    ...result,
-    voltage: sortedResults.length - index // Highest velocity gets highest voltage
-  }));
-
   const handleRowClick = (result) => {
-    if (onFileSelect) {
-      onFileSelect(result);
+    if (onFileSelect && result.rampType !== 'reference') {
+      // Find the original dual result for this file
+      const fileName = result.fileName;
+      onFileSelect({ fileName }); // Pass fileName to load the dual chart
     }
   };
 
@@ -41,20 +34,28 @@ const ResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect 
     return isManuallyAdjusted ? 'orange' : 'green';
   };
 
-  const getRowBackgroundColor = (fileName, index) => {
+  const getRowBackgroundColor = (result, index) => {
+    if (result.rampType === 'reference') {
+      return '#f0f0f0'; // Light gray for reference row
+    }
+
+    const fileName = result.fileName;
     const isApproved = approvalStatus && approvalStatus[fileName];
     const isManuallyAdjusted = manuallyAdjusted && manuallyAdjusted[fileName];
     
     if (isApproved && !isManuallyAdjusted) {
-      return '#f0f8f0'; // Light green for approved auto-detected
+      return result.rampType === 'up' ? '#f0f8f0' : '#fff0f0'; // Light green for up, light red for down
     } else if (isApproved && isManuallyAdjusted) {
       return '#fff8e1'; // Light orange for approved manually adjusted
     }
     
-    return index % 2 === 0 ? '#fff' : '#f9f9f9'; // Alternating rows for pending
+    // Alternating rows for pending
+    return index % 2 === 0 ? '#fff' : '#f9f9f9';
   };
 
   const getStatusText = (fileName) => {
+    if (!fileName || fileName === 'REFERENCE') return '';
+    
     const isApproved = approvalStatus && approvalStatus[fileName];
     const isManuallyAdjusted = manuallyAdjusted && manuallyAdjusted[fileName];
     
@@ -65,11 +66,24 @@ const ResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect 
     return isManuallyAdjusted ? 'Approved (Manual)' : 'Approved (Auto)';
   };
 
+  const getRampIcon = (rampType) => {
+    if (rampType === 'up') return '↗️';
+    if (rampType === 'down') return '↘️';
+    return '⚪'; // Reference
+  };
+
+  const getRampLabel = (rampType) => {
+    if (rampType === 'up') return 'Ramp Up';
+    if (rampType === 'down') return 'Ramp Down';
+    return 'Reference';
+  };
+
   return (
     <div style={{ margin: '20px 0' }}>
-      <h3>Analysis Results</h3>
+      <h3>Bidirectional Analysis Results</h3>
       <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
-        {results.length} files analyzed, sorted by velocity (fastest = highest voltage)
+        {Math.floor(results.filter(r => r.rampType !== 'reference').length / 2)} CSV files analyzed, 
+        sorted by voltage (-10V to +10V, 0V reference in center)
       </p>
       
       <div style={{ overflowX: 'auto' }}>
@@ -82,7 +96,8 @@ const ResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect 
           <thead>
             <tr style={{ backgroundColor: '#f5f5f5' }}>
               <th style={headerStyle}>Status</th>
-              <th style={headerStyle}>Voltage (V)</th>
+              <th style={headerStyle}>Eingangsspannung UE (V)</th>
+              <th style={headerStyle}>Ramp</th>
               <th style={headerStyle}>File Name</th>
               <th style={headerStyle}>Velocity (mm/s)</th>
               <th style={headerStyle}>Duration (s)</th>
@@ -91,23 +106,26 @@ const ResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect 
             </tr>
           </thead>
           <tbody>
-            {resultsWithVoltage.map((result, index) => (
+            {results.map((result, index) => (
               <tr 
-                key={index}
+                key={`${result.fileName}-${result.rampType}-${index}`}
                 style={{ 
-                  backgroundColor: getRowBackgroundColor(result.fileName, index),
-                  cursor: onFileSelect ? 'pointer' : 'default',
-                  transition: 'background-color 0.2s'
+                  backgroundColor: getRowBackgroundColor(result, index),
+                  cursor: result.rampType !== 'reference' && onFileSelect ? 'pointer' : 'default',
+                  transition: 'background-color 0.2s',
+                  fontWeight: result.rampType === 'reference' ? 'bold' : 'normal',
+                  borderTop: result.rampType === 'reference' ? '2px solid #ddd' : 'none',
+                  borderBottom: result.rampType === 'reference' ? '2px solid #ddd' : 'none'
                 }}
                 onClick={() => handleRowClick(result)}
                 onMouseEnter={(e) => {
-                  if (onFileSelect) {
+                  if (result.rampType !== 'reference' && onFileSelect) {
                     e.target.parentElement.style.backgroundColor = '#e3f2fd';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (onFileSelect) {
-                    e.target.parentElement.style.backgroundColor = getRowBackgroundColor(result.fileName, index);
+                  if (result.rampType !== 'reference' && onFileSelect) {
+                    e.target.parentElement.style.backgroundColor = getRowBackgroundColor(result, index);
                   }
                 }}
               >
@@ -116,38 +134,90 @@ const ResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect 
                   textAlign: 'center',
                   fontWeight: 'bold',
                   fontSize: '16px',
-                  color: getStatusColor(result.fileName)
+                  color: result.rampType === 'reference' ? '#999' : getStatusColor(result.fileName)
                 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                    <span style={{ fontSize: '18px' }}>
-                      {getStatusIcon(result.fileName)}
-                    </span>
-                    <span style={{ 
-                      fontSize: '10px', 
-                      color: '#666',
-                      fontWeight: 'normal'
-                    }}>
-                      {getStatusText(result.fileName)}
-                    </span>
+                  {result.rampType === 'reference' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                      <span style={{ fontSize: '18px' }}>⚪</span>
+                      <span style={{ 
+                        fontSize: '10px', 
+                        color: '#666',
+                        fontWeight: 'normal'
+                      }}>
+                        Reference
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                      <span style={{ fontSize: '18px' }}>
+                        {getStatusIcon(result.fileName)}
+                      </span>
+                      <span style={{ 
+                        fontSize: '10px', 
+                        color: '#666',
+                        fontWeight: 'normal'
+                      }}>
+                        {getStatusText(result.fileName)}
+                      </span>
+                    </div>
+                  )}
+                </td>
+                
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'center',
+                  fontWeight: result.rampType === 'reference' ? 'bold' : 'normal',
+                  fontSize: result.rampType === 'reference' ? '16px' : '14px',
+                  color: result.voltage > 0 ? 'green' : result.voltage < 0 ? 'red' : '#333'
+                }}>
+                  {result.voltage === 0 ? '0.00' : result.voltage.toFixed(2)}V
+                </td>
+                
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'center',
+                  color: result.rampType === 'up' ? 'green' : result.rampType === 'down' ? 'red' : '#666'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '16px' }}>{getRampIcon(result.rampType)}</span>
+                    <span style={{ fontSize: '12px' }}>{getRampLabel(result.rampType)}</span>
                   </div>
                 </td>
+                
                 <td style={cellStyle}>
-                  <strong>{result.voltage}V</strong>
+                  {result.rampType === 'reference' ? '-' : result.fileName}
                 </td>
-                <td style={cellStyle}>
-                  {result.fileName}
+                
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'right',
+                  fontFamily: 'monospace'
+                }}>
+                  {result.rampType === 'reference' ? '0.000000' : result.velocity.toFixed(6)}
                 </td>
-                <td style={cellStyle}>
-                  {result.velocity.toFixed(6)}
+                
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'right',
+                  fontFamily: 'monospace'
+                }}>
+                  {result.rampType === 'reference' ? '-' : result.duration.toFixed(3)}
                 </td>
-                <td style={cellStyle}>
-                  {result.duration.toFixed(3)}
+                
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'right',
+                  fontFamily: 'monospace'
+                }}>
+                  {result.rampType === 'reference' ? '-' : result.startTime.toFixed(3)}
                 </td>
-                <td style={cellStyle}>
-                  {result.startTime.toFixed(3)}
-                </td>
-                <td style={cellStyle}>
-                  {result.endTime.toFixed(3)}
+                
+                <td style={{
+                  ...cellStyle,
+                  textAlign: 'right',
+                  fontFamily: 'monospace'
+                }}>
+                  {result.rampType === 'reference' ? '-' : result.endTime.toFixed(3)}
                 </td>
               </tr>
             ))}
@@ -165,8 +235,17 @@ const ResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSelect 
           <li><span style={{ color: '#666', fontWeight: 'bold' }}>⏳ Gray</span> = Pending review</li>
         </ul>
         <p>
-          Click on a row to view the corresponding chart. 
-          Velocity calculated as Δposition/Δtime for the linear section.
+          <strong>Ramp Types:</strong>
+        </p>
+        <ul style={{ margin: '5px 0', paddingLeft: '20px', lineHeight: '1.5' }}>
+          <li><span style={{ color: 'green', fontWeight: 'bold' }}>↗️ Ramp Up</span> = Positive voltage, upward movement</li>
+          <li><span style={{ color: 'red', fontWeight: 'bold' }}>↘️ Ramp Down</span> = Negative voltage, downward movement</li>
+          <li><span style={{ color: '#666', fontWeight: 'bold' }}>⚪ Reference</span> = 0V baseline (0 mm/s)</li>
+        </ul>
+        <p>
+          Click on a row to view the corresponding dual-ramp chart. 
+          Each CSV file contains both ramp up and ramp down measurements.
+          Approval applies to both ramps of the same file simultaneously.
         </p>
       </div>
     </div>
@@ -186,4 +265,4 @@ const cellStyle = {
   textAlign: 'left'
 };
 
-export default ResultsTable;
+export default DualResultsTable;

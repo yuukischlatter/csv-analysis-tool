@@ -6,6 +6,7 @@ import ApprovalButton from './components/common/ApprovalButton';
 import TestDataForm from './components/forms/TestDataForm';
 import RegressionChart from './components/charts/RegressionChart';
 import VoltageOverview from './components/charts/VoltageOverview';
+import PDFExportButton from './components/export/PDFExportButton';
 import { detectDualSlopes, recalculateDualVelocity } from './services/slopeDetection';
 import { createUserAssignedVoltageMapping, downloadDualCSV } from './services/voltageMapper';
 import { prepareRegressionData } from './services/regressionAnalysis';
@@ -28,10 +29,15 @@ function App() {
   const [error, setError] = useState(null);
   const [testFormData, setTestFormData] = useState(null);
   const [regressionData, setRegressionData] = useState([]);
+  const [isFormCollapsed, setIsFormCollapsed] = useState(true); // New state for form collapse
 
   const handleFormDataChange = (formData) => {
     setTestFormData(formData);
     console.log('Form data updated:', formData);
+  };
+
+  const handleToggleFormCollapse = () => {
+    setIsFormCollapsed(!isFormCollapsed);
   };
 
   const updateRegressionData = () => {
@@ -293,7 +299,7 @@ function App() {
     return otherUnapproved.length > 0 ? otherUnapproved[0] : null;
   };
 
-  const handleExport = () => {
+  const handleCSVExport = () => {
     if (Object.keys(voltageAssignments).length === 0) {
       alert('No voltage assignments to export');
       return;
@@ -302,10 +308,10 @@ function App() {
     try {
       const mappedResults = createUserAssignedVoltageMapping(dualSlopeResults, voltageAssignments);
       downloadDualCSV(mappedResults, testFormData);
-      console.log('User-assigned voltage export successful');
+      console.log('User-assigned voltage CSV export successful');
     } catch (error) {
-      console.error('Export failed:', error);
-      setError(`Export failed: ${error.message}`);
+      console.error('CSV Export failed:', error);
+      setError(`CSV Export failed: ${error.message}`);
     }
   };
 
@@ -412,7 +418,11 @@ function App() {
         </div>
       )}
 
-      <TestDataForm onFormDataChange={handleFormDataChange} />
+      <TestDataForm 
+        onFormDataChange={handleFormDataChange} 
+        isCollapsed={isFormCollapsed}
+        onToggleCollapse={handleToggleFormCollapse}
+      />
 
       <FileUpload onFilesProcessed={handleFilesProcessed} />
 
@@ -508,6 +518,33 @@ function App() {
             </div>
           )}
         </>
+      )}
+
+      {/* Export Section */}
+      {Object.keys(voltageAssignments).length > 0 && (
+        <div style={{ 
+          marginTop: '30px',
+          paddingTop: '20px',
+          borderTop: '1px solid #ddd',
+          display: 'flex',
+          gap: '15px',
+          justifyContent: 'flex-start'
+        }}>
+          <button
+            onClick={handleCSVExport}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              backgroundColor: '#f8f9fa',
+              color: '#333'
+            }}
+          >
+            Export CSV
+          </button>
+        </div>
       )}
 
       {processedFiles.length === 0 && !isAnalyzing && (

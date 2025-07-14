@@ -21,7 +21,6 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
               <tr style={{ backgroundColor: '#f5f5f5' }}>
                 <th style={headerStyle}>Status</th>
                 <th style={headerStyle}>Eingangsspannung UE (V)</th>
-                <th style={headerStyle}>Ramp</th>
                 <th style={headerStyle}>File Name</th>
                 <th style={headerStyle}>Velocity (mm/s)</th>
                 <th style={headerStyle}>Duration (s)</th>
@@ -62,16 +61,6 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
                   fontSize: '16px'
                 }}>
                   0.00V
-                </td>
-                <td style={{
-                  ...cellStyle,
-                  textAlign: 'center',
-                  color: '#666'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                    <span style={{ fontSize: '16px' }}>⚪</span>
-                    <span style={{ fontSize: '12px' }}>Reference</span>
-                  </div>
                 </td>
                 <td style={cellStyle}>-</td>
                 <td style={{
@@ -164,18 +153,6 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
     return isManuallyAdjusted ? 'Approved (Manual)' : 'Approved (Auto)';
   };
 
-  const getRampIcon = (rampType) => {
-    if (rampType === 'up') return '↗️';
-    if (rampType === 'down') return '↘️';
-    return '⚪';
-  };
-
-  const getRampLabel = (rampType) => {
-    if (rampType === 'up') return 'Ramp Up';
-    if (rampType === 'down') return 'Ramp Down';
-    return 'Reference';
-  };
-
   return (
     <div style={{ margin: '20px 0' }}>
       <h3>Voltage Assignment Results</h3>
@@ -191,7 +168,6 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
             <tr style={{ backgroundColor: '#f5f5f5' }}>
               <th style={headerStyle}>Status</th>
               <th style={headerStyle}>Eingangsspannung UE (V)</th>
-              <th style={headerStyle}>Ramp</th>
               <th style={headerStyle}>File Name</th>
               <th style={headerStyle}>Velocity (mm/s)</th>
               <th style={headerStyle}>Duration (s)</th>
@@ -265,17 +241,6 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
                   color: result.voltage > 0 ? 'green' : result.voltage < 0 ? 'red' : '#333'
                 }}>
                   {result.voltage === 0 ? '0.00' : result.voltage.toFixed(2)}V
-                </td>
-                
-                <td style={{
-                  ...cellStyle,
-                  textAlign: 'center',
-                  color: result.rampType === 'up' ? 'green' : result.rampType === 'down' ? 'red' : '#666'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                    <span style={{ fontSize: '16px' }}>{getRampIcon(result.rampType)}</span>
-                    <span style={{ fontSize: '12px' }}>{getRampLabel(result.rampType)}</span>
-                  </div>
                 </td>
                 
                 <td style={cellStyle}>

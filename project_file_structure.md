@@ -42,14 +42,15 @@
 
 ### `src/App.js`
 - **Zweck**: Main App Component
-- **Inhalt**: Complete workflow management, State Management, Approval System, Error Boundaries
-- **Status**: ✅ COMPLETED - Full approval workflow with auto-navigation
+- **Inhalt**: Complete bidirectional workflow management, Dual State Management, Combined Approval System, Regression Chart Integration
+- **Status**: ✅ COMPLETED - Full bidirectional dual-ramp workflow with regression analysis
 - **Features**: 
-  - File processing coordination
-  - Approval status tracking
-  - Manual adjustment detection
+  - Dual slope processing coordination
+  - Combined approval status tracking (both ramps)
+  - Manual adjustment detection for both ramps
   - Auto-unapproval on changes
-  - Responsive chart integration
+  - Responsive dual chart integration
+  - Live regression chart updates
 
 ---
 
@@ -58,9 +59,9 @@
 ### Common Components (`src/components/common/`)
 
 #### `ApprovalButton.js` ✅ COMPLETED
-- **Zweck**: Approval Interface Component
-- **Inhalt**: Approval button mit status-aware styling, onClick handler
-- **Features**: Visual feedback, disabled state when approved, hover effects
+- **Zweck**: Combined Approval Interface Component
+- **Inhalt**: Approval button für beide Rampen gleichzeitig, status-aware styling, onClick handler
+- **Features**: Visual feedback, disabled state when approved, hover effects, combined ramp approval
 
 #### `Button.js` (future)
 - **Zweck**: Reusable Button Component
@@ -104,52 +105,69 @@
   - Chart metadata display
   - Error boundary handling
 
-#### `LineChart.js` ✅ COMPLETED
-- **Zweck**: D3 Line Chart Implementation
-- **Inhalt**: D3 Scales, Axes, Path Drawing, Interactive Behavior
+#### `LineChart.js` ✅ COMPLETED - DUAL RAMP SYSTEM
+- **Zweck**: D3 Dual Line Chart Implementation
+- **Inhalt**: D3 Scales, Axes, Path Drawing, 4-Marker Interactive Behavior
 - **Features**: 
-  - Vertical draggable markers (easier than point markers)
-  - Drag-on-release behavior (smooth performance)
-  - Automatic intersection dots
-  - Transparent red highlighting area
+  - 4 vertical draggable markers (upStart, upEnd, downStart, downEnd)
+  - Dual drag-on-release behavior (smooth performance)
+  - Automatic intersection dots for both ramps
+  - Dual transparent areas (green for up, red for down)
   - Grid lines and professional styling
   - Responsive sizing
+  - Separate validation for each marker type
+
+#### `RegressionChart.js` ✅ COMPLETED - NEW
+- **Zweck**: UE vs Velocity Regression Analysis Chart
+- **Inhalt**: D3.js Non-interactive chart with regression analysis
+- **Features**:
+  - 1:1 scale ratio (Volt = mm/s visually)
+  - Fixed X-axis (-10V to +10V), dynamic Y-axis (±max velocity + 2mm/s)
+  - Black data points for approved measurements
+  - Black natural curve through points (smooth interpolation)
+  - Thin red linear regression line
+  - Grid system with equal spacing
+  - Zero reference lines (gray)
+  - Live updates after each approval
+  - Statistical display (R², equation, data counts)
 
 #### `DraggableMarker.js` (integrated)
 - **Zweck**: Verschiebbare Marker auf Charts
-- **Status**: ✅ INTEGRATED into LineChart.js
+- **Status**: ✅ INTEGRATED into LineChart.js (now 4 markers)
 
 #### `ChartControls.js` (future)
 - **Zweck**: Chart Kontroll-Buttons
 - **Status**: 📋 PLANNED - zoom, pan, reset controls
 
-### Dashboard Components (integrated)
+### Forms Components (`src/components/forms/`)
 
-#### `Dashboard.js` (integrated)
-- **Zweck**: Main Dashboard Layout
-- **Status**: ✅ INTEGRATED into App.js
-
-#### `GraphGrid.js` (future)
-- **Zweck**: Grid Layout für mehrere Charts
-- **Status**: 📋 PLANNED - for multi-chart comparison view
-
-#### `GraphCard.js` (future)
-- **Zweck**: Container für einzelnen Graph
-- **Status**: 📋 PLANNED
+#### `TestDataForm.js` ✅ COMPLETED
+- **Zweck**: 5-Category Test Data Input Form
+- **Inhalt**: Auftragsdaten, Prüfung, Regelventil, Prüfbedingungen input sections
+- **Features**:
+  - Auto-mapping S-CH → Parker + Nenndurchfluss
+  - Tolerance hints for test conditions
+  - Dropdown selections (Maschinentyp, Ventil-Arten)
+  - Input validation and units display
+  - Form state management with callbacks
 
 ### Export Components (`src/components/export/`)
 
-#### `ResultsTable.js` ✅ COMPLETED
-- **Zweck**: Results Display mit Status Tracking
-- **Inhalt**: Sortierbare Tabelle mit Approval Status, Color-coded indicators
+#### `ResultsTable.js` ✅ COMPLETED - DUAL BIDIRECTIONAL SYSTEM
+- **Zweck**: Bidirectional Results Display mit Combined Status Tracking
+- **Inhalt**: Symmetric voltage table with dual ramp display, Combined approval status
 - **Features**:
-  - Status column with color-coded ticks:
-    - ✅ Green: Approved + auto-detected
-    - ✅ Orange: Approved + manually adjusted
-    - ⏳ Gray: Pending review
-  - Row highlighting based on status
+  - 0V reference row in center (0 mm/s baseline)
+  - Dual entries per CSV file (up + down ramps)
+  - Status column with color-coded indicators:
+    - ✅ Green: Approved + auto-detected (both ramps)
+    - ✅ Orange: Approved + manually adjusted (both ramps)
+    - ⏳ Gray: Pending review (combined status)
+  - Row highlighting based on ramp type and status
   - Click-to-select functionality
   - Responsive table design
+  - Voltage range: +10V to -10V symmetric display
+  - Ramp type indicators (↗️ Up, ↘️ Down, ⚪ Reference)
 
 #### `ExportPanel.js` (future - NEXT PHASE)
 - **Zweck**: Advanced Export Interface
@@ -173,33 +191,59 @@
   - File name tracking
   - Data structure validation
 
+### `src/services/slopeDetection.js` ✅ COMPLETED - DUAL SLOPE SYSTEM
+- **Zweck**: Dual Slope Detection & Analysis
+- **Inhalt**: Automatic positive AND negative slope detection, Dual fallback system, Live dual recalculation
+- **Features**: 
+  - Automatic dual slope detection (up + down)
+  - Dual fallback markers: Up (10%-40%), Down (60%-90%)
+  - Linear regression analysis for both ramps (R² calculation)
+  - Live dual velocity recalculation
+  - Detection method tracking (automatic/fallback/manual)
+  - Individual ramp validation
+  - **Functions**: detectDualSlopes(), findRampUp(), findRampDown(), generateDualFallbackMarkers(), recalculateDualVelocity()
+
+### `src/services/voltageMapper.js` ✅ COMPLETED - BIDIRECTIONAL SYSTEM
+- **Zweck**: Bidirectional Voltage Assignment & Export
+- **Inhalt**: Dual velocity-to-voltage mapping (-10V to +10V), Enhanced CSV export, Dual data validation
+- **Features**: 
+  - Bidirectional voltage scale: 33 values from -10V to +10V
+  - Automatic sorting by velocity (fastest = highest absolute voltage)
+  - Symmetric voltage assignment (up = positive, down = negative)
+  - Enhanced CSV export with test form data integration
+  - Result validation for dual system
+  - Statistics calculation for both ramp types
+  - **Functions**: mapDualVelocitiesToVoltages(), exportDualToCSV(), downloadDualCSV(), validateDualMapping()
+
+### `src/services/regressionAnalysis.js` ✅ COMPLETED - NEW
+- **Zweck**: Mathematical Regression Analysis for UE vs Velocity
+- **Inhalt**: Linear regression calculation, smooth curve generation, statistical analysis
+- **Features**:
+  - Linear regression with R² calculation
+  - Smooth curve interpolation (natural curve through points)
+  - Dynamic Y-scale calculation (±max velocity + 2mm/s)
+  - Regression line generation across full domain
+  - Statistical analysis (means, ranges, correlations)
+  - Data validation for regression
+  - **Functions**: calculateLinearRegression(), generateRegressionLine(), calculateSmoothCurve(), calculateDynamicYScale(), prepareRegressionData()
+
+### `src/services/ventilMapping.js` ✅ COMPLETED
+- **Zweck**: Ventil Data Mapping Service
+- **Inhalt**: S-CH to Parker article number mapping, machine type definitions
+- **Features**:
+  - Complete ventil mapping table (5 entries)
+  - Auto-mapping S-CH → Parker + Nenndurchfluss
+  - Machine type dropdown options
+  - Validation functions
+  - **Data**: VENTIL_MAPPINGS, MASCHINEN_TYPEN
+
 ### `src/services/dataValidator.js` (integrated)
 - **Zweck**: Daten-Validation
 - **Status**: ✅ INTEGRATED into csvProcessor.js
 
-### `src/services/slopeDetection.js` ✅ COMPLETED
-- **Zweck**: Slope Detection & Analysis
-- **Inhalt**: Automatic positive slope detection, Fallback system, Live recalculation
-- **Features**: 
-  - Automatic first positive slope detection
-  - Fallback markers (10% - 90% of data range)
-  - Linear regression analysis (R² calculation)
-  - Live velocity recalculation
-  - Detection method tracking (automatic/fallback/manual)
-
 ### `src/services/chartDataProcessor.js` (integrated)
 - **Zweck**: Daten für Charts vorbereiten
 - **Status**: ✅ INTEGRATED into LineChart.js
-
-### `src/services/voltageMapper.js` ✅ COMPLETED
-- **Zweck**: Voltage Assignment & Export
-- **Inhalt**: Velocity-to-voltage mapping (1-24V), CSV export, Data validation
-- **Features**: 
-  - Automatic sorting by velocity
-  - 1-24V assignment (fastest = highest)
-  - CSV export functionality
-  - Result validation
-  - Statistics calculation
 
 ### `src/services/exportService.js` (future - NEXT PHASE)
 - **Zweck**: Advanced Export Features
@@ -284,34 +328,46 @@
 - Multi-file drag & drop - COMPLETED
 - Error handling - COMPLETED
 
-### ✅ Phase 3: D3.js Charts & Interaction
-- `ChartContainer.js`, `LineChart.js` - COMPLETED
-- Interactive vertical drag markers - COMPLETED
-- Responsive sizing - COMPLETED
-- Drag-on-release behavior - COMPLETED
+### ✅ Phase 3: Test Data Form Integration
+- `TestDataForm.js`, `ventilMapping.js` - COMPLETED
+- 5-category input form - COMPLETED
+- Auto-mapping S-CH → Parker - COMPLETED
 
-### ✅ Phase 4: Slope Detection & Analysis
-- `slopeDetection.js` - COMPLETED
-- Automatic detection + fallback - COMPLETED
-- Live recalculation - COMPLETED
+### ✅ Phase 4: Dual Slope Detection & Analysis
+- `slopeDetection.js` - COMPLETED (Dual System)
+- Automatic dual detection + fallback - COMPLETED
+- Live dual recalculation - COMPLETED
 
-### ✅ Phase 5: Approval Workflow System
+### ✅ Phase 5: Bidirectional Chart System
+- `LineChart.js` - COMPLETED (4-Marker System)
+- Interactive dual charts - COMPLETED
+- 4 draggable markers - COMPLETED
+- Dual drag-on-release behavior - COMPLETED
+
+### ✅ Phase 6: Combined Approval Workflow System
 - `ApprovalButton.js`, enhanced `ResultsTable.js` - COMPLETED
+- Combined approval for both ramps - COMPLETED
 - Auto-navigation - COMPLETED
-- Status tracking - COMPLETED
+- Status tracking for dual system - COMPLETED
 - Auto-unapproval on changes - COMPLETED
 
-### ✅ Phase 6: Voltage Mapping & Basic Export
-- `voltageMapper.js` - COMPLETED
-- 1-24V automatic assignment - COMPLETED
-- CSV export - COMPLETED
+### ✅ Phase 7: Bidirectional Voltage Mapping & Export
+- `voltageMapper.js` - COMPLETED (Bidirectional System)
+- Symmetric voltage assignment (-10V to +10V) - COMPLETED
+- Enhanced CSV export with form data - COMPLETED
+
+### ✅ Phase 8: Regression Analysis Integration
+- `regressionAnalysis.js`, `RegressionChart.js` - COMPLETED
+- Live regression chart updates - COMPLETED
+- 1:1 scale visualization - COMPLETED
+- Statistical analysis display - COMPLETED
 
 ---
 
 ## 🎯 NEXT PHASE: Advanced Export Features
 
 ### Planned Export Enhancements:
-1. **PDF Export**: Professional reports with embedded charts
+1. **PDF Export**: Professional reports with embedded charts (dual + regression)
 2. **Excel Export**: Multi-sheet workbooks with formatted data
 3. **Report Templates**: Customizable export formats
 4. **Batch Processing**: Multiple export options
@@ -328,11 +384,24 @@
 ## Aktueller Status Summary
 
 **✅ COMPLETED (100% functional):**
-- Complete user workflow from upload to approval
-- Interactive chart analysis with professional UX
-- Approval system with status tracking
-- Basic export functionality
+- Complete bidirectional user workflow from upload to combined approval
+- Interactive dual-ramp chart analysis with professional UX
+- 4-marker system for independent ramp adjustment
+- Test data form integration with auto-mapping
+- Combined approval system for both ramps simultaneously
+- Bidirectional voltage mapping (-10V to +10V)
+- Live regression analysis with 1:1 scale visualization
+- Enhanced export functionality with form data integration
 
-**🎯 READY FOR:** Advanced export features and report generation
+**🎯 READY FOR:** Advanced export features and report generation with embedded charts
 
-**📊 Code Quality:** Clean, modular architecture ready for expansion
+**📊 Code Quality:** Clean, modular architecture ready for expansion with complete dual-ramp system
+
+**🔧 System Features:**
+- Bidirectional voltage analysis (-10V to +10V)
+- Dual slope detection (up + down ramps)
+- Combined approval workflow
+- Live regression analysis
+- Professional visualization
+- Test data integration
+- Enhanced export capabilities

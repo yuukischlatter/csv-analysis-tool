@@ -4,8 +4,10 @@ import DualResultsTable from './components/export/ResultsTable';
 import ChartContainer from './components/charts/ChartContainer';
 import ApprovalButton from './components/common/ApprovalButton';
 import TestDataForm from './components/forms/TestDataForm';
+import RegressionChart from './components/charts/RegressionChart';
 import { detectDualSlopes, recalculateDualVelocity } from './services/slopeDetection';
 import { mapDualVelocitiesToVoltages, downloadDualCSV } from './services/voltageMapper';
+import { prepareRegressionData } from './services/regressionAnalysis';
 import { createDualLineChart } from './components/charts/LineChart';
 
 function App() {
@@ -18,10 +20,20 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
   const [testFormData, setTestFormData] = useState(null);
+  const [regressionData, setRegressionData] = useState([]);
 
   const handleFormDataChange = (formData) => {
     setTestFormData(formData);
     console.log('Form data updated:', formData);
+  };
+
+  const updateRegressionData = () => {
+    if (dualSlopeResults.length > 0) {
+      const mappedResults = mapDualVelocitiesToVoltages(dualSlopeResults);
+      const approvedData = prepareRegressionData(mappedResults, approvalStatus);
+      setRegressionData(approvedData);
+      console.log(`Regression data updated: ${approvedData.length} approved points`);
+    }
   };
 
   const handleFilesProcessed = async (files) => {
@@ -31,6 +43,7 @@ function App() {
     setFailedFiles([]);
     setApprovalStatus({}); // Reset approval status
     setManuallyAdjusted({}); // Reset manual adjustment tracking
+    setRegressionData([]); // Reset regression data
 
     try {
       const results = [];
@@ -180,10 +193,14 @@ function App() {
       }));
 
       // Auto-unapprove when user makes changes
-      setApprovalStatus(prev => ({
-        ...prev,
+      const newApprovalStatus = {
+        ...approvalStatus,
         [fileName]: false
-      }));
+      };
+      setApprovalStatus(newApprovalStatus);
+
+      // Update regression data immediately
+      setTimeout(() => updateRegressionData(), 100);
 
       console.log(`Updated ${fileName}: rampUp = ${updatedDualSlope.rampUp.velocity.toFixed(6)}, rampDown = ${updatedDualSlope.rampDown.velocity.toFixed(6)} (auto-unapproved due to manual adjustment)`);
 
@@ -195,12 +212,16 @@ function App() {
 
   const handleApproval = (fileName) => {
     // Mark current file as approved
-    setApprovalStatus(prev => ({
-      ...prev,
+    const newApprovalStatus = {
+      ...approvalStatus,
       [fileName]: true
-    }));
+    };
+    setApprovalStatus(newApprovalStatus);
 
     console.log(`✓ Approved: ${fileName} (both ramps)`);
+
+    // Update regression data with new approval
+    setTimeout(() => updateRegressionData(), 100);
 
     // Auto-navigate to next unapproved file
     const nextFile = getNextUnapprovedFile(fileName);
@@ -294,6 +315,11 @@ function App() {
       }
     }
   }, [selectedFile]);
+
+  // Update regression data when approval status changes
+  React.useEffect(() => {
+    updateRegressionData();
+  }, [dualSlopeResults, approvalStatus]);
 
   return (
     <div style={{ 
@@ -464,6 +490,13 @@ function App() {
                   fileName={selectedFile.dualSlope.fileName}
                   isApproved={isCurrentFileApproved}
                   onApprove={handleApproval}
+                />
+
+                {/* NEW: Regression Chart Section */}
+                <RegressionChart 
+                  data={regressionData}
+                  width={800}
+                  height={400}
                 />
               </div>
             </div>

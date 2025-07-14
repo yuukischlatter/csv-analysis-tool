@@ -9,16 +9,23 @@
     "build": "webpack --mode production",
     "electron": "electron .",
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-simple": "webpack --mode development && electron .",
     "electron-pack": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --publish=never"
   },
-  "keywords": ["csv", "analysis", "electron", "schlatter"],
+  "keywords": [
+    "csv",
+    "analysis",
+    "electron",
+    "schlatter"
+  ],
   "author": "Schlatter Industries",
   "license": "ISC",
   "dependencies": {
-    "electron": "^37.2.1",
+    "papaparse": "^5.5.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-dropzone": "^14.3.8"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
@@ -26,6 +33,7 @@
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.0",
     "cross-env": "^7.0.3",
+    "electron": "^25.9.0",
     "electron-builder": "^26.0.12",
     "html-webpack-plugin": "^5.6.3",
     "wait-on": "^8.0.3",
@@ -48,7 +56,9 @@
       "target": [
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },

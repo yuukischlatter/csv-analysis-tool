@@ -24,7 +24,6 @@ const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
 
   const completedCount = assignedVoltages ? assignedVoltages.size : 0;
   const totalCount = ALL_VOLTAGES.length;
-  const progressPercentage = (completedCount / totalCount) * 100;
 
   return (
     <div style={{ 
@@ -43,13 +42,6 @@ const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
         <h4 style={{ margin: '0', fontSize: '16px', color: '#333' }}>
           Voltage Assignment Progress
         </h4>
-        <div style={{ 
-          fontSize: '14px', 
-          color: '#666',
-          marginTop: '5px'
-        }}>
-          {completedCount}/{totalCount} completed
-        </div>
       </div>
 
       {/* Two-Row Display */}
@@ -129,28 +121,6 @@ const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Summary Information */}
-      <div style={{ 
-        marginTop: '10px',
-        fontSize: '12px',
-        color: '#666',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '10px'
-      }}>
-        <div>
-          <strong>Completed:</strong> {completedCount} voltage assignments
-        </div>
-        <div>
-          <strong>Remaining:</strong> {totalCount - completedCount} voltages available
-        </div>
-        {completedCount > 0 && (
-          <div>
-            <strong>Assigned:</strong> {Array.from(assignedVoltages).sort((a, b) => b - a).map(v => formatVoltage(v)).join(', ')}
-          </div>
-        )}
       </div>
 
       {/* Completion Message */}

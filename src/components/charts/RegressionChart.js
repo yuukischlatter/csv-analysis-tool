@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { calculateLinearRegression, generateRegressionLine, calculateSmoothCurve, getStatistics } from '../../services/regressionAnalysis';
+import { calculateLinearRegression, generateRegressionLine, calculateSmoothCurve } from '../../services/regressionAnalysis';
 
 const RegressionChart = ({ data, width = 800, height = 400 }) => {
   const svgRef = useRef(null);
@@ -226,13 +226,6 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
     );
   }
 
-  // Calculate statistics for display
-  const regression = calculateLinearRegression(data);
-  const stats = getStatistics(data, regression);
-  const velocities = data.map(point => point.velocity);
-  const maxAbsVelocity = Math.max(...velocities.map(v => Math.abs(v)));
-  const pixelsPerUnit = (width - 110) / 20; // Approximate pixels per unit
-
   return (
     <div style={{ marginTop: '20px' }}>
       <div style={{ 
@@ -244,9 +237,6 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
         <h4 style={{ margin: '0', fontSize: '16px' }}>
           UE vs Velocity Regression Analysis
         </h4>
-        <div style={{ fontSize: '12px', color: '#666' }}>
-          {data.length} user-assigned measurements (perfect squares)
-        </div>
       </div>
 
       <div style={{ 
@@ -256,68 +246,6 @@ const RegressionChart = ({ data, width = 800, height = 400 }) => {
         backgroundColor: 'white'
       }}>
         <svg ref={svgRef}></svg>
-        
-        {/* Statistics Display */}
-        {regression && (
-          <div style={{ 
-            marginTop: '10px', 
-            fontSize: '12px', 
-            color: '#666',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '10px'
-          }}>
-            <div>
-              <strong>Linear Regression:</strong>
-              <br />
-              {regression.equation}
-              <br />
-              {regression.rSquaredText}
-            </div>
-            
-            {stats && (
-              <>
-                <div>
-                  <strong>Data Points:</strong>
-                  <br />
-                  Total: {stats.totalPoints}
-                  <br />
-                  Up: {stats.upRampCount}, Down: {stats.downRampCount}
-                </div>
-                
-                <div>
-                  <strong>Velocity Range:</strong>
-                  <br />
-                  {stats.velocityRange.min.toFixed(3)} to {stats.velocityRange.max.toFixed(3)} mm/s
-                  <br />
-                  Avg: {stats.velocityRange.average.toFixed(3)} mm/s
-                </div>
-
-                <div>
-                  <strong>Perfect Square Grid:</strong>
-                  <br />
-                  X: -10V to +10V (fixed)
-                  <br />
-                  Y: ±{(maxAbsVelocity + 2).toFixed(1)} mm/s (dynamic)
-                  <br />
-                  Grid: {pixelsPerUnit.toFixed(0)}px × {pixelsPerUnit.toFixed(0)}px squares
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        <div style={{ 
-          marginTop: '10px', 
-          fontSize: '11px', 
-          color: '#999',
-          borderTop: '1px solid #eee',
-          paddingTop: '8px'
-        }}>
-          <strong>Legend:</strong> Black points = user-assigned measurements, Black line = natural curve through points, Red line = linear regression, Gray lines = zero reference
-          <br />
-          <strong>Grid:</strong> Perfect squares with equal pixel spacing for X and Y axes. Chart height adjusts automatically for 1:1 scale.
-        </div>
       </div>
     </div>
   );

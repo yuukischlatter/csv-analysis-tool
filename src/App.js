@@ -424,31 +424,6 @@ function App() {
 
       {dualSlopeResults.length > 0 && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0' }}>
-            <div>
-              <h2 style={{ margin: '0' }}>Voltage Assignment Results</h2>
-              <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#666' }}>
-                {dualSlopeResults.length} files analyzed, {Object.keys(voltageAssignments).length} voltage assignments completed
-                {failedFiles.length > 0 && ` (${failedFiles.length} with fallback markers)`}
-              </p>
-            </div>
-            {Object.keys(voltageAssignments).length > 0 && (
-              <button 
-                onClick={handleExport}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Export Results
-              </button>
-            )}
-          </div>
-
           <DualResultsTable 
             results={mappedResults} 
             approvalStatus={approvalStatus}

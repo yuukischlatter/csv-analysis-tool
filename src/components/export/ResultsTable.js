@@ -106,13 +106,6 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
             </tbody>
           </table>
         </div>
-        
-        <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-          <p>
-            <strong>Instructions:</strong> Upload CSV files, review charts, select voltage assignments during approval.
-            Each approval will add both positive and negative voltage entries to this table.
-          </p>
-        </div>
       </div>
     );
   }
@@ -183,20 +176,9 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
     return 'Reference';
   };
 
-  // Count unique files and total assignments
-  const uniqueFiles = [...new Set(results
-    .filter(r => r.rampType !== 'reference')
-    .map(r => r.fileName))];
-  const totalAssignments = results.filter(r => r.rampType !== 'reference').length;
-
   return (
     <div style={{ margin: '20px 0' }}>
       <h3>Voltage Assignment Results</h3>
-      <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
-        {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} approved, 
-        {totalAssignments} voltage assignments completed
-        {' '}(sorted by voltage: +10V to -10V)
-      </p>
       
       <div style={{ overflowX: 'auto' }}>
         <table style={{ 
@@ -335,21 +317,6 @@ const DualResultsTable = ({ results, approvalStatus, manuallyAdjusted, onFileSel
             ))}
           </tbody>
         </table>
-      </div>
-      
-      <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-        <p>
-          <strong>Status Legend:</strong>
-        </p>
-        <ul style={{ margin: '5px 0', paddingLeft: '20px', lineHeight: '1.5' }}>
-          <li><span style={{ color: 'green', fontWeight: 'bold' }}>✓ Green</span> = Approved, automatically detected</li>
-          <li><span style={{ color: 'orange', fontWeight: 'bold' }}>✓ Orange</span> = Approved, manually adjusted</li>
-          <li><span style={{ color: '#666', fontWeight: 'bold' }}>⏳ Gray</span> = Pending review</li>
-        </ul>
-        <p>
-          <strong>Voltage Assignment:</strong> Each CSV file approval creates both positive and negative voltage entries.
-          Click on a row to view the corresponding dual-ramp chart.
-        </p>
       </div>
     </div>
   );

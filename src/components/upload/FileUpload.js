@@ -50,11 +50,6 @@ const FileUpload = ({ onFilesProcessed }) => {
     multiple: true
   });
 
-  const clearFiles = () => {
-    setUploadedFiles([]);
-    onFilesProcessed([]);
-  };
-
   return (
     <div style={{ margin: '20px 0' }}>
       <div
@@ -83,42 +78,6 @@ const FileUpload = ({ onFilesProcessed }) => {
           </div>
         )}
       </div>
-
-      {uploadedFiles.length > 0 && (
-        <div style={{ marginTop: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <h3>Uploaded Files ({uploadedFiles.length})</h3>
-            <button onClick={clearFiles} style={{ padding: '5px 10px', fontSize: '12px' }}>
-              Clear All
-            </button>
-          </div>
-          
-          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-            {uploadedFiles.map((file, index) => (
-              <div 
-                key={index} 
-                style={{ 
-                  padding: '8px', 
-                  borderBottom: '1px solid #eee',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <span style={{ fontSize: '14px' }}>{file.name}</span>
-                <span 
-                  style={{ 
-                    fontSize: '12px', 
-                    color: file.status === 'success' ? 'green' : 'red' 
-                  }}
-                >
-                  {file.status === 'success' ? 'OK' : 'ERROR'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

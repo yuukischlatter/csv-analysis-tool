@@ -11,14 +11,15 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false
     },
-    show: true
+    show: true,
+    icon: path.join(__dirname, 'build/icon.ico') // Icon wird automatisch geladen falls vorhanden
   });
 
   // HTML-Datei laden
   mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
   
-  // DevTools öffnen
-  mainWindow.webContents.openDevTools();
+  // DevTools nur in Development öffnen
+  // mainWindow.webContents.openDevTools();  // <- AUSKOMMENTIERT für Production
   
   console.log('Window created');
 }

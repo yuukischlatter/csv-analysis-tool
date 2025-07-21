@@ -266,47 +266,6 @@ export const filterVoltageRange = (data, minVoltage, maxVoltage) => {
 };
 
 /**
- * Generate measurement data for specific voltage range
- * @param {string} range - 'filtered' for 0-4.5V, 'full' for complete range
- * @returns {Array} Measurement data points
- */
-export const generateMeasurementData = (range = 'filtered') => {
-  if (range === 'filtered') {
-    // Filtered data for main chart - only 0 to 4.5V range
-    const voltages = [
-      0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.75, 1.00, 1.50, 2.00, 2.50, 3.00, 4.00
-    ];
-    
-    const speeds = [
-      0.00, 0.42, 0.74, 1.05, 1.36, 1.64, 2.37, 3.07, 4.49, 5.84, 7.09, 8.40, 10.60
-    ];
-
-    return voltages.map((voltage, index) => ({
-      voltage: voltage,
-      velocity: speeds[index]
-    }));
-  } else {
-    // Full measurement data including negative values
-    const voltages = [
-      -10.00, -9.00, -7.00, -5.00, -4.00, -3.00, -2.50, -2.00, -1.50, -1.00, 
-      -0.75, -0.50, -0.40, -0.30, -0.20, -0.10, 0.00, 0.10, 0.20, 0.30, 
-      0.40, 0.50, 0.75, 1.00, 1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 9.00, 10.00
-    ];
-    
-    const speeds = [
-      12.57, 13.67, 14.00, 11.00, 9.31, 7.46, 6.29, 5.16, 3.98, 2.74, 
-      2.14, 1.48, 1.24, 0.96, 0.67, 0.37, 0.00, 0.42, 0.74, 1.05, 
-      1.36, 1.64, 2.37, 3.07, 4.49, 5.84, 7.09, 8.40, 10.60, 12.79, 14.37, 13.30, 11.94
-    ];
-
-    return voltages.map((voltage, index) => ({
-      voltage: voltage,
-      velocity: speeds[index]
-    }));
-  }
-};
-
-/**
  * Format deviation label text
  * @param {number} deviation - Deviation percentage
  * @returns {string} Formatted label

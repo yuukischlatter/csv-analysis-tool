@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { performSpeedCheckAnalysis, validateSpeedCheckData } from '../../services/speedCheckService';
-import { getMachineTypes, SLOPE_FACTOR_RANGE } from '../../constants/speedCheckConstants';
+import { SLOPE_FACTOR_RANGE } from '../../constants/speedCheckConstants';
 import SpeedCheckChart from '../charts/SpeedCheckChart';
 
 const SpeedCheckAnalysis = ({ 
   regressionData, 
-  selectedMachineType = 'GAA100', 
+  testFormData,
   onAnalysisUpdate 
 }) => {
   const [analysis, setAnalysis] = useState(null);
   const [manualSlopeFactor, setManualSlopeFactor] = useState(SLOPE_FACTOR_RANGE.default);
   const [directSlopeInput, setDirectSlopeInput] = useState('');
-  const [machineType, setMachineType] = useState(selectedMachineType);
   const [error, setError] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Get machine type from test form data
+  const machineType = testFormData?.maschinentyp || 'GAA100';
 
   // Perform analysis when inputs change
   useEffect(() => {
@@ -52,11 +54,6 @@ const SpeedCheckAnalysis = ({
     }
   }, [regressionData, manualSlopeFactor, machineType, onAnalysisUpdate]);
 
-  // Update machine type when prop changes
-  useEffect(() => {
-    setMachineType(selectedMachineType);
-  }, [selectedMachineType]);
-
   const handleSliderChange = (event) => {
     const newFactor = parseFloat(event.target.value);
     setManualSlopeFactor(newFactor);
@@ -85,10 +82,6 @@ const SpeedCheckAnalysis = ({
       
       setManualSlopeFactor(clampedFactor);
     }
-  };
-
-  const handleMachineTypeChange = (event) => {
-    setMachineType(event.target.value);
   };
 
   const handleResetToCalculated = () => {
@@ -128,17 +121,6 @@ const SpeedCheckAnalysis = ({
           <h3 style={{ margin: '0', fontSize: '18px', color: '#333' }}>
             Speed Check Analysis
           </h3>
-          {analysis && (
-            <span style={{ 
-              fontSize: '12px', 
-              color: '#666',
-              background: '#e9ecef',
-              padding: '2px 8px',
-              borderRadius: '12px'
-            }}>
-              {analysis.machineType} ({analysis.machineParams.type})
-            </span>
-          )}
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -185,9 +167,6 @@ const SpeedCheckAnalysis = ({
           {analysis && (
             <>
               <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: '1fr 1fr', 
-                gap: '20px', 
                 marginBottom: '20px',
                 padding: '15px',
                 backgroundColor: '#fafafa',
@@ -195,33 +174,15 @@ const SpeedCheckAnalysis = ({
                 border: '1px solid #eee'
               }}>
                 
-                {/* Left Column - Machine Type & Calculated Values */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {/* Top Row: Calculated Slope (left) + Direct Slope Input (right) */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '1fr 1fr', 
+                  gap: '20px',
+                  marginBottom: '15px'
+                }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
-                      Machine Type:
-                    </label>
-                    <select
-                      value={machineType}
-                      onChange={handleMachineTypeChange}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        fontSize: '14px'
-                      }}
-                    >
-                      {getMachineTypes().map(type => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
                       Calculated Slope (0-4V):
                     </label>
                     <div style={{ 
@@ -236,23 +197,33 @@ const SpeedCheckAnalysis = ({
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                      R-squared:
+                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
+                      Direct Slope Input (mm/s per V):
                     </label>
-                    <div style={{ 
-                      padding: '8px 12px', 
-                      backgroundColor: '#e9ecef', 
-                      borderRadius: '4px',
-                      fontFamily: 'monospace',
-                      fontSize: '14px'
-                    }}>
-                      {analysis.rSquared.toFixed(4)}
-                    </div>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={directSlopeInput}
+                      onChange={handleDirectSlopeChange}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        fontFamily: 'monospace'
+                      }}
+                    />
                   </div>
                 </div>
 
-                {/* Right Column - Manual Adjustments */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {/* Bottom Row: Full-width slider (left) + Small reset button (right) */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '1fr auto', 
+                  gap: '15px',
+                  alignItems: 'end'
+                }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold' }}>
                       Manual Slope Factor: {manualSlopeFactor.toFixed(2)}
@@ -284,26 +255,6 @@ const SpeedCheckAnalysis = ({
                     </div>
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
-                      Direct Slope Input (mm/s per V):
-                    </label>
-                    <input
-                      type="number"
-                      step="0.0001"
-                      value={directSlopeInput}
-                      onChange={handleDirectSlopeChange}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        fontSize: '14px',
-                        fontFamily: 'monospace'
-                      }}
-                    />
-                  </div>
-
                   <button
                     onClick={handleResetToCalculated}
                     style={{
@@ -313,7 +264,8 @@ const SpeedCheckAnalysis = ({
                       border: 'none',
                       borderRadius: '4px',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     Reset to Calculated
@@ -321,83 +273,17 @@ const SpeedCheckAnalysis = ({
                 </div>
               </div>
 
-              {/* Dual Chart Container - Increased height for better grid visibility */}
+              {/* Chart Container */}
               <div style={{ 
                 width: '100%',
-                overflow: 'hidden', // Prevent horizontal scroll
-                marginBottom: '20px'
+                overflow: 'hidden'
               }}>
                 <SpeedCheckChart 
                   analysis={analysis}
-                  width={1100} // Wide enough for dual chart layout
-                  height={550} // Increased height for better grid spacing
+                  regressionData={regressionData}
+                  width={1100}
+                  height={550}
                 />
-              </div>
-
-              {/* Results Summary */}
-              <div style={{ 
-                marginTop: '20px',
-                padding: '15px',
-                backgroundColor: '#f0f8ff',
-                borderRadius: '4px',
-                border: '1px solid #b3d9ff'
-              }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>
-                  Analysis Summary
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', fontSize: '14px' }}>
-                  <div>
-                    <strong>Speed Limits ({machineType}):</strong><br/>
-                    Lower: {analysis.machineParams.lower} mm/s<br/>
-                    Middle: {analysis.machineParams.middle} mm/s<br/>
-                    Upper: {analysis.machineParams.upper} mm/s
-                  </div>
-                  <div>
-                    <strong>Regression Analysis:</strong><br/>
-                    Data Points: {analysis.dataPointsUsed}<br/>
-                    Voltage Range: {analysis.voltageRange[0]}-{analysis.voltageRange[1]}V<br/>
-                    Manual Factor: {analysis.manualSlopeFactor.toFixed(2)}
-                  </div>
-                  <div>
-                    <strong>Manual Slope:</strong><br/>
-                    Value: {analysis.manualSlope.toFixed(4)} mm/s/V<br/>
-                    vs Calculated: {((analysis.manualSlope / analysis.calculatedSlope - 1) * 100).toFixed(1)}%<br/>
-                    Quality: R² = {analysis.rSquared.toFixed(4)}
-                  </div>
-                </div>
-
-                {/* Deviation Summary for Critical Speeds */}
-                <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #ddd' }}>
-                  <strong style={{ fontSize: '14px' }}>Critical Speed Deviations:</strong>
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: '20px', 
-                    marginTop: '8px',
-                    fontSize: '13px',
-                    flexWrap: 'wrap'
-                  }}>
-                    {analysis.deviations
-                      .filter(d => 
-                        d.targetSpeed >= analysis.machineParams.lower && 
-                        d.targetSpeed <= analysis.machineParams.upper &&
-                        d.targetSpeed % 0.5 === 0 // Only show half-step increments
-                      )
-                      .map((deviation, index) => (
-                        <div 
-                          key={index}
-                          style={{ 
-                            padding: '4px 8px',
-                            backgroundColor: Math.abs(deviation.deviation) <= 2 ? '#d4edda' : '#fff3cd',
-                            borderRadius: '4px',
-                            border: `1px solid ${Math.abs(deviation.deviation) <= 2 ? '#c3e6cb' : '#ffeaa7'}`
-                          }}
-                        >
-                          <strong>{deviation.targetSpeed}mm/s:</strong> {deviation.deviation.toFixed(1)}%
-                        </div>
-                      ))
-                    }
-                  </div>
-                </div>
               </div>
             </>
           )}

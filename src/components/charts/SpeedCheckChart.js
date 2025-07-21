@@ -12,7 +12,7 @@ import {
   CHART_STYLES 
 } from '../../utils/chartUtils';
 
-const SpeedCheckChart = ({ analysis, width = 1100, height = 500 }) => {
+const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 500 }) => {
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const SpeedCheckChart = ({ analysis, width = 1100, height = 500 }) => {
     d3.select(svgRef.current).selectAll("*").remove();
 
     renderDualCharts();
-  }, [analysis, width, height]);
+  }, [analysis, regressionData, width, height]);
 
   const renderDualCharts = () => {
     const svg = d3.select(svgRef.current)
@@ -71,8 +71,8 @@ const SpeedCheckChart = ({ analysis, width = 1100, height = 500 }) => {
     // Add chart title
     addChartTitle(g, "Speed Check Analysis", chartWidth);
 
-    // Get filtered measurement data (0-4.5V only - no negative values)
-    const measurementData = generateFilteredMeasurementData();
+    // Get filtered measurement data from real user data (positive voltages only, including origin)
+    const measurementData = getPositiveUserDataWithOrigin();
 
     // Add measured data points and line
     addDataPoints(g, measurementData, xScale, yScale);
@@ -119,8 +119,8 @@ const SpeedCheckChart = ({ analysis, width = 1100, height = 500 }) => {
     // Add chart title
     addChartTitle(g, "Full Range Overview", chartWidth);
 
-    // Get filtered overview data (0-11V only, no negative voltages)
-    const overviewData = generateOverviewMeasurementData();
+    // Get overview data from real user data (positive voltages only, including origin)
+    const overviewData = getPositiveUserDataWithOrigin();
 
     // Add data points only (simplified for overview)
     g.selectAll(".overview-data-point")
@@ -157,36 +157,27 @@ const SpeedCheckChart = ({ analysis, width = 1100, height = 500 }) => {
     addOverviewLegend(g, chartWidth);
   };
 
-  const generateFilteredMeasurementData = () => {
-    // Filtered data for main chart - only 0 to 4.5V range (no negative values)
-    const voltages = [
-      0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.75, 1.00, 1.50, 2.00, 2.50, 3.00, 4.00
-    ];
-    
-    const speeds = [
-      0.00, 0.42, 0.74, 1.05, 1.36, 1.64, 2.37, 3.07, 4.49, 5.84, 7.09, 8.40, 10.60
+  const getPositiveUserDataWithOrigin = () => {
+    // Always start with the reference point (0V, 0mm/s)
+    const dataWithOrigin = [
+      { voltage: 0, velocity: 0 } // Reference point
     ];
 
-    return voltages.map((voltage, index) => ({
-      voltage: voltage,
-      velocity: speeds[index]
-    }));
-  };
+    if (regressionData && regressionData.length > 0) {
+      // Filter for positive voltages only (ramp up data) and sort by voltage
+      const positiveData = regressionData
+        .filter(point => point.voltage > 0 && point.rampType === 'up')
+        .map(point => ({
+          voltage: point.voltage,
+          velocity: point.velocity
+        }))
+        .sort((a, b) => a.voltage - b.voltage);
 
-  const generateOverviewMeasurementData = () => {
-    // Overview data - 0 to 11V only (no negative voltages)
-    const voltages = [
-      0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.75, 1.00, 1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 9.00, 10.00
-    ];
-    
-    const speeds = [
-      0.00, 0.42, 0.74, 1.05, 1.36, 1.64, 2.37, 3.07, 4.49, 5.84, 7.09, 8.40, 10.60, 12.79, 14.37, 13.30, 11.94
-    ];
+      // Add the positive data to our origin point
+      dataWithOrigin.push(...positiveData);
+    }
 
-    return voltages.map((voltage, index) => ({
-      voltage: voltage,
-      velocity: speeds[index]
-    }));
+    return dataWithOrigin;
   };
 
   const addMainLegend = (g, chartWidth, chartHeight) => {
@@ -266,7 +257,7 @@ const SpeedCheckChart = ({ analysis, width = 1100, height = 500 }) => {
       .attr("dy", "0.35em")
       .style("font-size", "9px")
       .style("fill", "black")
-      .text("Messwerte (full)");
+      .text("Messwerte (user data)");
 
     // Manual regression
     const legendRow2 = legend.append("g")
@@ -284,7 +275,7 @@ const SpeedCheckChart = ({ analysis, width = 1100, height = 500 }) => {
       .attr("dy", "0.35em")
       .style("font-size", "9px")
       .style("fill", "black")
-      .text("Regression (full)");
+      .text("Regression (manual)");
 
     // Legend border
     const legendBox = legend.node().getBBox();
@@ -317,64 +308,12 @@ const SpeedCheckChart = ({ analysis, width = 1100, height = 500 }) => {
   return (
     <div style={{ marginTop: '20px' }}>
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '10px' 
-      }}>
-        <h4 style={{ margin: '0', fontSize: '16px' }}>
-          Speed Check Chart - {analysis.machineType}
-        </h4>
-        <div style={{ fontSize: '12px', color: '#666' }}>
-          Manual Slope: {analysis.manualSlope.toFixed(4)} mm/s/V 
-          (Factor: {analysis.manualSlopeFactor.toFixed(2)})
-        </div>
-      </div>
-
-      <div style={{ 
         border: '1px solid #ddd', 
         borderRadius: '4px', 
         padding: '10px',
         backgroundColor: 'white'
       }}>
         <svg ref={svgRef}></svg>
-        
-        {/* Chart info */}
-        <div style={{ 
-          marginTop: '10px', 
-          fontSize: '12px', 
-          color: '#666',
-          display: 'flex',
-          justifyContent: 'space-between'
-        }}>
-          <div>
-            <strong>Regression Analysis:</strong> R² = {analysis.rSquared.toFixed(4)}, 
-            Data Points: {analysis.dataPointsUsed}, 
-            Range: {analysis.voltageRange[0]}-{analysis.voltageRange[1]}V
-          </div>
-          <div>
-            <strong>Speed Limits:</strong> {analysis.machineParams.lower} | {analysis.machineParams.middle} | {analysis.machineParams.upper} mm/s
-          </div>
-        </div>
-
-        {/* Deviation summary */}
-        <div style={{ 
-          marginTop: '10px',
-          padding: '8px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '4px',
-          fontSize: '11px'
-        }}>
-          <strong>Key Deviations:</strong>
-          {analysis.deviations
-            .filter(d => d.targetSpeed >= analysis.machineParams.lower && d.targetSpeed <= analysis.machineParams.upper)
-            .map((d, index) => (
-              <span key={index} style={{ marginLeft: '10px' }}>
-                {d.targetSpeed}mm/s: {d.deviation.toFixed(1)}%
-              </span>
-            ))
-          }
-        </div>
       </div>
     </div>
   );

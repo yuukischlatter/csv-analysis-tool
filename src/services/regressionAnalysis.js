@@ -52,25 +52,10 @@ export const calculateLinearRegression = (dataPoints) => {
   const slope = (n * sumXY - sumX * sumY) / denominator;
   const yIntercept = (sumY - slope * sumX) / n;
 
-  // Calculate R-squared
-  const meanY = sumY / n;
-  let totalSumSquares = 0;
-  let residualSumSquares = 0;
-
-  dataPoints.forEach(point => {
-    const predictedY = slope * point.voltage + yIntercept;
-    totalSumSquares += Math.pow(point.velocity - meanY, 2);
-    residualSumSquares += Math.pow(point.velocity - predictedY, 2);
-  });
-
-  const rSquared = totalSumSquares !== 0 ? 1 - (residualSumSquares / totalSumSquares) : 0;
-
   return {
     slope: slope,
     yIntercept: yIntercept,
-    rSquared: rSquared,
-    equation: `y = ${slope.toFixed(4)}x + ${yIntercept.toFixed(4)}`,
-    rSquaredText: `R² = ${rSquared.toFixed(4)}`
+    equation: `y = ${slope.toFixed(4)}x + ${yIntercept.toFixed(4)}`
   };
 };
 

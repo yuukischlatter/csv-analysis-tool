@@ -30,7 +30,7 @@ function App() {
   const [error, setError] = useState(null);
   const [testFormData, setTestFormData] = useState(null);
   const [regressionData, setRegressionData] = useState([]);
-  const [isFormCollapsed, setIsFormCollapsed] = useState(true); // New state for form collapse
+  const [isFormCollapsed, setIsFormCollapsed] = useState(false); // New state for form collapse
   const [speedCheckResults, setSpeedCheckResults] = useState(null);
 
   const handleFormDataChange = (formData) => {
@@ -520,7 +520,7 @@ function App() {
                 {regressionData.length > 0 && (
                   <SpeedCheckAnalysis 
                     regressionData={regressionData}
-                    selectedMachineType={testFormData?.maschinentyp || 'GAA100'}
+                    testFormData={testFormData}
                     onAnalysisUpdate={setSpeedCheckResults}
                   />
                 )}

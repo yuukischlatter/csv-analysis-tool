@@ -7,6 +7,7 @@ import { VOLTAGE_LIMIT, TARGET_SPEEDS, getMachineParams } from '../constants/spe
 
 /**
  * Calculate linear regression slope from filtered voltage range (0 to voltage_limit)
+ * Always includes the reference point (0V, 0mm/s) in the calculation
  * @param {Array} regressionData - Array of {voltage, velocity} objects
  * @param {number} voltageLimit - Maximum voltage for regression (default 4.0V)
  * @returns {Object} Regression results
@@ -21,18 +22,32 @@ export const calculateRegressionSlope = (regressionData, voltageLimit = VOLTAGE_
     point.voltage >= 0 && point.voltage <= voltageLimit
   );
 
-  if (filteredData.length < 2) {
-    throw new Error(`Insufficient data points in 0-${voltageLimit}V range`);
+  // Always add the reference point (0V, 0mm/s) to the regression calculation
+  const dataWithOrigin = [
+    { voltage: 0, velocity: 0 }, // Reference point
+    ...filteredData
+  ];
+
+  // Remove duplicates if (0,0) already exists
+  const uniqueData = dataWithOrigin.filter((point, index, array) => {
+    if (point.voltage === 0 && point.velocity === 0) {
+      return array.findIndex(p => p.voltage === 0 && p.velocity === 0) === index;
+    }
+    return true;
+  });
+
+  if (uniqueData.length < 2) {
+    throw new Error(`Insufficient data points in 0-${voltageLimit}V range (including origin)`);
   }
 
-  const n = filteredData.length;
+  const n = uniqueData.length;
   let sumX = 0;
   let sumY = 0;
   let sumXY = 0;
   let sumXX = 0;
 
   // Calculate sums
-  filteredData.forEach(point => {
+  uniqueData.forEach(point => {
     sumX += point.voltage;
     sumY += point.velocity;
     sumXY += point.voltage * point.velocity;
@@ -49,24 +64,10 @@ export const calculateRegressionSlope = (regressionData, voltageLimit = VOLTAGE_
   const slope = (n * sumXY - sumX * sumY) / denominator;
   const intercept = (sumY - slope * sumX) / n;
 
-  // Calculate R-squared
-  const meanY = sumY / n;
-  let totalSumSquares = 0;
-  let residualSumSquares = 0;
-
-  filteredData.forEach(point => {
-    const predictedY = slope * point.voltage + intercept;
-    totalSumSquares += Math.pow(point.velocity - meanY, 2);
-    residualSumSquares += Math.pow(point.velocity - predictedY, 2);
-  });
-
-  const rSquared = totalSumSquares !== 0 ? 1 - (residualSumSquares / totalSumSquares) : 0;
-
   return {
     slope: slope,
     intercept: intercept,
-    rSquared: rSquared,
-    dataPointsUsed: filteredData.length,
+    dataPointsUsed: uniqueData.length,
     voltageRange: [0, voltageLimit]
   };
 };
@@ -141,10 +142,10 @@ export const validateSpeedCheckData = (regressionData) => {
     };
   }
 
-  if (regressionData.length < 2) {
+  if (regressionData.length < 1) {
     return { 
       isValid: false, 
-      error: 'At least 2 data points required for speed check analysis' 
+      error: 'At least 1 data point required for speed check analysis (origin will be added automatically)' 
     };
   }
 
@@ -153,10 +154,10 @@ export const validateSpeedCheckData = (regressionData) => {
     point.voltage >= 0 && point.voltage <= VOLTAGE_LIMIT
   );
 
-  if (filteredData.length < 2) {
+  if (filteredData.length < 1) {
     return { 
       isValid: false, 
-      error: `Insufficient data points in 0-${VOLTAGE_LIMIT}V range for analysis` 
+      error: `At least 1 data point required in 0-${VOLTAGE_LIMIT}V range (origin will be added automatically)` 
     };
   }
 
@@ -210,7 +211,6 @@ export const performSpeedCheckAnalysis = (regressionData, manualSlopeFactor, mac
     manualSlopeFactor: manualSlopeFactor,
     manualSlope: manualSlope,
     intercept: regression.intercept,
-    rSquared: regression.rSquared,
     dataPointsUsed: regression.dataPointsUsed,
     voltageRange: regression.voltageRange,
     deviations: deviations,
@@ -240,7 +240,6 @@ export const formatSpeedCheckExport = (analysis, testFormData = null) => {
         calculatedSlope: analysis.calculatedSlope,
         manualSlopeFactor: analysis.manualSlopeFactor,
         manualSlope: analysis.manualSlope,
-        rSquared: analysis.rSquared,
         voltageRange: analysis.voltageRange,
         dataPointsUsed: analysis.dataPointsUsed
       },

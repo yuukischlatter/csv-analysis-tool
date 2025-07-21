@@ -45,6 +45,7 @@
   "build": {
     "appId": "com.schlatter.csv-analysis-tool",
     "productName": "CSV Analysis Tool",
+    "icon": "public/assets/icon.ico",
     "directories": {
       "output": "dist"
     },

@@ -47,7 +47,7 @@ const extractTimeAndPosition = (rawData, fileName) => {
     }
 
     const time = parseFloat(row[0]);
-    const position = parseFloat(row[3]); // Column 4 (index 3)
+    const position = parseFloat(row[3]) * 10; // Column 4 (index 3)
 
     // Skip rows with invalid numbers
     if (isNaN(time) || isNaN(position)) {

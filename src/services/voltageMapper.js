@@ -160,7 +160,7 @@ export const exportUserAssignedToCSV = (mappedResults, testFormData = null) => {
     'Assignment'
   ];
 
-  csvLines.push(headers.join(','));
+  csvLines.push(headers.join(';'));
 
   // Add data rows (exclude reference)
   const dataRows = mappedResults.filter(result => result.rampType !== 'reference');
@@ -175,7 +175,7 @@ export const exportUserAssignedToCSV = (mappedResults, testFormData = null) => {
       result.endTime.toFixed(3),
       result.rank
     ];
-    csvLines.push(row.join(','));
+    csvLines.push(row.join(';'));
   });
 
   // Add summary statistics

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ApprovalButton = ({ 
   fileName, 
@@ -8,6 +8,23 @@ const ApprovalButton = ({
   assignedVoltage 
 }) => {
   const [selectedVoltage, setSelectedVoltage] = useState('');
+
+  // Auto-select lowest available voltage
+  useEffect(() => {
+    if (availableVoltages.length > 0 && selectedVoltage === '' && !isApproved) {
+      const lowestVoltage = Math.min(...availableVoltages);
+      setSelectedVoltage(lowestVoltage);
+    }
+  }, [availableVoltages, selectedVoltage, isApproved]);
+
+  // Auto-select lowest available voltage when available voltages change
+  useEffect(() => {
+    if (availableVoltages.length > 0 && selectedVoltage === '' && !isApproved) {
+      const lowestVoltage = Math.min(...availableVoltages);
+      setSelectedVoltage(lowestVoltage);
+      console.log(`🎯 Auto-selected lowest voltage: ±${lowestVoltage}V for ${fileName}`);
+    }
+  }, [availableVoltages, selectedVoltage, isApproved, fileName]);
 
   const handleVoltageChange = (event) => {
     setSelectedVoltage(parseFloat(event.target.value));

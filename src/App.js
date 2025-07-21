@@ -7,6 +7,7 @@ import TestDataForm from './components/forms/TestDataForm';
 import RegressionChart from './components/charts/RegressionChart';
 import VoltageOverview from './components/charts/VoltageOverview';
 import PDFExportButton from './components/export/PDFExportButton';
+import SpeedCheckAnalysis from './components/analysis/SpeedCheckAnalysis';
 import { detectDualSlopes, recalculateDualVelocity } from './services/slopeDetection';
 import { createUserAssignedVoltageMapping, downloadDualCSV } from './services/voltageMapper';
 import { prepareRegressionData } from './services/regressionAnalysis';
@@ -30,6 +31,7 @@ function App() {
   const [testFormData, setTestFormData] = useState(null);
   const [regressionData, setRegressionData] = useState([]);
   const [isFormCollapsed, setIsFormCollapsed] = useState(true); // New state for form collapse
+  const [speedCheckResults, setSpeedCheckResults] = useState(null);
 
   const handleFormDataChange = (formData) => {
     setTestFormData(formData);
@@ -514,6 +516,14 @@ function App() {
                   width={800}
                   height={400}
                 />
+
+                {regressionData.length > 0 && (
+                  <SpeedCheckAnalysis 
+                    regressionData={regressionData}
+                    selectedMachineType={testFormData?.maschinentyp || 'GAA100'}
+                    onAnalysisUpdate={setSpeedCheckResults}
+                  />
+                )}
               </div>
             </div>
           )}

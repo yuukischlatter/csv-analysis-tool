@@ -46,10 +46,10 @@ function App() {
     }}>
       <header style={{ marginBottom: '30px', borderBottom: `1px solid ${COLORS.BORDER_DEFAULT}`, paddingBottom: '20px' }}>
         <h1 style={{ margin: '0', fontSize: '24px' }}>
-          CSV Analysis Tool - Voltage Assignment System
+          SpeedChecker
         </h1>
         <p style={{ margin: '5px 0 0 0', color: COLORS.TEXT_SECONDARY }}>
-          Schlatter Industries - User-Controlled Voltage/Velocity Analysis
+          Schlatter Industries
         </p>
       </header>
 
@@ -161,7 +161,7 @@ function App() {
       {/* Empty State */}
       {processedFiles.length === 0 && !isAnalyzing && (
         <div style={{ textAlign: 'center', padding: '40px', color: COLORS.TEXT_SECONDARY }}>
-          Upload CSV files to begin voltage assignment analysis
+          Upload CSV files to begin speed analysis
         </div>
       )}
     </div>

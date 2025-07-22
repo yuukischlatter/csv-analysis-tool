@@ -1,7 +1,7 @@
 {
-  "name": "csv-analysis-tool",
+  "name": "speedchecker",
   "version": "1.0.0",
-  "description": "CSV Analysis Tool for Voltage/Displacement Diagrams",
+  "description": "SpeedChecker Tool",
   "main": "electron.js",
   "homepage": "./",
   "scripts": {
@@ -14,7 +14,7 @@
     "dist": "npm run build && electron-builder --publish=never"
   },
   "keywords": [
-    "csv",
+    "speed",
     "analysis",
     "electron",
     "schlatter"
@@ -45,8 +45,8 @@
     "webpack-dev-server": "^5.2.2"
   },
   "build": {
-    "appId": "com.schlatter.csv-analysis-tool",
-    "productName": "CSV Analysis Tool",
+    "appId": "com.schlatter.speedchecker",
+    "productName": "SpeedChecker",
     "icon": "public/assets/icon.ico",
     "directories": {
       "output": "dist"
@@ -65,10 +65,15 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "forceCodeSigning": false,
+      "verifyUpdateCodeSignature": false,
+      "signAndEditExecutable": false,
+      "signExts": null
     },
     "portable": {
-      "artifactName": "CSV-Analysis-Tool-portable.exe"
-    }
+      "artifactName": "SpeedChecker.exe"
+    },
+    "forceCodeSigning": false
   }
 }

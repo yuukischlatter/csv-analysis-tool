@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { MASCHINEN_TYPEN, getVentilOptions, getParkerData } from '../../data/ventils';
+import { MASCHINEN_TYPEN } from '../../data/machines';
+import { getVentilOptions, getParkerData } from '../../data/ventils';
 
 const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }) => {
   const [formData, setFormData] = useState({

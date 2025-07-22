@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { DATA_VALIDATION } from '../constants/validation';
+import { FILE_VALIDATION } from '../constants/validation';
 
 /**
  * CSV Processor Service
@@ -33,8 +33,8 @@ const extractTimeAndPosition = (rawData, fileName) => {
 
   // Validate that we have at least required columns
   const firstRow = rawData[0];
-  if (!Array.isArray(firstRow) || firstRow.length < DATA_VALIDATION.MIN_COLUMNS_REQUIRED) {
-    throw new Error(`Invalid CSV format in ${fileName}. Expected at least ${DATA_VALIDATION.MIN_COLUMNS_REQUIRED} columns.`);
+  if (!Array.isArray(firstRow) || firstRow.length < FILE_VALIDATION.MIN_COLUMNS_REQUIRED) {
+    throw new Error(`Invalid CSV format in ${fileName}. Expected at least ${FILE_VALIDATION.MIN_COLUMNS_REQUIRED} columns.`);
   }
 
   const timePositionData = [];
@@ -43,12 +43,12 @@ const extractTimeAndPosition = (rawData, fileName) => {
     const row = rawData[i];
     
     // Skip rows that don't have enough columns
-    if (!row || row.length < DATA_VALIDATION.MIN_COLUMNS_REQUIRED) {
+    if (!row || row.length < FILE_VALIDATION.MIN_COLUMNS_REQUIRED) {
       continue;
     }
 
-    const time = parseFloat(row[DATA_VALIDATION.TIME_COLUMN_INDEX]);
-    const position = parseFloat(row[DATA_VALIDATION.POSITION_COLUMN_INDEX]) * DATA_VALIDATION.POSITION_MULTIPLIER;
+    const time = parseFloat(row[FILE_VALIDATION.TIME_COLUMN_INDEX]);
+    const position = parseFloat(row[FILE_VALIDATION.POSITION_COLUMN_INDEX]) * FILE_VALIDATION.POSITION_MULTIPLIER;
 
     // Skip rows with invalid numbers
     if (isNaN(time) || isNaN(position)) {
@@ -73,7 +73,7 @@ const extractTimeAndPosition = (rawData, fileName) => {
 };
 
 export const validateCSVData = (processedData) => {
-  if (!processedData || !processedData.data || processedData.data.length < DATA_VALIDATION.MIN_DATA_POINTS) {
+  if (!processedData || !processedData.data || processedData.data.length < FILE_VALIDATION.MIN_DATA_POINTS) {
     throw new Error('Insufficient data points for analysis');
   }
 

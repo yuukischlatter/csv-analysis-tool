@@ -6,7 +6,6 @@ import ApprovalButton from './components/common/ApprovalButton';
 import TestDataForm from './components/forms/TestDataForm';
 import RegressionChart from './components/charts/RegressionChart';
 import VoltageOverview from './components/charts/VoltageOverview';
-import PDFExportButton from './components/export/PDFExportButton';
 import SpeedCheckAnalysis from './components/analysis/SpeedCheckAnalysis';
 import { detectDualSlopes, recalculateDualVelocity } from './services/slopeDetection';
 import { createUserAssignedVoltageMapping, downloadDualCSV } from './services/voltageMapper';

@@ -33,8 +33,8 @@ const extractTimeAndPosition = (rawData, fileName) => {
 
   // Validate that we have at least required columns
   const firstRow = rawData[0];
-  if (!Array.isArray(firstRow) || firstRow.length < FILE_VALIDATION.MIN_COLUMNS_REQUIRED) {
-    throw new Error(`Invalid CSV format in ${fileName}. Expected at least ${FILE_VALIDATION.MIN_COLUMNS_REQUIRED} columns.`);
+  if (!Array.isArray(firstRow) || firstRow.length < FILE_VALIDATION.MIN_COLUMNS) {
+    throw new Error(`Invalid CSV format in ${fileName}. Expected at least ${FILE_VALIDATION.MIN_COLUMNS} columns.`);
   }
 
   const timePositionData = [];
@@ -43,12 +43,12 @@ const extractTimeAndPosition = (rawData, fileName) => {
     const row = rawData[i];
     
     // Skip rows that don't have enough columns
-    if (!row || row.length < FILE_VALIDATION.MIN_COLUMNS_REQUIRED) {
+    if (!row || row.length < FILE_VALIDATION.MIN_COLUMNS) {
       continue;
     }
 
-    const time = parseFloat(row[FILE_VALIDATION.TIME_COLUMN_INDEX]);
-    const position = parseFloat(row[FILE_VALIDATION.POSITION_COLUMN_INDEX]) * FILE_VALIDATION.POSITION_MULTIPLIER;
+    const time = parseFloat(row[FILE_VALIDATION.TIME_COLUMN]);
+    const position = parseFloat(row[FILE_VALIDATION.POSITION_COLUMN]) * FILE_VALIDATION.POSITION_MULTIPLIER;
 
     // Skip rows with invalid numbers
     if (isNaN(time) || isNaN(position)) {

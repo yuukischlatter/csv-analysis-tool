@@ -18,6 +18,7 @@ export const FILE_VALIDATION = {
   // Column indices (0-based)
   TIME_COLUMN: 0,                   // Time data column index
   POSITION_COLUMN: 3,               // Position data column index
+  POSITION_MULTIPLIER: 10,
   
   // Data format requirements
   REQUIRED_NUMERIC_COLUMNS: [0, 3], // Columns that must contain numeric data

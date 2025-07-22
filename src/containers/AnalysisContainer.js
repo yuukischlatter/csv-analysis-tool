@@ -5,6 +5,7 @@ import ApprovalButton from '../components/common/ApprovalButton';
 import RegressionChart from '../components/charts/RegressionChart';
 import VoltageOverview from '../components/charts/VoltageOverview';
 import SpeedCheckAnalysis from '../components/analysis/SpeedCheckAnalysis';
+import ExportContainer from './ExportContainer';
 import { recalculateDualVelocity } from '../services/slopeDetection';
 import { createUserAssignedVoltageMapping } from '../services/voltageMapper';
 import { prepareRegressionData } from '../services/regressionAnalysis';
@@ -340,6 +341,16 @@ const AnalysisContainer = ({
           </div>
         </div>
       )}
+
+      {/* Export Container - now with PDF export support */}
+      <ExportContainer
+        dualSlopeResults={dualSlopeResults}
+        voltageAssignments={voltageAssignments}
+        testFormData={testFormData}
+        speedCheckResults={speedCheckResults}
+        regressionData={regressionData}
+        setError={setError}
+      />
     </>
   );
 };

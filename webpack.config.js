@@ -1,9 +1,22 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './src/index.js',
-  target: 'electron-renderer',
+  
+  // CHANGED: Use 'web' target for browser compatibility instead of 'electron-renderer'
+  target: 'web',
+  
+  resolve: {
+    extensions: ['.js', '.jsx'],
+    fallback: {
+      "fs": false,
+      "path": false,
+      "os": false
+    }
+  },
+  
   module: {
     rules: [
       {
@@ -22,19 +35,25 @@ module.exports = {
       }
     ]
   },
-  resolve: {
-    extensions: ['.js', '.jsx']
-  },
+  
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'build'),
     clean: true
   },
+  
   plugins: [
     new HtmlWebpackPlugin({
       template: './public/index.html'
+    }),
+    // Fix for jsPDF in browser
+    new webpack.DefinePlugin({
+      'global': 'window'
     })
   ],
+  
+  // CHANGED: Remove electron-specific node settings
+  
   devServer: {
     static: {
       directory: path.join(__dirname, 'build'),
@@ -45,5 +64,6 @@ module.exports = {
     historyApiFallback: true,
     open: false
   },
-  mode: 'development'
+  
+  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development'
 };

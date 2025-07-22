@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import TestDataForm from './components/forms/TestDataForm';
 import FileUploadContainer from './containers/FileUploadContainer';
 import AnalysisContainer from './containers/AnalysisContainer';
-import ExportContainer from './containers/ExportContainer';
 import { COLORS } from './constants/ui';
 
 function App() {
@@ -156,14 +155,6 @@ function App() {
         testFormData={testFormData}
         speedCheckResults={speedCheckResults}
         setSpeedCheckResults={setSpeedCheckResults}
-        setError={setError}
-      />
-
-      {/* Export Container */}
-      <ExportContainer
-        dualSlopeResults={dualSlopeResults}
-        voltageAssignments={voltageAssignments}
-        testFormData={testFormData}
         setError={setError}
       />
 

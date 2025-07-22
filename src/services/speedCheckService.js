@@ -3,7 +3,9 @@
  * Data processing and calculation logic for speed check analysis
  */
 
-import { VOLTAGE_LIMIT, TARGET_SPEEDS, getMachineParams } from '../constants/speedCheckConstants';
+import { VOLTAGE_LIMIT } from '../constants/voltages';
+import { SPEED_CHECK } from '../constants/analysis';
+import { getMachineParams } from '../data/machines';
 
 /**
  * Calculate linear regression slope from filtered voltage range (0 to voltage_limit)
@@ -101,7 +103,7 @@ export const forecastVoltageForSpeed = (targetSpeed, manualSlope) => {
  * @param {Array} targetSpeeds - Array of target speeds (default from constants)
  * @returns {Array} Array of deviation analysis objects
  */
-export const calculateDeviations = (manualSlope, targetSpeeds = TARGET_SPEEDS) => {
+export const calculateDeviations = (manualSlope, targetSpeeds = SPEED_CHECK.TARGET_SPEEDS) => {
   const deviations = [];
 
   targetSpeeds.forEach(targetSpeed => {
@@ -216,7 +218,7 @@ export const performSpeedCheckAnalysis = (regressionData, manualSlopeFactor, mac
     deviations: deviations,
     machineType: machineType,
     machineParams: machineParams,
-    targetSpeeds: TARGET_SPEEDS
+    targetSpeeds: SPEED_CHECK.TARGET_SPEEDS
   };
 };
 

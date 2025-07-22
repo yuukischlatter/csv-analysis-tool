@@ -9,11 +9,8 @@ import { recalculateDualVelocity } from '../services/slopeDetection';
 import { createUserAssignedVoltageMapping } from '../services/voltageMapper';
 import { prepareRegressionData } from '../services/regressionAnalysis';
 import { createDualLineChart } from '../components/charts/LineChart';
-
-// Available voltage magnitudes for assignment (removed 0V)
-const AVAILABLE_VOLTAGES = [
-  0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.0, 9.0, 10.0
-];
+import { AVAILABLE_VOLTAGES } from '../constants/voltages';
+import { CHART_DIMENSIONS } from '../constants/charts';
 
 const AnalysisContainer = ({
   processedFiles,
@@ -223,7 +220,7 @@ const AnalysisContainer = ({
       if (chartElement) {
         try {
           const container = chartElement.parentElement;
-          const containerWidth = container ? container.offsetWidth - 20 : 800;
+          const containerWidth = container ? container.offsetWidth - 20 : CHART_DIMENSIONS.DEFAULT.width;
           
           createDualLineChart(
             chartElement,
@@ -231,7 +228,7 @@ const AnalysisContainer = ({
             selectedFile.dualSlope,
             handleDualMarkerMove,
             containerWidth,
-            400
+            CHART_DIMENSIONS.DEFAULT.height
           );
         } catch (error) {
           console.error('Dual chart rendering failed:', error);
@@ -288,7 +285,7 @@ const AnalysisContainer = ({
             <svg
               id="chart-svg"
               width="100%"
-              height="400"
+              height={CHART_DIMENSIONS.DEFAULT.height}
               style={{ backgroundColor: 'white', display: 'block' }}
             />
             <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
@@ -329,8 +326,8 @@ const AnalysisContainer = ({
 
             <RegressionChart 
               data={regressionData}
-              width={800}
-              height={400}
+              width={CHART_DIMENSIONS.REGRESSION.width}
+              height={CHART_DIMENSIONS.REGRESSION.height}
             />
 
             {regressionData.length > 0 && (

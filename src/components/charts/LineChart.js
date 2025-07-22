@@ -1,4 +1,6 @@
 import * as d3 from 'd3';
+import { CHART_COLORS, RESPONSIVE } from '../../constants/charts';
+import { ANALYSIS_VALIDATION } from '../../constants/validation';
 
 /**
  * D3.js Dual Line Chart Implementation
@@ -16,8 +18,8 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
   const chartHeight = height - margin.top - margin.bottom;
 
   // Ensure minimum chart dimensions
-  const minChartWidth = Math.max(chartWidth, 300);
-  const minChartHeight = Math.max(chartHeight, 200);
+  const minChartWidth = Math.max(chartWidth, RESPONSIVE.MIN_CHART_WIDTH);
+  const minChartHeight = Math.max(chartHeight, RESPONSIVE.MIN_CHART_HEIGHT);
 
   const svg = d3.select(svgElement);
   
@@ -86,7 +88,7 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
   g.append("path")
     .datum(data)
     .attr("fill", "none")
-    .attr("stroke", "#333")
+    .attr("stroke", CHART_COLORS.DATA_LINE)
     .attr("stroke-width", 1.5)
     .attr("d", line);
 
@@ -104,7 +106,7 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
       .attr("y", 0)
       .attr("width", upEndX - upStartX)
       .attr("height", minChartHeight)
-      .attr("fill", "green")
+      .attr("fill", CHART_COLORS.RAMP_UP)
       .attr("opacity", 0.1);
 
     // Add highlighted area for ramp down (red)
@@ -114,7 +116,7 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
       .attr("y", 0)
       .attr("width", downEndX - downStartX)
       .attr("height", minChartHeight)
-      .attr("fill", "red")
+      .attr("fill", CHART_COLORS.RAMP_DOWN)
       .attr("opacity", 0.1);
 
     // Add highlighted ramp up line
@@ -122,7 +124,7 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
     g.append("path")
       .datum(rampUpData)
       .attr("fill", "none")
-      .attr("stroke", "green")
+      .attr("stroke", CHART_COLORS.RAMP_UP)
       .attr("stroke-width", 3)
       .attr("d", line);
 
@@ -131,16 +133,16 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
     g.append("path")
       .datum(rampDownData)
       .attr("fill", "none")
-      .attr("stroke", "red")
+      .attr("stroke", CHART_COLORS.RAMP_DOWN)
       .attr("stroke-width", 3)
       .attr("d", line);
 
     // Create 4 vertical drag lines
     const markers = [
-      { type: 'upStart', x: upStartX, color: 'green', label: 'Up Start', ramp: 'up' },
-      { type: 'upEnd', x: upEndX, color: 'green', label: 'Up End', ramp: 'up' },
-      { type: 'downStart', x: downStartX, color: 'red', label: 'Down Start', ramp: 'down' },
-      { type: 'downEnd', x: downEndX, color: 'red', label: 'Down End', ramp: 'down' }
+      { type: 'upStart', x: upStartX, color: CHART_COLORS.RAMP_UP, label: 'Up Start', ramp: 'up' },
+      { type: 'upEnd', x: upEndX, color: CHART_COLORS.RAMP_UP, label: 'Up End', ramp: 'up' },
+      { type: 'downStart', x: downStartX, color: CHART_COLORS.RAMP_DOWN, label: 'Down Start', ramp: 'down' },
+      { type: 'downEnd', x: downEndX, color: CHART_COLORS.RAMP_DOWN, label: 'Down End', ramp: 'down' }
     ];
 
     markers.forEach(marker => {
@@ -190,7 +192,7 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
       .attr("cx", xScale(upStartIntersection.time))
       .attr("cy", yScale(upStartIntersection.position))
       .attr("r", 4)
-      .attr("fill", "green")
+      .attr("fill", CHART_COLORS.RAMP_UP)
       .attr("stroke", "white")
       .attr("stroke-width", 2);
 
@@ -199,7 +201,7 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
       .attr("cx", xScale(upEndIntersection.time))
       .attr("cy", yScale(upEndIntersection.position))
       .attr("r", 4)
-      .attr("fill", "green")
+      .attr("fill", CHART_COLORS.RAMP_UP)
       .attr("stroke", "white")
       .attr("stroke-width", 2);
 
@@ -212,7 +214,7 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
       .attr("cx", xScale(downStartIntersection.time))
       .attr("cy", yScale(downStartIntersection.position))
       .attr("r", 4)
-      .attr("fill", "red")
+      .attr("fill", CHART_COLORS.RAMP_DOWN)
       .attr("stroke", "white")
       .attr("stroke-width", 2);
 
@@ -221,7 +223,7 @@ export const createDualLineChart = (svgElement, data, dualSlopeResult, onMarkerM
       .attr("cx", xScale(downEndIntersection.time))
       .attr("cy", yScale(downEndIntersection.position))
       .attr("r", 4)
-      .attr("fill", "red")
+      .attr("fill", CHART_COLORS.RAMP_DOWN)
       .attr("stroke", "white")
       .attr("stroke-width", 2);
 
@@ -285,7 +287,7 @@ const addDragBehavior = (g, markerType, rampType, dualSlopeResult, data, xScale,
 };
 
 const validateMarkerPosition = (markerType, rampType, newIndex, dualSlopeResult) => {
-  const minDistance = 5;
+  const minDistance = ANALYSIS_VALIDATION.SLOPE_DETECTION.MIN_DISTANCE_BETWEEN_RAMPS;
   
   if (rampType === 'up') {
     if (markerType === 'upStart') {

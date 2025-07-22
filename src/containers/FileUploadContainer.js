@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import FileUpload from '../components/upload/FileUpload';
 import { detectDualSlopes } from '../services/slopeDetection';
 

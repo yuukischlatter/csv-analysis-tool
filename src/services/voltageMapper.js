@@ -4,13 +4,7 @@
  * Handles voltage pairs (±9V → both -9V and +9V entries)
  */
 
-export const VOLTAGE_SCALE = [
-  -10.00, -9.00, -7.00, -5.00, -4.00, -3.00, -2.50, -2.00,
-  -1.50, -1.00, -0.75, -0.50, -0.40, -0.30, -0.20, -0.10,
-  0.00,
-  0.10, 0.20, 0.30, 0.40, 0.50, 0.75, 1.00,
-  1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 9.00, 10.00
-];
+import { VOLTAGE_SCALE } from '../constants/voltages';
 
 /**
  * Creates voltage mapping based on user assignments during approval

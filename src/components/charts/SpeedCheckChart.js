@@ -11,8 +11,9 @@ import {
   addChartTitle,
   CHART_STYLES 
 } from '../../utils/chartUtils';
+import { CHART_DIMENSIONS } from '../../constants/charts';
 
-const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 500 }) => {
+const SpeedCheckChart = ({ analysis, regressionData, width = CHART_DIMENSIONS.SPEED_CHECK_DUAL.width, height = CHART_DIMENSIONS.SPEED_CHECK_DUAL.height }) => {
   const svgRef = useRef(null);
 
   useEffect(() => {

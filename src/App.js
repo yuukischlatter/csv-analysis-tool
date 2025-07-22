@@ -3,6 +3,7 @@ import TestDataForm from './components/forms/TestDataForm';
 import FileUploadContainer from './containers/FileUploadContainer';
 import AnalysisContainer from './containers/AnalysisContainer';
 import ExportContainer from './containers/ExportContainer';
+import { COLORS } from './constants/ui';
 
 function App() {
   // File processing state
@@ -44,11 +45,11 @@ function App() {
       maxWidth: '1200px',
       margin: '0 auto'
     }}>
-      <header style={{ marginBottom: '30px', borderBottom: '1px solid #ddd', paddingBottom: '20px' }}>
+      <header style={{ marginBottom: '30px', borderBottom: `1px solid ${COLORS.BORDER_DEFAULT}`, paddingBottom: '20px' }}>
         <h1 style={{ margin: '0', fontSize: '24px' }}>
           CSV Analysis Tool - Voltage Assignment System
         </h1>
-        <p style={{ margin: '5px 0 0 0', color: '#666' }}>
+        <p style={{ margin: '5px 0 0 0', color: COLORS.TEXT_SECONDARY }}>
           Schlatter Industries - User-Controlled Voltage/Velocity Analysis
         </p>
       </header>
@@ -56,12 +57,12 @@ function App() {
       {/* Error Display */}
       {error && (
         <div style={{ 
-          background: '#ffebee', 
-          border: '1px solid #f44336', 
+          background: COLORS.ERROR_BACKGROUND, 
+          border: `1px solid ${COLORS.ERROR}`, 
           borderRadius: '4px',
           padding: '10px',
           marginBottom: '20px',
-          color: '#d32f2f',
+          color: COLORS.ERROR,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
@@ -72,7 +73,7 @@ function App() {
             style={{ 
               background: 'none', 
               border: 'none', 
-              color: '#d32f2f', 
+              color: COLORS.ERROR, 
               cursor: 'pointer',
               fontSize: '16px'
             }}
@@ -85,8 +86,8 @@ function App() {
       {/* Failed Files Warning */}
       {failedFiles.length > 0 && (
         <div style={{ 
-          background: '#fff3cd', 
-          border: '1px solid #ffc107', 
+          background: COLORS.WARNING_BACKGROUND, 
+          border: `1px solid ${COLORS.WARNING}`, 
           borderRadius: '4px',
           padding: '10px',
           marginBottom: '20px',
@@ -132,7 +133,7 @@ function App() {
 
       {/* Analysis Status */}
       {isAnalyzing && (
-        <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+        <div style={{ textAlign: 'center', padding: '20px', color: COLORS.TEXT_SECONDARY }}>
           Analyzing dual slope data...
         </div>
       )}
@@ -168,7 +169,7 @@ function App() {
 
       {/* Empty State */}
       {processedFiles.length === 0 && !isAnalyzing && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+        <div style={{ textAlign: 'center', padding: '40px', color: COLORS.TEXT_SECONDARY }}>
           Upload CSV files to begin voltage assignment analysis
         </div>
       )}

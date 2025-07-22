@@ -3,6 +3,9 @@
  * Calculates linear regression and smooth curves for UE vs velocity data
  */
 
+import { REGRESSION, PRECISION } from '../constants/analysis';
+import { VOLTAGE_RANGES } from '../constants/voltages';
+
 export const prepareRegressionData = (mappedResults, approvalStatus) => {
   if (!mappedResults || !approvalStatus) {
     return [];
@@ -24,7 +27,7 @@ export const prepareRegressionData = (mappedResults, approvalStatus) => {
 };
 
 export const calculateLinearRegression = (dataPoints) => {
-  if (!dataPoints || dataPoints.length < 2) {
+  if (!dataPoints || dataPoints.length < REGRESSION.MIN_POINTS_WITH_ORIGIN) {
     return null;
   }
 
@@ -55,17 +58,17 @@ export const calculateLinearRegression = (dataPoints) => {
   return {
     slope: slope,
     yIntercept: yIntercept,
-    equation: `y = ${slope.toFixed(4)}x + ${yIntercept.toFixed(4)}`
+    equation: `y = ${slope.toFixed(REGRESSION.REGRESSION_PRECISION)}x + ${yIntercept.toFixed(REGRESSION.REGRESSION_PRECISION)}`
   };
 };
 
-export const generateRegressionLine = (regression, xMin = -10, xMax = 10) => {
+export const generateRegressionLine = (regression, xMin = VOLTAGE_RANGES.FULL.min, xMax = VOLTAGE_RANGES.FULL.max) => {
   if (!regression) {
     return [];
   }
 
   const points = [];
-  const step = (xMax - xMin) / 100; // 100 points for smooth line
+  const step = (xMax - xMin) / REGRESSION.CURVE_INTERPOLATION_POINTS; // Points for smooth line
 
   for (let x = xMin; x <= xMax; x += step) {
     const y = regression.slope * x + regression.yIntercept;
@@ -99,9 +102,8 @@ export const calculateDynamicYScale = (dataPoints) => {
   const velocities = dataPoints.map(point => Math.abs(point.velocity));
   const maxVelocity = Math.max(...velocities);
   
-  // Add 2mm/s buffer as specified
-  const buffer = 2;
-  const yMax = maxVelocity + buffer;
+  // Add buffer as specified
+  const yMax = maxVelocity + REGRESSION.DYNAMIC_Y_BUFFER;
   const yMin = -yMax; // Symmetric range
 
   return {
@@ -143,8 +145,8 @@ export const validateRegressionData = (dataPoints) => {
     return { isValid: false, error: 'No data points provided' };
   }
 
-  if (dataPoints.length < 2) {
-    return { isValid: false, error: 'At least 2 data points required for regression' };
+  if (dataPoints.length < REGRESSION.MIN_POINTS_WITH_ORIGIN) {
+    return { isValid: false, error: `At least ${REGRESSION.MIN_POINTS_WITH_ORIGIN} data point required for regression (origin added automatically)` };
   }
 
   // Check for valid numbers
@@ -162,8 +164,8 @@ export const validateRegressionData = (dataPoints) => {
   const minVoltage = Math.min(...voltages);
   const maxVoltage = Math.max(...voltages);
   
-  if (minVoltage < -10 || maxVoltage > 10) {
-    return { isValid: false, error: 'Voltage values out of expected range (-10V to +10V)' };
+  if (minVoltage < VOLTAGE_RANGES.FULL.min || maxVoltage > VOLTAGE_RANGES.FULL.max) {
+    return { isValid: false, error: `Voltage values out of expected range (${VOLTAGE_RANGES.FULL.min}V to ${VOLTAGE_RANGES.FULL.max}V)` };
   }
 
   return { isValid: true };

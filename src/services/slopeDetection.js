@@ -4,8 +4,10 @@
  * Uses simple transition detection with buffers
  */
 
+import { SLOPE_DETECTION, FALLBACK_PERCENTAGES, DATA_VALIDATION } from '../constants/analysis';
+
 export const detectDualSlopes = (data, fileName) => {
-  if (!data || data.length < 20) {
+  if (!data || data.length < DATA_VALIDATION.MIN_DATA_POINTS) {
     throw new Error(`Insufficient data points in ${fileName}`);
   }
 
@@ -91,7 +93,7 @@ const detectSimpleSlopes = (data, fileName) => {
 /**
  * Smooth data using simple moving average
  */
-const smoothData = (data, windowSize = 5) => {
+const smoothData = (data, windowSize = SLOPE_DETECTION.SMOOTHING_WINDOW_SIZE) => {
   const smoothed = [];
   
   for (let i = 0; i < data.length; i++) {
@@ -139,7 +141,7 @@ const calculateVelocities = (data) => {
  * Find transition points in the data
  */
 const findTransitions = (data, velocities) => {
-  const VELOCITY_THRESHOLD = 0.1; // mm/s - adjust as needed
+  const VELOCITY_THRESHOLD = SLOPE_DETECTION.VELOCITY_THRESHOLD;
   
   let flatToUpIndex = -1;
   let peakIndex = -1;
@@ -187,7 +189,7 @@ const findTransitions = (data, velocities) => {
  * Apply buffers - move markers inward by specified time
  */
 const applyBuffers = (transitions, data) => {
-  const BUFFER_SECONDS = 5; // Move inward by 5 seconds
+  const BUFFER_SECONDS = SLOPE_DETECTION.BUFFER_SECONDS;
   
   // Convert seconds to approximate data points
   const avgTimeStep = (data[data.length-1].time - data[0].time) / data.length;
@@ -217,8 +219,8 @@ const applyBuffers = (transitions, data) => {
  * Validate minimum distances between markers
  */
 const validateDistances = (indices, data) => {
-  const MIN_RAMP_SECONDS = 5; // Minimum 5 seconds per ramp
-  const MIN_GAP_SECONDS = 6;  // Minimum 6 seconds between ramps
+  const MIN_RAMP_SECONDS = SLOPE_DETECTION.MIN_RAMP_SECONDS;
+  const MIN_GAP_SECONDS = SLOPE_DETECTION.MIN_GAP_SECONDS;
   
   // Calculate actual time durations
   const upDuration = data[indices.upEnd].time - data[indices.upStart].time;
@@ -234,23 +236,23 @@ const validateDistances = (indices, data) => {
  * Generate fallback markers when detection fails
  */
 export const generateDualFallbackMarkers = (data, fileName) => {
-  if (!data || data.length < 20) {
+  if (!data || data.length < DATA_VALIDATION.MIN_DATA_POINTS) {
     throw new Error(`Insufficient data points in ${fileName}`);
   }
 
   const dataLength = data.length;
 
-  // Ramp Up Fallback (10% - 40%)
-  const upStartIndex = Math.floor(dataLength * 0.1);
-  const upEndIndex = Math.floor(dataLength * 0.4);
+  // Ramp Up Fallback
+  const upStartIndex = Math.floor(dataLength * FALLBACK_PERCENTAGES.RAMP_UP_START);
+  const upEndIndex = Math.floor(dataLength * FALLBACK_PERCENTAGES.RAMP_UP_END);
 
-  // Ramp Down Fallback (60% - 90%)
-  const downStartIndex = Math.floor(dataLength * 0.6);
-  const downEndIndex = Math.floor(dataLength * 0.9);
+  // Ramp Down Fallback
+  const downStartIndex = Math.floor(dataLength * FALLBACK_PERCENTAGES.RAMP_DOWN_START);
+  const downEndIndex = Math.floor(dataLength * FALLBACK_PERCENTAGES.RAMP_DOWN_END);
 
   // Ensure minimum distances
-  const finalUpEndIndex = Math.max(upEndIndex, upStartIndex + 10);
-  const finalDownEndIndex = Math.max(downEndIndex, downStartIndex + 10);
+  const finalUpEndIndex = Math.max(upEndIndex, upStartIndex + SLOPE_DETECTION.MIN_MARKER_DISTANCE);
+  const finalDownEndIndex = Math.max(downEndIndex, downStartIndex + SLOPE_DETECTION.MIN_MARKER_DISTANCE);
 
   const upVelocity = calculateVelocity(data, { startIndex: upStartIndex, endIndex: finalUpEndIndex });
   const downVelocity = Math.abs(calculateVelocity(data, { startIndex: downStartIndex, endIndex: finalDownEndIndex }));
@@ -300,7 +302,8 @@ export const recalculateDualVelocity = (data, rampUpIndices, rampDownIndices) =>
   }
 
   // Ensure minimum distances
-  if (upEnd - upStart < 5 || downEnd - downStart < 5) {
+  const minDistance = SLOPE_DETECTION.MIN_MARKER_DISTANCE;
+  if (upEnd - upStart < minDistance || downEnd - downStart < minDistance) {
     throw new Error('Insufficient distance between markers');
   }
 

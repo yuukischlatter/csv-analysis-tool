@@ -4,6 +4,7 @@
  */
 
 import * as d3 from 'd3';
+import { CHART_COLORS, STROKE_WIDTHS, CHART_FONTS, CHART_SIZES, GRID_CONFIG } from '../constants/charts';
 
 /**
  * Create D3 scale
@@ -40,9 +41,9 @@ export const addGridLines = (g, xScale, yScale, width, height) => {
       .tickSize(-height)
       .tickFormat("")
     )
-    .style("stroke-dasharray", "3,3")
+    .style("stroke-dasharray", GRID_CONFIG.STROKE_DASHARRAY)
     .style("opacity", 0.3)
-    .style("stroke", "#ccc");
+    .style("stroke", CHART_COLORS.GRID_LINES);
 
   // Horizontal grid lines
   g.append("g")
@@ -51,9 +52,9 @@ export const addGridLines = (g, xScale, yScale, width, height) => {
       .tickSize(-width)
       .tickFormat("")
     )
-    .style("stroke-dasharray", "3,3")
+    .style("stroke-dasharray", GRID_CONFIG.STROKE_DASHARRAY)
     .style("opacity", 0.3)
-    .style("stroke", "#ccc");
+    .style("stroke", CHART_COLORS.GRID_LINES);
 };
 
 /**
@@ -65,9 +66,9 @@ export const addGridLines = (g, xScale, yScale, width, height) => {
  */
 export const addSpeedLimitLines = (g, machineParams, yScale, width) => {
   const limits = [
-    { value: machineParams.lower, label: 'untere Grenze', color: 'lightgreen' },
-    { value: machineParams.middle, label: 'mittig', color: 'green' },
-    { value: machineParams.upper, label: 'obere Grenze', color: 'lightgreen' }
+    { value: machineParams.lower, label: 'untere Grenze', color: CHART_COLORS.SPEED_LIMIT_LOWER },
+    { value: machineParams.middle, label: 'mittig', color: CHART_COLORS.SPEED_LIMIT_MIDDLE },
+    { value: machineParams.upper, label: 'obere Grenze', color: CHART_COLORS.SPEED_LIMIT_UPPER }
   ];
 
   limits.forEach(limit => {
@@ -79,7 +80,7 @@ export const addSpeedLimitLines = (g, machineParams, yScale, width) => {
       .attr("y2", yScale(limit.value))
       .attr("stroke", limit.color)
       .attr("stroke-dasharray", "5,5")
-      .attr("stroke-width", 1)
+      .attr("stroke-width", STROKE_WIDTHS.SPEED_LIMIT_LINES)
       .attr("opacity", 0.8);
 
     // Add label
@@ -87,8 +88,8 @@ export const addSpeedLimitLines = (g, machineParams, yScale, width) => {
       .attr("x", width - 10)
       .attr("y", yScale(limit.value) - 5)
       .attr("text-anchor", "end")
-      .attr("font-size", "10px")
-      .attr("fill", limit.color === 'green' ? 'green' : 'darkgreen')
+      .attr("font-size", CHART_FONTS.SPEED_LIMIT_LABELS)
+      .attr("fill", limit.color === CHART_COLORS.SPEED_LIMIT_MIDDLE ? CHART_COLORS.SPEED_LIMIT_MIDDLE : 'darkgreen')
       .attr("font-weight", "bold")
       .text(`relev. Brenngeschwindigkeit (${limit.label}): ${limit.value} mm/s`);
   });
@@ -130,16 +131,16 @@ export const addRegressionLines = (g, analysis, xScale, yScale, voltageRange) =>
   g.append("path")
     .datum(calculatedLineData)
     .attr("fill", "none")
-    .attr("stroke", "blue")
-    .attr("stroke-width", 2)
+    .attr("stroke", CHART_COLORS.CALCULATED_LINE)
+    .attr("stroke-width", STROKE_WIDTHS.REGRESSION_LINES)
     .attr("d", line);
 
   // Add manual regression line (red)
   g.append("path")
     .datum(manualLineData)
     .attr("fill", "none")
-    .attr("stroke", "red")
-    .attr("stroke-width", 2)
+    .attr("stroke", CHART_COLORS.MANUAL_LINE)
+    .attr("stroke-width", STROKE_WIDTHS.REGRESSION_LINES)
     .attr("d", line);
 };
 
@@ -159,8 +160,8 @@ export const addDataPoints = (g, data, xScale, yScale) => {
   g.append("path")
     .datum(data)
     .attr("fill", "none")
-    .attr("stroke", "black")
-    .attr("stroke-width", 2)
+    .attr("stroke", CHART_COLORS.DATA_POINTS)
+    .attr("stroke-width", STROKE_WIDTHS.REGRESSION_LINES)
     .attr("d", line);
 
   // Add data points
@@ -168,11 +169,11 @@ export const addDataPoints = (g, data, xScale, yScale) => {
     .data(data)
     .enter().append("path")
     .attr("class", "data-point")
-    .attr("d", d3.symbol().type(d3.symbolDiamond).size(64))
+    .attr("d", d3.symbol().type(d3.symbolDiamond).size(CHART_SIZES.SYMBOL_SIZE))
     .attr("transform", d => `translate(${xScale(d.voltage)},${yScale(d.velocity)})`)
-    .attr("fill", "black")
-    .attr("stroke", "white")
-    .attr("stroke-width", 1);
+    .attr("fill", CHART_COLORS.DATA_POINTS)
+    .attr("stroke", CHART_COLORS.DATA_POINTS_BORDER)
+    .attr("stroke-width", STROKE_WIDTHS.DATA_POINTS_BORDER);
 };
 
 /**
@@ -198,7 +199,7 @@ export const addDeviationAnnotations = (g, deviations, xScale, yScale, visibleRa
         .attr("x", xScale(forecastedVoltage))
         .attr("y", yScale(targetSpeed) - 8)
         .attr("text-anchor", "middle")
-        .attr("font-size", "8px")
+        .attr("font-size", CHART_FONTS.DEVIATION_LABELS)
         .attr("fill", "gray")
         .attr("font-weight", "bold")
         .text(`${devPercent.toFixed(1)}%`);
@@ -223,8 +224,8 @@ export const addOverviewChart = (g, fullData, analysis, xScale, yScale, voltageR
     .attr("class", "overview-point")
     .attr("cx", d => xScale(d.voltage))
     .attr("cy", d => yScale(d.velocity))
-    .attr("r", 2)
-    .attr("fill", "black")
+    .attr("r", CHART_SIZES.OVERVIEW_POINTS)
+    .attr("fill", CHART_COLORS.OVERVIEW_POINTS)
     .attr("opacity", 0.7);
 
   // Add manual regression line across full range
@@ -247,8 +248,8 @@ export const addOverviewChart = (g, fullData, analysis, xScale, yScale, voltageR
   g.append("path")
     .datum(manualLineData)
     .attr("fill", "none")
-    .attr("stroke", "red")
-    .attr("stroke-width", 2)
+    .attr("stroke", CHART_COLORS.MANUAL_LINE)
+    .attr("stroke-width", STROKE_WIDTHS.REGRESSION_LINES)
     .attr("d", line);
 };
 
@@ -302,22 +303,22 @@ export const addAxes = (g, xScale, yScale, width, height, labels) => {
   g.append("g")
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(xScale))
-    .style("stroke", "black")
-    .style("stroke-width", "1px");
+    .style("stroke", CHART_COLORS.AXES)
+    .style("stroke-width", STROKE_WIDTHS.CHART_AXES + "px");
 
   // Y axis
   g.append("g")
     .call(d3.axisLeft(yScale))
-    .style("stroke", "black")
-    .style("stroke-width", "1px");
+    .style("stroke", CHART_COLORS.AXES)
+    .style("stroke-width", STROKE_WIDTHS.CHART_AXES + "px");
 
   // X axis label
   g.append("text")
     .attr("transform", `translate(${width / 2}, ${height + 40})`)
     .style("text-anchor", "middle")
-    .style("font-size", "12px")
+    .style("font-size", CHART_FONTS.AXIS_LABELS)
     .style("font-weight", "bold")
-    .style("fill", "black")
+    .style("fill", CHART_COLORS.AXES)
     .text(labels.x || "Eingangsspannung UE [V]");
 
   // Y axis label
@@ -326,9 +327,9 @@ export const addAxes = (g, xScale, yScale, width, height, labels) => {
     .attr("y", -40)
     .attr("x", -height / 2)
     .style("text-anchor", "middle")
-    .style("font-size", "12px")
+    .style("font-size", CHART_FONTS.AXIS_LABELS)
     .style("font-weight", "bold")
-    .style("fill", "black")
+    .style("fill", CHART_COLORS.AXES)
     .text(labels.y || "Schlittengeschwindigkeit [mm/s]");
 };
 
@@ -343,9 +344,9 @@ export const addChartTitle = (g, title, width) => {
     .attr("x", width / 2)
     .attr("y", -10)
     .attr("text-anchor", "middle")
-    .style("font-size", "14px")
+    .style("font-size", CHART_FONTS.TITLE)
     .style("font-weight", "bold")
-    .style("fill", "black")
+    .style("fill", CHART_COLORS.AXES)
     .text(title);
 };
 
@@ -354,28 +355,28 @@ export const addChartTitle = (g, title, width) => {
  */
 export const CHART_STYLES = {
   colors: {
-    calculatedLine: 'blue',
-    manualLine: 'red',
-    dataPoints: 'black',
-    dataPointsBorder: 'white',
-    gridLines: '#ccc',
+    calculatedLine: CHART_COLORS.CALCULATED_LINE,
+    manualLine: CHART_COLORS.MANUAL_LINE,
+    dataPoints: CHART_COLORS.DATA_POINTS,
+    dataPointsBorder: CHART_COLORS.DATA_POINTS_BORDER,
+    gridLines: CHART_COLORS.GRID_LINES,
     speedLimits: {
-      lower: 'lightgreen',
-      middle: 'green',
-      upper: 'lightgreen'
+      lower: CHART_COLORS.SPEED_LIMIT_LOWER,
+      middle: CHART_COLORS.SPEED_LIMIT_MIDDLE,
+      upper: CHART_COLORS.SPEED_LIMIT_UPPER
     }
   },
   strokeWidths: {
-    regressionLines: 2,
-    dataLines: 2,
-    dataPointsBorder: 1,
-    gridLines: 1,
-    speedLimitLines: 1
+    regressionLines: STROKE_WIDTHS.REGRESSION_LINES,
+    dataLines: STROKE_WIDTHS.REGRESSION_LINES,
+    dataPointsBorder: STROKE_WIDTHS.DATA_POINTS_BORDER,
+    gridLines: STROKE_WIDTHS.GRID_LINES,
+    speedLimitLines: STROKE_WIDTHS.SPEED_LIMIT_LINES
   },
   fontSizes: {
-    title: '14px',
-    axisLabels: '12px',
-    deviationLabels: '8px',
-    speedLimitLabels: '10px'
+    title: CHART_FONTS.TITLE,
+    axisLabels: CHART_FONTS.AXIS_LABELS,
+    deviationLabels: CHART_FONTS.DEVIATION_LABELS,
+    speedLimitLabels: CHART_FONTS.SPEED_LIMIT_LABELS
   }
 };

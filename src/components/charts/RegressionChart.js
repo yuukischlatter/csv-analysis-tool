@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { calculateLinearRegression, generateRegressionLine, calculateSmoothCurve } from '../../services/regressionAnalysis';
+import { CHART_DIMENSIONS } from '../../constants/charts';
 
-const RegressionChart = ({ data, width = 800, height = 400 }) => {
+const RegressionChart = ({ data, width = CHART_DIMENSIONS.REGRESSION.width, height = CHART_DIMENSIONS.REGRESSION.height }) => {
   const svgRef = useRef(null);
 
   useEffect(() => {

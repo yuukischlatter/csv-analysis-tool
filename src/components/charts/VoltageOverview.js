@@ -1,15 +1,7 @@
 import React from 'react';
+import { AVAILABLE_VOLTAGES, formatVoltageMagnitude } from '../../constants/voltages';
 
-const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
-  // All possible voltage magnitudes in order (removed 0V)
-  const ALL_VOLTAGES = [
-    0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.0, 9.0, 10.0
-  ];
-
-  const formatVoltage = (voltage) => {
-    return `±${voltage}V`;
-  };
-
+const VoltageOverview = ({ assignedVoltages }) => {
   const isVoltageAssigned = (voltage) => {
     return assignedVoltages && assignedVoltages.has(voltage);
   };
@@ -23,7 +15,7 @@ const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
   };
 
   const completedCount = assignedVoltages ? assignedVoltages.size : 0;
-  const totalCount = ALL_VOLTAGES.length;
+  const totalCount = AVAILABLE_VOLTAGES.length;
 
   return (
     <div style={{ 
@@ -69,7 +61,7 @@ const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
           }}>
             Voltages:
           </div>
-          {ALL_VOLTAGES.map((voltage, index) => (
+          {AVAILABLE_VOLTAGES.map((voltage, index) => (
             <div 
               key={voltage}
               style={{
@@ -78,12 +70,12 @@ const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
                 fontWeight: 'bold',
                 textAlign: 'center',
                 minWidth: '50px',
-                borderRight: index < ALL_VOLTAGES.length - 1 ? '1px solid #eee' : 'none',
+                borderRight: index < AVAILABLE_VOLTAGES.length - 1 ? '1px solid #eee' : 'none',
                 color: '#333',
                 backgroundColor: isVoltageAssigned(voltage) ? '#e8f5e8' : '#fff'
               }}
             >
-              {formatVoltage(voltage)}
+              {formatVoltageMagnitude(voltage)}
             </div>
           ))}
         </div>
@@ -103,7 +95,7 @@ const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
           }}>
             Status:
           </div>
-          {ALL_VOLTAGES.map((voltage, index) => (
+          {AVAILABLE_VOLTAGES.map((voltage, index) => (
             <div 
               key={voltage}
               style={{
@@ -112,7 +104,7 @@ const VoltageOverview = ({ availableVoltages, assignedVoltages }) => {
                 fontWeight: 'bold',
                 textAlign: 'center',
                 minWidth: '50px',
-                borderRight: index < ALL_VOLTAGES.length - 1 ? '1px solid #eee' : 'none',
+                borderRight: index < AVAILABLE_VOLTAGES.length - 1 ? '1px solid #eee' : 'none',
                 color: getStatusColor(voltage),
                 backgroundColor: isVoltageAssigned(voltage) ? '#e8f5e8' : '#ffebee'
               }}

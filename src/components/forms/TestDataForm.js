@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MASCHINEN_TYPEN, getVentilOptions, getParkerData } from '../../services/ventilMapping';
+import { MASCHINEN_TYPEN, getVentilOptions, getParkerData } from '../../data/ventils';
 
 const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }) => {
   const [formData, setFormData] = useState({
@@ -252,7 +252,11 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }
             <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Prüfbedingungen</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontSize: '14px' 
+                }}>
                   Ventil-Offset UEQ (mit AQ60), Originalzustand:
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -269,7 +273,11 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontSize: '14px' 
+                }}>
                   Ventil-Offset Korrekturen in Parker-Software, falls angewendet:
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -285,7 +293,11 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontSize: '14px' 
+                }}>
                   Ventil-Offset UEQ (mit AQ60), nach allfälliger Korrektur mit Parker-Software:
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -302,7 +314,11 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontSize: '14px' 
+                }}>
                   Druck am Ventil / an der Pumpe:
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -318,7 +334,11 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontSize: '14px' 
+                }}>
                   Öltemperatur (vor Start der Messung):
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -331,7 +351,9 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }
                   />
                   <span style={{ fontSize: '14px' }}>°C</span>
                 </div>
-                <small style={{ color: '#666', fontSize: '12px' }}>50 ± 5°C I.O. (Hinweis: Nullpunkt kann um 10°C zu 0.20% driften, entspricht zu 0.01V UEQ)</small>
+                <small style={{ color: '#666', fontSize: '12px' }}>
+                  50 ± 5°C I.O. (Hinweis: Nullpunkt kann um 10°C zu 0.20% driften, entspricht zu 0.01V UEQ)
+                </small>
               </div>
             </div>
           </div>

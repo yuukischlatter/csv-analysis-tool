@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatVoltageMagnitude } from '../../constants/voltages';
 
 const ApprovalButton = ({ 
   fileName, 
@@ -37,13 +38,6 @@ const ApprovalButton = ({
     }
   };
 
-  const formatVoltage = (voltage) => {
-    if (voltage === 0) {
-      return '0V';
-    }
-    return `±${voltage}V`;
-  };
-
   const canApprove = !isApproved && selectedVoltage !== '';
 
   return (
@@ -60,7 +54,7 @@ const ApprovalButton = ({
       <div style={{ fontSize: '14px', color: '#666' }}>
         {isApproved ? (
           <span style={{ color: 'green', fontWeight: 'bold' }}>
-            ✓ This file has been approved for {formatVoltage(assignedVoltage)}
+            ✓ This file has been approved for {formatVoltageMagnitude(assignedVoltage)}
           </span>
         ) : (
           <span>
@@ -107,7 +101,7 @@ const ApprovalButton = ({
               </option>
               {availableVoltages.map(voltage => (
                 <option key={voltage} value={voltage}>
-                  {formatVoltage(voltage)}
+                  {formatVoltageMagnitude(voltage)}
                 </option>
               ))}
             </select>

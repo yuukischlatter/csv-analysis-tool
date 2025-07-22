@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { performSpeedCheckAnalysis, validateSpeedCheckData } from '../../services/speedCheckService';
-import { SLOPE_FACTOR_RANGE } from '../../constants/speedCheckConstants';
+import { SPEED_CHECK } from '../../constants/analysis';
 import SpeedCheckChart from '../charts/SpeedCheckChart';
 
 const SpeedCheckAnalysis = ({ 
@@ -9,7 +9,7 @@ const SpeedCheckAnalysis = ({
   onAnalysisUpdate 
 }) => {
   const [analysis, setAnalysis] = useState(null);
-  const [manualSlopeFactor, setManualSlopeFactor] = useState(SLOPE_FACTOR_RANGE.default);
+  const [manualSlopeFactor, setManualSlopeFactor] = useState(SPEED_CHECK.SLOPE_FACTOR_RANGE.default);
   const [directSlopeInput, setDirectSlopeInput] = useState('');
   const [error, setError] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -76,8 +76,8 @@ const SpeedCheckAnalysis = ({
       
       // Clamp factor to valid range
       const clampedFactor = Math.max(
-        SLOPE_FACTOR_RANGE.min, 
-        Math.min(SLOPE_FACTOR_RANGE.max, newFactor)
+        SPEED_CHECK.SLOPE_FACTOR_RANGE.min, 
+        Math.min(SPEED_CHECK.SLOPE_FACTOR_RANGE.max, newFactor)
       );
       
       setManualSlopeFactor(clampedFactor);
@@ -230,9 +230,9 @@ const SpeedCheckAnalysis = ({
                     </label>
                     <input
                       type="range"
-                      min={SLOPE_FACTOR_RANGE.min}
-                      max={SLOPE_FACTOR_RANGE.max}
-                      step={SLOPE_FACTOR_RANGE.step}
+                      min={SPEED_CHECK.SLOPE_FACTOR_RANGE.min}
+                      max={SPEED_CHECK.SLOPE_FACTOR_RANGE.max}
+                      step={SPEED_CHECK.SLOPE_FACTOR_RANGE.step}
                       value={manualSlopeFactor}
                       onChange={handleSliderChange}
                       style={{
@@ -250,8 +250,8 @@ const SpeedCheckAnalysis = ({
                       color: '#666',
                       marginTop: '5px'
                     }}>
-                      <span>{SLOPE_FACTOR_RANGE.min}</span>
-                      <span>{SLOPE_FACTOR_RANGE.max}</span>
+                      <span>{SPEED_CHECK.SLOPE_FACTOR_RANGE.min}</span>
+                      <span>{SPEED_CHECK.SLOPE_FACTOR_RANGE.max}</span>
                     </div>
                   </div>
 

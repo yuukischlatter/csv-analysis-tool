@@ -1,11 +1,12 @@
 import React, { useRef, useEffect } from 'react';
+import { CHART_DIMENSIONS } from '../../constants/charts';
 
 const ChartContainer = ({ 
   data, 
   slopeResult, 
   onMarkerMove, 
-  width = 800, 
-  height = 400,
+  width = CHART_DIMENSIONS.CONTAINER.width, 
+  height = CHART_DIMENSIONS.CONTAINER.height,
   title 
 }) => {
   const svgRef = useRef();

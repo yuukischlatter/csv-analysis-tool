@@ -62,22 +62,14 @@ export const mapVoltageData = (mappedResults) => {
     return [];
   }
 
-  // Filter out reference rows and convert to PDF format
-  const voltageData = mappedResults
-    .filter(result => result.rampType !== 'reference')
-    .map(result => ({
-      voltage: parseFloat(result.voltage.toFixed(2)),
-      velocity: parseFloat(result.velocity.toFixed(2))
-    }));
+  // Keep all voltage data including reference points - don't filter anything out
+  const voltageData = mappedResults.map(result => ({
+    voltage: parseFloat(result.voltage.toFixed(2)),
+    velocity: parseFloat(result.velocity.toFixed(2))
+  }));
 
-  // Add origin point if not present
-  const hasOrigin = voltageData.some(point => point.voltage === 0 && point.velocity === 0);
-  if (!hasOrigin) {
-    voltageData.push({ voltage: 0.00, velocity: 0.00 });
-  }
-
-  // Sort by voltage for proper chart display
-  return voltageData.sort((a, b) => a.voltage - b.voltage);
+  // Sort by voltage for proper chart display (descending: +10V to -10V)
+  return voltageData.sort((a, b) => b.voltage - a.voltage);
 };
 
 /**
@@ -108,9 +100,10 @@ export const mapSpeedCheckResults = (speedCheckResults) => {
 /**
  * Generate system parameters for SWEP form section
  * @param {Object} speedCheckResults - Speed check analysis results
+ * @param {number} realMaxSpeed - Real measured maximum speed from voltage data
  * @returns {Object} System parameters for PDF
  */
-export const mapSystemParameters = (speedCheckResults) => {
+export const mapSystemParameters = (speedCheckResults, realMaxSpeed) => {
   if (!speedCheckResults) {
     throw new Error('Speed check results required for system parameters');
   }
@@ -120,7 +113,7 @@ export const mapSystemParameters = (speedCheckResults) => {
   return {
     slopeValue: parseFloat(slope.toFixed(2)),
     speedAt03V: parseFloat((slope * 0.3).toFixed(3)),
-    maxSpeedAt10V: parseFloat((slope * 10.0).toFixed(2))
+    maxSpeedAt10V: parseFloat(realMaxSpeed.toFixed(2)) // Use real measured max speed
   };
 };
 
@@ -213,12 +206,37 @@ export const validatePDFData = (data) => {
 export const createPDFDataPackage = (reactData) => {
   const { testFormData, voltageData: mappedResults, speedCheckResults, regressionData } = reactData;
 
+  // Transform voltage data
+  const voltageData = mapVoltageData(mappedResults);
+  
+  // Calculate real maximum measured speed from actual voltage data
+  let realMaxSpeed = 0;
+  
+  // Find speeds at +10V and -10V
+  const speedAt10V = voltageData.find(point => point.voltage === 10);
+  const speedAtMinus10V = voltageData.find(point => point.voltage === -10);
+  
+  if (speedAt10V && speedAtMinus10V) {
+    // Take the one with larger absolute value
+    realMaxSpeed = Math.abs(speedAt10V.velocity) > Math.abs(speedAtMinus10V.velocity) 
+      ? Math.abs(speedAt10V.velocity) 
+      : Math.abs(speedAtMinus10V.velocity);
+  } else if (speedAt10V) {
+    realMaxSpeed = Math.abs(speedAt10V.velocity);
+  } else if (speedAtMinus10V) {
+    realMaxSpeed = Math.abs(speedAtMinus10V.velocity);
+  } else {
+    // Fallback: use the maximum absolute velocity from all data
+    const maxVelocity = Math.max(...voltageData.map(point => Math.abs(point.velocity)));
+    realMaxSpeed = maxVelocity;
+  }
+
   // Transform all data
   const pdfData = {
     testFormData: mapTestFormData(testFormData),
-    voltageData: mapVoltageData(mappedResults),
+    voltageData: voltageData,
     speedCheckResults: mapSpeedCheckResults(speedCheckResults),
-    systemParameters: mapSystemParameters(speedCheckResults),
+    systemParameters: mapSystemParameters(speedCheckResults, realMaxSpeed),
     filename: generatePDFFilename(testFormData),
     timestamp: getCurrentFormattedDate()
   };

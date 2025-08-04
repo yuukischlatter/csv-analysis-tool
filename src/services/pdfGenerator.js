@@ -254,7 +254,7 @@ function addExtendedMeasurementTable(doc, data, x, y, width, colors) {
   doc.setTextColor(...colors.text);
   
   let currentY = y + 40;
-  const rowHeight = 4.2;
+  const rowHeight = 4.1;
   const maxY = 277;
   
   data.forEach((row, index) => {

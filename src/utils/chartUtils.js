@@ -177,9 +177,9 @@ export const addDataPoints = (g, data, xScale, yScale) => {
 };
 
 /**
- * Add deviation percentage annotations
+ * Add deviation percentage annotations near measured data points
  * @param {Object} g - D3 group element
- * @param {Array} deviations - Deviation analysis data
+ * @param {Array} deviations - Deviation analysis data with measured points
  * @param {Function} xScale - X scale function
  * @param {Function} yScale - Y scale function
  * @param {Array} visibleRange - Visible voltage/speed range [[minV, maxV], [minS, maxS]]
@@ -188,21 +188,44 @@ export const addDeviationAnnotations = (g, deviations, xScale, yScale, visibleRa
   const [[minVoltage, maxVoltage], [minSpeed, maxSpeed]] = visibleRange;
 
   deviations.forEach(deviation => {
-    const { targetSpeed, forecastedVoltage, deviation: devPercent } = deviation;
+    const { measuredVoltage, measuredVelocity, deviation: devPercent } = deviation;
     
-    // Only show annotations in visible range and for non-zero speeds
-    if (targetSpeed > 0 && 
-        forecastedVoltage >= minVoltage && forecastedVoltage <= maxVoltage &&
-        targetSpeed >= minSpeed && targetSpeed <= maxSpeed) {
+    // Only show annotations in visible range and for non-zero voltages
+    if (measuredVoltage > 0 && 
+        measuredVoltage >= minVoltage && measuredVoltage <= maxVoltage &&
+        measuredVelocity >= minSpeed && measuredVelocity <= maxSpeed) {
       
+      // Position label near the measured data point (offset slightly to avoid overlap)
+      const labelX = xScale(measuredVoltage);
+      const labelY = yScale(measuredVelocity) - 12; // Offset above the diamond symbol
+      
+      // Get color based on deviation magnitude
+      const labelColor = getDeviationColor(devPercent);
+      
+      // Add background rectangle for better readability
+      const labelText = formatDeviationLabel(devPercent);
+      const textWidth = labelText.length * 3.5; // Approximate text width
+      
+      g.append("rect")
+        .attr("x", labelX - textWidth/2 - 2)
+        .attr("y", labelY - 6)
+        .attr("width", textWidth + 4)
+        .attr("height", 10)
+        .attr("fill", "white")
+        .attr("stroke", labelColor)
+        .attr("stroke-width", 0.5)
+        .attr("opacity", 0.9)
+        .attr("rx", 2);
+      
+      // Add percentage text
       g.append("text")
-        .attr("x", xScale(forecastedVoltage))
-        .attr("y", yScale(targetSpeed) - 8)
+        .attr("x", labelX)
+        .attr("y", labelY)
         .attr("text-anchor", "middle")
         .attr("font-size", CHART_FONTS.DEVIATION_LABELS)
-        .attr("fill", "gray")
+        .attr("fill", labelColor)
         .attr("font-weight", "bold")
-        .text(`${devPercent.toFixed(1)}%`);
+        .text(labelText);
     }
   });
 };
@@ -272,6 +295,9 @@ export const filterVoltageRange = (data, minVoltage, maxVoltage) => {
  * @returns {string} Formatted label
  */
 export const formatDeviationLabel = (deviation) => {
+  if (Math.abs(deviation) < 0.1) {
+    return '0.0%';
+  }
   const sign = deviation >= 0 ? '+' : '';
   return `${sign}${deviation.toFixed(1)}%`;
 };

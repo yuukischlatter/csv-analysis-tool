@@ -1,10 +1,15 @@
 /**
  * Simplified Dual Slope Detection Service
- * Finds positive (ramp up) and negative (ramp down) linear movements
- * Uses simple transition detection with buffers
+ * Uses fixed position thresholds (5mm and 25mm) for reliable detection
  */
 
 import { SLOPE_DETECTION, FALLBACK_PERCENTAGES, DATA_VALIDATION } from '../constants/analysis';
+
+// Fixed position thresholds for intersection detection
+const POSITION_THRESHOLDS = {
+  LOW: 5.0,    // 5mm threshold
+  HIGH: 25.0   // 25mm threshold
+};
 
 export const detectDualSlopes = (data, fileName) => {
   if (!data || data.length < DATA_VALIDATION.MIN_DATA_POINTS) {
@@ -12,13 +17,13 @@ export const detectDualSlopes = (data, fileName) => {
   }
 
   try {
-    // Try simple automatic detection
-    const result = detectSimpleSlopes(data, fileName);
+    // Try fixed position threshold detection
+    const result = detectByPositionThresholds(data, fileName);
     if (result) {
       return result;
     }
   } catch (error) {
-    console.warn(`Simple slope detection failed for ${fileName}:`, error.message);
+    console.warn(`Position threshold detection failed for ${fileName}:`, error.message);
   }
 
   // Immediate fallback to percentage-based markers
@@ -27,183 +32,116 @@ export const detectDualSlopes = (data, fileName) => {
 };
 
 /**
- * Simple slope detection using transition finding
+ * Detect slopes using fixed position thresholds (5mm and 25mm)
  */
-const detectSimpleSlopes = (data, fileName) => {
-  // Step 1: Smooth the data
-  const smoothedData = smoothData(data);
+const detectByPositionThresholds = (data, fileName) => {
+  const lowThreshold = POSITION_THRESHOLDS.LOW;
+  const highThreshold = POSITION_THRESHOLDS.HIGH;
   
-  // Step 2: Calculate velocities
-  const velocities = calculateVelocities(smoothedData);
-  
-  // Step 3: Find transitions
-  const transitions = findTransitions(smoothedData, velocities);
-  if (!transitions) {
+  // Find intersection points
+  const intersections = findPositionIntersections(data, lowThreshold, highThreshold);
+  if (!intersections) {
     return null;
   }
   
-  // Step 4: Apply buffers (move inward)
-  const bufferedIndices = applyBuffers(transitions, smoothedData);
-  if (!bufferedIndices) {
+  // Validate that we have all 4 intersection points
+  if (!intersections.upStart || !intersections.upEnd || 
+      !intersections.downStart || !intersections.downEnd) {
     return null;
   }
   
-  // Step 5: Validate minimum distances
-  if (!validateDistances(bufferedIndices, smoothedData)) {
+  // Validate minimum distances and ordering
+  if (!validateIntersectionOrder(intersections, data)) {
     return null;
   }
   
-  // Step 6: Calculate final velocities
-  const upVelocity = calculateVelocity(smoothedData, {
-    startIndex: bufferedIndices.upStart,
-    endIndex: bufferedIndices.upEnd
+  // Calculate velocities for each ramp
+  const upVelocity = calculateVelocity(data, {
+    startIndex: intersections.upStart,
+    endIndex: intersections.upEnd
   });
   
-  const downVelocity = Math.abs(calculateVelocity(smoothedData, {
-    startIndex: bufferedIndices.downStart,
-    endIndex: bufferedIndices.downEnd
+  const downVelocity = Math.abs(calculateVelocity(data, {
+    startIndex: intersections.downStart,
+    endIndex: intersections.downEnd
   }));
   
   return {
     fileName: fileName,
     rampUp: {
-      startIndex: bufferedIndices.upStart,
-      endIndex: bufferedIndices.upEnd,
-      startTime: smoothedData[bufferedIndices.upStart].time,
-      endTime: smoothedData[bufferedIndices.upEnd].time,
-      startPosition: smoothedData[bufferedIndices.upStart].position,
-      endPosition: smoothedData[bufferedIndices.upEnd].position,
+      startIndex: intersections.upStart,
+      endIndex: intersections.upEnd,
+      startTime: data[intersections.upStart].time,
+      endTime: data[intersections.upEnd].time,
+      startPosition: data[intersections.upStart].position,
+      endPosition: data[intersections.upEnd].position,
       velocity: upVelocity,
-      duration: smoothedData[bufferedIndices.upEnd].time - smoothedData[bufferedIndices.upStart].time
+      duration: data[intersections.upEnd].time - data[intersections.upStart].time
     },
     rampDown: {
-      startIndex: bufferedIndices.downStart,
-      endIndex: bufferedIndices.downEnd,
-      startTime: smoothedData[bufferedIndices.downStart].time,
-      endTime: smoothedData[bufferedIndices.downEnd].time,
-      startPosition: smoothedData[bufferedIndices.downStart].position,
-      endPosition: smoothedData[bufferedIndices.downEnd].position,
+      startIndex: intersections.downStart,
+      endIndex: intersections.downEnd,
+      startTime: data[intersections.downStart].time,
+      endTime: data[intersections.downEnd].time,
+      startPosition: data[intersections.downStart].position,
+      endPosition: data[intersections.downEnd].position,
       velocity: downVelocity,
-      duration: smoothedData[bufferedIndices.downEnd].time - smoothedData[bufferedIndices.downStart].time
+      duration: data[intersections.downEnd].time - data[intersections.downStart].time
     },
     detectionMethod: 'automatic'
   };
 };
 
 /**
- * Smooth data using simple moving average
+ * Find position intersections with 5mm and 25mm thresholds
  */
-const smoothData = (data, windowSize = SLOPE_DETECTION.SMOOTHING_WINDOW_SIZE) => {
-  const smoothed = [];
+const findPositionIntersections = (data, lowThreshold, highThreshold) => {
+  let upStart = -1;    // First crossing of 5mm (going up)
+  let upEnd = -1;      // First crossing of 25mm (going up)
+  let downStart = -1;  // Second crossing of 25mm (going down)
+  let downEnd = -1;    // Second crossing of 5mm (going down)
   
-  for (let i = 0; i < data.length; i++) {
-    const start = Math.max(0, i - Math.floor(windowSize / 2));
-    const end = Math.min(data.length - 1, i + Math.floor(windowSize / 2));
-    
-    let sumPosition = 0;
-    let count = 0;
-    
-    for (let j = start; j <= end; j++) {
-      sumPosition += data[j].position;
-      count++;
-    }
-    
-    smoothed.push({
-      time: data[i].time,
-      position: sumPosition / count
-    });
-  }
-  
-  return smoothed;
-};
-
-/**
- * Calculate velocities between consecutive points
- */
-const calculateVelocities = (data) => {
-  const velocities = [];
+  let highCrossings = 0;  // Count crossings of 25mm threshold
+  let lowCrossings = 0;   // Count crossings of 5mm threshold
   
   for (let i = 1; i < data.length; i++) {
-    const deltaPosition = data[i].position - data[i-1].position;
-    const deltaTime = data[i].time - data[i-1].time;
+    const prevPos = data[i-1].position;
+    const currPos = data[i].position;
     
-    if (deltaTime > 0) {
-      velocities.push(deltaPosition / deltaTime);
-    } else {
-      velocities.push(0);
+    // Check for 5mm threshold crossings
+    if (prevPos < lowThreshold && currPos >= lowThreshold) {
+      // Crossing 5mm upward
+      lowCrossings++;
+      if (lowCrossings === 1) {
+        upStart = i; // First upward crossing = ramp up start
+      }
+    } else if (prevPos > lowThreshold && currPos <= lowThreshold) {
+      // Crossing 5mm downward
+      lowCrossings++;
+      if (lowCrossings === 2) {
+        downEnd = i; // Second downward crossing = ramp down end
+        break; // We have all points we need
+      }
+    }
+    
+    // Check for 25mm threshold crossings
+    if (prevPos < highThreshold && currPos >= highThreshold) {
+      // Crossing 25mm upward
+      highCrossings++;
+      if (highCrossings === 1) {
+        upEnd = i; // First upward crossing = ramp up end
+      }
+    } else if (prevPos > highThreshold && currPos <= highThreshold) {
+      // Crossing 25mm downward
+      highCrossings++;
+      if (highCrossings === 2) {
+        downStart = i; // Second downward crossing = ramp down start
+      }
     }
   }
   
-  return velocities;
-};
-
-/**
- * Find transition points in the data
- */
-const findTransitions = (data, velocities) => {
-  const VELOCITY_THRESHOLD = SLOPE_DETECTION.VELOCITY_THRESHOLD;
-  
-  let flatToUpIndex = -1;
-  let peakIndex = -1;
-  let downToFlatIndex = -1;
-  
-  // Find flat → up transition (velocity becomes positive)
-  for (let i = 0; i < velocities.length; i++) {
-    if (velocities[i] > VELOCITY_THRESHOLD) {
-      flatToUpIndex = i;
-      break;
-    }
-  }
-  
-  if (flatToUpIndex === -1) return null;
-  
-  // Find peak (maximum position)
-  let maxPosition = data[0].position;
-  peakIndex = 0;
-  
-  for (let i = flatToUpIndex; i < data.length; i++) {
-    if (data[i].position > maxPosition) {
-      maxPosition = data[i].position;
-      peakIndex = i;
-    }
-  }
-  
-  // Find down → flat transition (velocity becomes ~0 after peak)
-  for (let i = peakIndex; i < velocities.length; i++) {
-    if (Math.abs(velocities[i]) < VELOCITY_THRESHOLD) {
-      downToFlatIndex = i;
-      break;
-    }
-  }
-  
-  if (downToFlatIndex === -1) return null;
-  
-  return {
-    flatToUp: flatToUpIndex,
-    peak: peakIndex,
-    downToFlat: downToFlatIndex
-  };
-};
-
-/**
- * Apply buffers - move markers inward by specified time
- */
-const applyBuffers = (transitions, data) => {
-  const BUFFER_SECONDS = SLOPE_DETECTION.BUFFER_SECONDS;
-  
-  // Convert seconds to approximate data points
-  const avgTimeStep = (data[data.length-1].time - data[0].time) / data.length;
-  const bufferPoints = Math.round(BUFFER_SECONDS / avgTimeStep);
-  
-  const upStart = transitions.flatToUp + bufferPoints;
-  const upEnd = transitions.peak - bufferPoints;
-  const downStart = transitions.peak + bufferPoints;
-  const downEnd = transitions.downToFlat - bufferPoints;
-  
-  // Check bounds
-  if (upStart >= upEnd || downStart >= downEnd ||
-      upStart < 0 || upEnd >= data.length ||
-      downStart < 0 || downEnd >= data.length) {
+  // Return null if we didn't find all 4 intersection points
+  if (upStart === -1 || upEnd === -1 || downStart === -1 || downEnd === -1) {
     return null;
   }
   
@@ -216,20 +154,32 @@ const applyBuffers = (transitions, data) => {
 };
 
 /**
- * Validate minimum distances between markers
+ * Validate that intersection points are in correct order and have minimum distances
  */
-const validateDistances = (indices, data) => {
-  const MIN_RAMP_SECONDS = SLOPE_DETECTION.MIN_RAMP_SECONDS;
-  const MIN_GAP_SECONDS = SLOPE_DETECTION.MIN_GAP_SECONDS;
+const validateIntersectionOrder = (intersections, data) => {
+  const { upStart, upEnd, downStart, downEnd } = intersections;
   
-  // Calculate actual time durations
-  const upDuration = data[indices.upEnd].time - data[indices.upStart].time;
-  const downDuration = data[indices.downEnd].time - data[indices.downStart].time;
-  const gapDuration = data[indices.downStart].time - data[indices.upEnd].time;
+  // Check logical order: upStart < upEnd < downStart < downEnd
+  if (!(upStart < upEnd && upEnd < downStart && downStart < downEnd)) {
+    return false;
+  }
   
-  return upDuration >= MIN_RAMP_SECONDS &&
-         downDuration >= MIN_RAMP_SECONDS &&
-         gapDuration >= MIN_GAP_SECONDS;
+  // Check minimum distances (convert to approximate data points)
+  const avgTimeStep = (data[data.length-1].time - data[0].time) / data.length;
+  const minPoints = Math.round(SLOPE_DETECTION.MIN_RAMP_SECONDS / avgTimeStep);
+  
+  // Check minimum ramp durations
+  if ((upEnd - upStart) < minPoints || (downEnd - downStart) < minPoints) {
+    return false;
+  }
+  
+  // Check minimum gap between ramps
+  const minGapPoints = Math.round(SLOPE_DETECTION.MIN_GAP_SECONDS / avgTimeStep);
+  if ((downStart - upEnd) < minGapPoints) {
+    return false;
+  }
+  
+  return true;
 };
 
 /**

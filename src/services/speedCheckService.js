@@ -98,34 +98,50 @@ export const forecastVoltageForSpeed = (targetSpeed, manualSlope) => {
 };
 
 /**
- * Calculate percentage deviations for target speeds
+ * Calculate percentage deviations between measured data points and manual regression line
  * @param {number} manualSlope - Manual adjusted slope
- * @param {Array} targetSpeeds - Array of target speeds (default from constants)
+ * @param {Array} measuredDataPoints - Array of actual measured data points {voltage, velocity}
  * @returns {Array} Array of deviation analysis objects
  */
-export const calculateDeviations = (manualSlope, targetSpeeds = SPEED_CHECK.TARGET_SPEEDS) => {
+export const calculateDeviations = (manualSlope, measuredDataPoints = []) => {
+  if (!measuredDataPoints || measuredDataPoints.length === 0) {
+    return [];
+  }
+
   const deviations = [];
 
-  targetSpeeds.forEach(targetSpeed => {
-    if (targetSpeed === 0) {
+  measuredDataPoints.forEach(measuredPoint => {
+    const { voltage: measuredVoltage, velocity: measuredVelocity } = measuredPoint;
+    
+    // Skip the origin point (0V, 0mm/s) as it should always be 0% deviation
+    if (measuredVoltage === 0) {
       deviations.push({
-        targetSpeed: 0,
-        forecastedVoltage: 0,
-        actualSpeed: 0,
+        measuredVoltage: 0,
+        measuredVelocity: 0,
+        predictedVelocity: 0,
         deviation: 0
       });
-    } else {
-      const forecastedVoltage = forecastVoltageForSpeed(targetSpeed, manualSlope);
-      const actualSpeed = manualSlope * forecastedVoltage;
-      const deviation = ((actualSpeed / targetSpeed) - 1) * 100;
-
-      deviations.push({
-        targetSpeed: targetSpeed,
-        forecastedVoltage: forecastedVoltage,
-        actualSpeed: actualSpeed,
-        deviation: deviation
-      });
+      return;
     }
+
+    // Calculate what the manual red line predicts at this voltage
+    const predictedVelocity = manualSlope * measuredVoltage;
+    
+    // Calculate percentage deviation: (measured - predicted) / predicted * 100
+    let deviation = 0;
+    if (predictedVelocity !== 0) {
+      deviation = ((measuredVelocity - predictedVelocity) / Math.abs(predictedVelocity)) * 100;
+    } else if (measuredVelocity !== 0) {
+      // Handle case where predicted is 0 but measured is not
+      deviation = measuredVelocity > 0 ? 100 : -100;
+    }
+
+    deviations.push({
+      measuredVoltage: measuredVoltage,
+      measuredVelocity: measuredVelocity,
+      predictedVelocity: predictedVelocity,
+      deviation: deviation
+    });
   });
 
   return deviations;
@@ -181,7 +197,7 @@ export const validateSpeedCheckData = (regressionData) => {
 
 /**
  * Prepare speed check analysis results
- * @param {Array} regressionData - Input regression data
+ * @param {Array} regressionData - Input regression data (measured data points)
  * @param {number} manualSlopeFactor - User adjustment factor
  * @param {string} machineType - Selected machine type
  * @returns {Object} Complete speed check analysis
@@ -199,8 +215,19 @@ export const performSpeedCheckAnalysis = (regressionData, manualSlopeFactor, mac
   // Get manual slope
   const manualSlope = getManualSlope(regression.slope, manualSlopeFactor);
   
-  // Calculate deviations
-  const deviations = calculateDeviations(manualSlope);
+  // Calculate deviations using actual measured data points (NEW LOGIC)
+  const measuredDataPoints = regressionData.map(point => ({
+    voltage: point.voltage,
+    velocity: point.velocity
+  }));
+  
+  // Add origin point to measured data if not present
+  const hasOrigin = measuredDataPoints.some(point => point.voltage === 0);
+  if (!hasOrigin) {
+    measuredDataPoints.unshift({ voltage: 0, velocity: 0 });
+  }
+  
+  const deviations = calculateDeviations(manualSlope, measuredDataPoints);
   
   // Get machine parameters
   const machineParams = getMachineParams(machineType);
@@ -216,9 +243,10 @@ export const performSpeedCheckAnalysis = (regressionData, manualSlopeFactor, mac
     dataPointsUsed: regression.dataPointsUsed,
     voltageRange: regression.voltageRange,
     deviations: deviations,
+    measuredDataPoints: measuredDataPoints, // Include measured data points
     machineType: machineType,
     machineParams: machineParams,
-    targetSpeeds: SPEED_CHECK.TARGET_SPEEDS
+    targetSpeeds: SPEED_CHECK.TARGET_SPEEDS // Keep for backward compatibility
   };
 };
 
@@ -245,7 +273,8 @@ export const formatSpeedCheckExport = (analysis, testFormData = null) => {
         voltageRange: analysis.voltageRange,
         dataPointsUsed: analysis.dataPointsUsed
       },
-      deviations: analysis.deviations
+      deviations: analysis.deviations,
+      measuredDataPoints: analysis.measuredDataPoints
     },
     timestamp: new Date().toISOString()
   };

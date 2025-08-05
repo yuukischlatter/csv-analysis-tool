@@ -282,7 +282,7 @@ const SpeedCheckAnalysis = ({
                   analysis={analysis}
                   regressionData={regressionData}
                   width={1100}
-                  height={550}
+                  height={800}
                 />
               </div>
             </>

@@ -197,32 +197,20 @@ export const addDeviationAnnotations = (g, deviations, xScale, yScale, visibleRa
       
       // Position label near the measured data point (offset slightly to avoid overlap)
       const labelX = xScale(measuredVoltage);
-      const labelY = yScale(measuredVelocity) - 12; // Offset above the diamond symbol
+      const labelY = yScale(measuredVelocity) - 15; // Offset above the diamond symbol
       
       // Get color based on deviation magnitude
       const labelColor = getDeviationColor(devPercent);
       
-      // Add background rectangle for better readability
+      // Add percentage text directly without background box
       const labelText = formatDeviationLabel(devPercent);
-      const textWidth = labelText.length * 3.5; // Approximate text width
       
-      g.append("rect")
-        .attr("x", labelX - textWidth/2 - 2)
-        .attr("y", labelY - 6)
-        .attr("width", textWidth + 4)
-        .attr("height", 10)
-        .attr("fill", "white")
-        .attr("stroke", labelColor)
-        .attr("stroke-width", 0.5)
-        .attr("opacity", 0.9)
-        .attr("rx", 2);
-      
-      // Add percentage text
+      // Add percentage text - MADE 50% BIGGER TOTAL (30% + 20%)
       g.append("text")
         .attr("x", labelX)
         .attr("y", labelY)
         .attr("text-anchor", "middle")
-        .attr("font-size", CHART_FONTS.DEVIATION_LABELS)
+        .attr("font-size", "13px") // Increased from 11px to 13px (additional 20% increase)
         .attr("fill", labelColor)
         .attr("font-weight", "bold")
         .text(labelText);

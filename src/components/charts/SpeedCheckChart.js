@@ -13,7 +13,7 @@ import {
 } from '../../utils/chartUtils';
 import { CHART_DIMENSIONS } from '../../constants/charts';
 
-const SpeedCheckChart = ({ analysis, regressionData, width = CHART_DIMENSIONS.SPEED_CHECK_DUAL.width, height = CHART_DIMENSIONS.SPEED_CHECK_DUAL.height }) => {
+const SpeedCheckChart = ({ analysis, regressionData, width = CHART_DIMENSIONS.SPEED_CHECK_DUAL.width, height = CHART_DIMENSIONS.SPEED_CHECK_DUAL.height}) => {
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -24,24 +24,17 @@ const SpeedCheckChart = ({ analysis, regressionData, width = CHART_DIMENSIONS.SP
     // Clear previous chart
     d3.select(svgRef.current).selectAll("*").remove();
 
-    renderDualCharts();
+    renderSingleChart();
   }, [analysis, regressionData, width, height]);
 
-  const renderDualCharts = () => {
+  const renderSingleChart = () => {
     const svg = d3.select(svgRef.current)
       .attr("width", width)
       .attr("height", height);
 
-    // Chart layout - 65% main chart, 30% overview
-    const mainChartWidth = Math.floor(width * 0.65);
-    const overviewChartWidth = Math.floor(width * 0.3);
-    const spacing = 20;
-
-    // Render main chart (0-4.5V focused)
-    renderMainChart(svg, 0, mainChartWidth, height);
-    
-    // Render overview chart (0-11V full range, no negative voltages)
-    renderOverviewChart(svg, mainChartWidth + spacing, overviewChartWidth, height);
+    // Single chart takes 95% width
+    const chartWidth = Math.floor(width * 0.95);
+    renderMainChart(svg, 0, chartWidth, height);
   };
 
   const renderMainChart = (svg, xOffset, chartContainerWidth, chartContainerHeight) => {
@@ -90,72 +83,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = CHART_DIMENSIONS.SP
 
     // Add main chart legend
     addMainLegend(g, chartWidth, chartHeight);
-  };
-
-  const renderOverviewChart = (svg, xOffset, chartContainerWidth, chartContainerHeight) => {
-    const margin = { top: 50, right: 20, bottom: 70, left: 60 };
-    const chartWidth = chartContainerWidth - margin.left - margin.right;
-    const chartHeight = chartContainerHeight - margin.top - margin.bottom;
-
-    const g = svg.append("g")
-      .attr("transform", `translate(${xOffset + margin.left},${margin.top})`);
-
-    // Overview chart ranges - 0-11V only (no negative values)
-    const xDomain = [0, 11];
-    const yDomain = [0, 35];
-
-    // Create scales
-    const xScale = createScale(xDomain, [0, chartWidth]);
-    const yScale = createScale(yDomain, [chartHeight, 0]);
-
-    // Add simplified grid lines
-    addGridLines(g, xScale, yScale, chartWidth, chartHeight);
-
-    // Add axes
-    addAxes(g, xScale, yScale, chartWidth, chartHeight, {
-      x: "Voltage [V]",
-      y: "Speed [mm/s]"
-    });
-
-    // Add chart title
-    addChartTitle(g, "Full Range Overview", chartWidth);
-
-    // Get overview data from real user data (positive voltages only, including origin)
-    const overviewData = getPositiveUserDataWithOrigin();
-
-    // Add data points only (simplified for overview)
-    g.selectAll(".overview-data-point")
-      .data(overviewData)
-      .enter().append("circle")
-      .attr("class", "overview-data-point")
-      .attr("cx", d => xScale(d.voltage))
-      .attr("cy", d => yScale(d.velocity))
-      .attr("r", 2)
-      .attr("fill", "black")
-      .attr("opacity", 0.7);
-
-    // Add manual regression line (red) - extended across 0-11V range
-    const manualLineData = [];
-    for (let v = 0; v <= 11; v += 0.2) {
-      manualLineData.push({
-        voltage: v,
-        velocity: analysis.manualSlope * v
-      });
-    }
-
-    const line = d3.line()
-      .x(d => xScale(d.voltage))
-      .y(d => yScale(d.velocity));
-
-    g.append("path")
-      .datum(manualLineData)
-      .attr("fill", "none")
-      .attr("stroke", "red")
-      .attr("stroke-width", 2)
-      .attr("d", line);
-
-    // Add simple legend for overview
-    addOverviewLegend(g, chartWidth);
   };
 
   const getPositiveUserDataWithOrigin = () => {
@@ -226,57 +153,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = CHART_DIMENSIONS.SP
         .style("fill", "black")
         .text(item.label);
     });
-
-    // Legend border
-    const legendBox = legend.node().getBBox();
-    legend.insert("rect", ":first-child")
-      .attr("x", legendBox.x - 3)
-      .attr("y", legendBox.y - 3)
-      .attr("width", legendBox.width + 6)
-      .attr("height", legendBox.height + 6)
-      .attr("fill", "white")
-      .attr("stroke", "#ccc")
-      .attr("stroke-width", 1)
-      .attr("opacity", 0.9);
-  };
-
-  const addOverviewLegend = (g, chartWidth) => {
-    const legend = g.append("g")
-      .attr("class", "overview-legend")
-      .attr("transform", `translate(${chartWidth - 120}, 20)`);
-
-    // Messwerte
-    const legendRow1 = legend.append("g");
-    legendRow1.append("circle")
-      .attr("cx", 5)
-      .attr("cy", 0)
-      .attr("r", 3)
-      .attr("fill", "black");
-    legendRow1.append("text")
-      .attr("x", 15)
-      .attr("y", 0)
-      .attr("dy", "0.35em")
-      .style("font-size", "9px")
-      .style("fill", "black")
-      .text("Messwerte (user data)");
-
-    // Manual regression
-    const legendRow2 = legend.append("g")
-      .attr("transform", "translate(0, 15)");
-    legendRow2.append("line")
-      .attr("x1", 0)
-      .attr("x2", 10)
-      .attr("y1", 0)
-      .attr("y2", 0)
-      .attr("stroke", "red")
-      .attr("stroke-width", 2);
-    legendRow2.append("text")
-      .attr("x", 15)
-      .attr("y", 0)
-      .attr("dy", "0.35em")
-      .style("font-size", "9px")
-      .style("fill", "black")
-      .text("Regression (manual)");
 
     // Legend border
     const legendBox = legend.node().getBBox();

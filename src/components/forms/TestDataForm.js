@@ -39,7 +39,30 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }
     setFormData(newFormData);
     
     if (onFormDataChange) {
-      onFormDataChange(newFormData);
+      // Format date for PDF export if it's a date field
+      const processedFormData = { ...newFormData };
+      if (field === 'datum' && value) {
+        // Keep the original ISO format for internal use, but add formatted version
+        processedFormData.datumFormatted = formatDateForPDF(value);
+      } else if (processedFormData.datum) {
+        // Ensure formatted date is always available
+        processedFormData.datumFormatted = formatDateForPDF(processedFormData.datum);
+      }
+      
+      onFormDataChange(processedFormData);
+    }
+  };
+
+  // Helper function to format date from YYYY-MM-DD to DD.MM.YYYY
+  const formatDateForPDF = (isoDate) => {
+    if (!isoDate) return '';
+    
+    try {
+      const [year, month, day] = isoDate.split('-');
+      return `${day}.${month}.${year}`;
+    } catch (error) {
+      console.warn('Error formatting date:', error);
+      return isoDate; // Return original if formatting fails
     }
   };
 

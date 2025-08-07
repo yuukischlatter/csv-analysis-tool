@@ -257,6 +257,9 @@ npm run build
 cd build
 live-server
 
+# For .exe in Admin
+npm run dist
+
 # Alternative: Dev Server
 npm start
 

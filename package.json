@@ -1,6 +1,6 @@
 {
   "name": "speedchecker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SpeedChecker Tool",
   "main": "electron.js",
   "homepage": "./",

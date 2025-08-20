@@ -7,6 +7,30 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { createPDFDataPackage } from '../utils/pdfDataMapper';
 
+// Get version from package.json
+const getAppVersion = () => {
+  try {
+    // In Electron environment, we can access the main process
+    if (window.require) {
+      const { remote } = window.require('electron');
+      const app = remote ? remote.app : window.require('electron').app;
+      return app.getVersion();
+    }
+    
+    // Fallback: try to read package.json directly
+    if (window.fs && window.fs.readFileSync) {
+      const packageJson = JSON.parse(window.fs.readFileSync('package.json', 'utf8'));
+      return packageJson.version;
+    }
+    
+    // If neither works, return a default
+    return '1.0.0';
+  } catch (error) {
+    console.warn('Could not retrieve app version:', error);
+    return '1.0.0';
+  }
+};
+
 /**
  * Main PDF generation function
  * @param {Object} reactData - Data from React app
@@ -41,6 +65,9 @@ export const generatePDF = (reactData) => {
     addInfoBoxes(doc, pdfData.testFormData, colors);
     addResultsSection(doc, pdfData.voltageData, pdfData.speedCheckResults, pdfData.systemParameters, pageWidth, colors);
     
+    // Add version information at bottom left
+    addVersionInfo(doc, colors);
+    
     doc.save(pdfData.filename);
     console.log(`PDF generated: ${pdfData.filename}`);
     
@@ -49,6 +76,17 @@ export const generatePDF = (reactData) => {
     throw new Error(`PDF generation failed: ${error.message}`);
   }
 };
+
+function addVersionInfo(doc, colors) {
+  const version = getAppVersion();
+  
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...colors.textLight);
+  
+  // Position at bottom left (20mm from left, 290mm from top)
+  doc.text(`SpeedChecker v${version}`, 20, 290);
+}
 
 function addHeader(doc, pageWidth, colors) {
   // Title - moved up by 6mm

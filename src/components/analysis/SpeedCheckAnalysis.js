@@ -163,129 +163,129 @@ const SpeedCheckAnalysis = ({
             </div>
           )}
 
-          {/* Controls */}
+          {/* Chart Container - MOVED TO TOP */}
           {analysis && (
-            <>
-              <div style={{ 
-                marginBottom: '20px',
-                padding: '15px',
-                backgroundColor: '#fafafa',
-                borderRadius: '4px',
-                border: '1px solid #eee'
-              }}>
-                
-                {/* Top Row: Calculated Slope (left) + Direct Slope Input (right) */}
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: '1fr 1fr', 
-                  gap: '20px',
-                  marginBottom: '15px'
-                }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
-                      Calculated Slope (0-4V):
-                    </label>
-                    <div style={{ 
-                      padding: '8px 12px', 
-                      backgroundColor: '#e9ecef', 
-                      borderRadius: '4px',
-                      fontFamily: 'monospace',
-                      fontSize: '14px'
-                    }}>
-                      {analysis.calculatedSlope.toFixed(4)} mm/s per V
-                    </div>
-                  </div>
+            <div style={{ 
+              width: '100%',
+              overflow: 'hidden',
+              marginBottom: '20px'
+            }}>
+              <SpeedCheckChart 
+                analysis={analysis}
+                regressionData={regressionData}
+                width={1100}
+                height={800}
+              />
+            </div>
+          )}
 
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
-                      Direct Slope Input (mm/s per V):
-                    </label>
-                    <input
-                      type="number"
-                      step="0.0001"
-                      value={directSlopeInput}
-                      onChange={handleDirectSlopeChange}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        fontSize: '14px',
-                        fontFamily: 'monospace'
-                      }}
-                    />
+          {/* Controls - MOVED TO BOTTOM */}
+          {analysis && (
+            <div style={{ 
+              padding: '15px',
+              backgroundColor: '#fafafa',
+              borderRadius: '4px',
+              border: '1px solid #eee'
+            }}>
+              
+              {/* Top Row: Calculated Slope (left) + Direct Slope Input (right) */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '20px',
+                marginBottom: '15px'
+              }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
+                    Calculated Slope (0-4V):
+                  </label>
+                  <div style={{ 
+                    padding: '8px 12px', 
+                    backgroundColor: '#e9ecef', 
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    fontSize: '14px'
+                  }}>
+                    {analysis.calculatedSlope.toFixed(4)} mm/s per V
                   </div>
                 </div>
 
-                {/* Bottom Row: Full-width slider (left) + Small reset button (right) */}
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: '1fr auto', 
-                  gap: '15px',
-                  alignItems: 'end'
-                }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold' }}>
-                      Manual Slope Factor: {manualSlopeFactor.toFixed(2)}
-                    </label>
-                    <input
-                      type="range"
-                      min={SPEED_CHECK.SLOPE_FACTOR_RANGE.min}
-                      max={SPEED_CHECK.SLOPE_FACTOR_RANGE.max}
-                      step={SPEED_CHECK.SLOPE_FACTOR_RANGE.step}
-                      value={manualSlopeFactor}
-                      onChange={handleSliderChange}
-                      style={{
-                        width: '100%',
-                        height: '6px',
-                        borderRadius: '3px',
-                        background: '#ddd',
-                        outline: 'none'
-                      }}
-                    />
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      fontSize: '12px', 
-                      color: '#666',
-                      marginTop: '5px'
-                    }}>
-                      <span>{SPEED_CHECK.SLOPE_FACTOR_RANGE.min}</span>
-                      <span>{SPEED_CHECK.SLOPE_FACTOR_RANGE.max}</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleResetToCalculated}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
+                    Direct Slope Input (mm/s per V):
+                  </label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={directSlopeInput}
+                    onChange={handleDirectSlopeChange}
                     style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#6c757d',
-                      color: 'white',
-                      border: 'none',
+                      width: '100%',
+                      padding: '8px',
+                      border: '1px solid #ccc',
                       borderRadius: '4px',
-                      cursor: 'pointer',
                       fontSize: '14px',
-                      whiteSpace: 'nowrap'
+                      fontFamily: 'monospace'
                     }}
-                  >
-                    Reset to Calculated
-                  </button>
+                  />
                 </div>
               </div>
 
-              {/* Chart Container */}
+              {/* Bottom Row: Full-width slider (left) + Small reset button (right) */}
               <div style={{ 
-                width: '100%',
-                overflow: 'hidden'
+                display: 'grid', 
+                gridTemplateColumns: '1fr auto', 
+                gap: '15px',
+                alignItems: 'end'
               }}>
-                <SpeedCheckChart 
-                  analysis={analysis}
-                  regressionData={regressionData}
-                  width={1100}
-                  height={800}
-                />
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold' }}>
+                    Manual Slope Factor: {manualSlopeFactor.toFixed(2)}
+                  </label>
+                  <input
+                    type="range"
+                    min={SPEED_CHECK.SLOPE_FACTOR_RANGE.min}
+                    max={SPEED_CHECK.SLOPE_FACTOR_RANGE.max}
+                    step={SPEED_CHECK.SLOPE_FACTOR_RANGE.step}
+                    value={manualSlopeFactor}
+                    onChange={handleSliderChange}
+                    style={{
+                      width: '100%',
+                      height: '6px',
+                      borderRadius: '3px',
+                      background: '#ddd',
+                      outline: 'none'
+                    }}
+                  />
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    fontSize: '12px', 
+                    color: '#666',
+                    marginTop: '5px'
+                  }}>
+                    <span>{SPEED_CHECK.SLOPE_FACTOR_RANGE.min}</span>
+                    <span>{SPEED_CHECK.SLOPE_FACTOR_RANGE.max}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleResetToCalculated}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Reset to Calculated
+                </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}

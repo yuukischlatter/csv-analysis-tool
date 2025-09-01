@@ -1,6 +1,7 @@
 import React from 'react';
 import { createUserAssignedVoltageMapping, downloadDualCSV } from '../services/voltageMapper';
 import { generatePDF } from '../services/pdfGenerator';
+import DatabaseService from '../services/databaseService';
 
 const ExportContainer = ({
   dualSlopeResults,
@@ -8,6 +9,9 @@ const ExportContainer = ({
   testFormData,
   speedCheckResults,
   regressionData,
+  processedFiles,  // Add this prop to get original data
+  approvalStatus,  // Add this prop
+  manuallyAdjusted, // Add this prop
   setError
 }) => {
 
@@ -27,7 +31,7 @@ const ExportContainer = ({
     }
   };
 
-  const handlePDFExport = () => {
+  const handlePDFExport = async () => {
     if (Object.keys(voltageAssignments).length === 0) {
       alert('No voltage assignments to export');
       return;
@@ -40,17 +44,77 @@ const ExportContainer = ({
 
     try {
       const mappedResults = createUserAssignedVoltageMapping(dualSlopeResults, voltageAssignments);
+      
+      // Generate PDF
       generatePDF({
         testFormData,
         voltageData: mappedResults,
         speedCheckResults,
         regressionData
       });
+      
       console.log('PDF export successful');
+      
+      // NEW: Save project to database after successful PDF generation
+      await saveProjectSnapshot(mappedResults);
+      
     } catch (error) {
       console.error('PDF Export failed:', error);
       setError(`PDF Export failed: ${error.message}`);
     }
+  };
+
+  // NEW: Save complete project snapshot to database
+  const saveProjectSnapshot = async (mappedResults) => {
+    try {
+      // Initialize database service
+      const dbService = await DatabaseService.create();
+      
+      // Prepare data for saving
+      const projectData = {
+        testFormData,
+        dualSlopeResults,
+        voltageAssignments,
+        approvalStatus,
+        manuallyAdjusted,
+        regressionData,
+        speedCheckResults,
+        processedFiles,
+        pdfFilename: generatePDFFilename(testFormData)
+      };
+      
+      // Save to database
+      const projectId = await dbService.saveProjectSnapshot(projectData);
+      
+      if (projectId) {
+        console.log(`✓ Project saved automatically: ${projectId}`);
+        // Optional: Show user notification (non-intrusive)
+        showSaveNotification('Project saved successfully');
+      }
+      
+    } catch (error) {
+      console.error('Project save failed:', error);
+      // Don't show error to user - this is background functionality
+      // but log it for debugging
+    }
+  };
+
+  // Generate PDF filename based on form data
+  const generatePDFFilename = (testFormData) => {
+    if (testFormData && testFormData.auftragsNr) {
+      const date = testFormData.datum || new Date().toISOString().split('T')[0];
+      return `SpeedChecker_Report_${testFormData.auftragsNr}_${date}.pdf`;
+    }
+    return `SpeedChecker_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+  };
+
+  // Show non-intrusive save notification
+  const showSaveNotification = (message) => {
+    // Optional: Add a subtle notification
+    console.log(`💾 ${message}`);
+    
+    // You could add a toast notification here if desired
+    // For now, just console log to keep it simple
   };
 
   // Don't render if no voltage assignments

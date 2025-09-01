@@ -1,14 +1,14 @@
 /**
- * Simplified Dual Slope Detection Service
- * Uses fixed position thresholds (5mm and 25mm) for reliable detection
+ * Triangle-Based Dual Slope Detection Service
+ * Uses triangle peak detection with adaptive thresholds for reliable detection
  */
 
 import { SLOPE_DETECTION, FALLBACK_PERCENTAGES, DATA_VALIDATION } from '../constants/analysis';
 
-// Fixed position thresholds for intersection detection
-const POSITION_THRESHOLDS = {
-  LOW: 5.0,    // 5mm threshold
-  HIGH: 25.0   // 25mm threshold
+// Triangle detection thresholds (percentages of total range)
+const TRIANGLE_THRESHOLDS = {
+  UPPER_PERCENT: 0.8,  // 90% of range from minimum (where slopes end/start near peak)  
+  LOWER_PERCENT: 0.2   // 10% of range from minimum (baseline level)
 };
 
 export const detectDualSlopes = (data, fileName) => {
@@ -17,173 +17,136 @@ export const detectDualSlopes = (data, fileName) => {
   }
 
   try {
-    // Try fixed position threshold detection
-    const result = detectByPositionThresholds(data, fileName);
+    // Try triangle-based detection
+    const result = detectTriangleBasedMarkers(data, fileName);
     if (result) {
       return result;
     }
   } catch (error) {
-    console.warn(`Position threshold detection failed for ${fileName}:`, error.message);
+    console.warn(`Triangle detection failed for ${fileName}:`, error.message);
   }
 
-  // Immediate fallback to percentage-based markers
+  // Fallback to percentage-based markers
   console.log(`Using fallback markers for ${fileName}`);
   return generateDualFallbackMarkers(data, fileName);
 };
 
 /**
- * Detect slopes using fixed position thresholds (5mm and 25mm)
+ * Triangle-based detection - find markers based on peak and slopes
  */
-const detectByPositionThresholds = (data, fileName) => {
-  const lowThreshold = POSITION_THRESHOLDS.LOW;
-  const highThreshold = POSITION_THRESHOLDS.HIGH;
+const detectTriangleBasedMarkers = (data, fileName) => {
+  // Find global maximum and minimum
+  const positions = data.map(d => d.position);
+  const maxPos = Math.max(...positions);
+  const minPos = Math.min(...positions);
+  const maxIndex = positions.indexOf(maxPos);
   
-  // Find intersection points
-  const intersections = findPositionIntersections(data, lowThreshold, highThreshold);
-  if (!intersections) {
+  const totalRange = maxPos - minPos;
+  console.log(`Triangle detection: peak at index ${maxIndex}, range ${minPos.toFixed(1)} to ${maxPos.toFixed(1)} mm`);
+  
+  if (totalRange < 1.0) {
+    console.log(`Insufficient range for triangle detection: ${totalRange.toFixed(1)}mm`);
     return null;
   }
   
-  // Validate that we have all 4 intersection points
-  if (!intersections.upStart || !intersections.upEnd || 
-      !intersections.downStart || !intersections.downEnd) {
+  // Calculate thresholds based on position range
+  const upperThreshold = minPos + totalRange * TRIANGLE_THRESHOLDS.UPPER_PERCENT;
+  const lowerThreshold = minPos + totalRange * TRIANGLE_THRESHOLDS.LOWER_PERCENT;
+  
+  console.log(`Thresholds: lower=${lowerThreshold.toFixed(1)}mm, upper=${upperThreshold.toFixed(1)}mm`);
+  
+  // RAMP UP: Go left from peak
+  let upEnd = -1;  // Where we drop below 90% (end of ramp up)
+  let upStart = -1; // Where we reach baseline (start of ramp up)
+  
+  for (let i = maxIndex; i >= 0; i--) {
+    if (upEnd === -1 && data[i].position < upperThreshold) {
+      upEnd = i;
+      console.log(`Ramp up ends at index ${i}, pos=${data[i].position.toFixed(3)}mm`);
+    }
+    
+    if (upEnd !== -1 && data[i].position < lowerThreshold) {
+      upStart = i;
+      console.log(`Ramp up starts at index ${i}, pos=${data[i].position.toFixed(3)}mm`);
+      break;
+    }
+  }
+  
+  // RAMP DOWN: Go right from peak
+  let downStart = -1; // Where we drop below 90% (start of ramp down)
+  let downEnd = -1;   // Where we reach baseline (end of ramp down)
+  
+  for (let i = maxIndex; i < data.length; i++) {
+    if (downStart === -1 && data[i].position < upperThreshold) {
+      downStart = i;
+      console.log(`Ramp down starts at index ${i}, pos=${data[i].position.toFixed(3)}mm`);
+    }
+    
+    if (downStart !== -1 && data[i].position < lowerThreshold) {
+      downEnd = i;
+      console.log(`Ramp down ends at index ${i}, pos=${data[i].position.toFixed(3)}mm`);
+      break;
+    }
+  }
+  
+  // Check if we found all markers
+  if (upStart === -1 || upEnd === -1 || downStart === -1 || downEnd === -1) {
+    console.log(`Failed to find all triangle markers: upStart=${upStart}, upEnd=${upEnd}, downStart=${downStart}, downEnd=${downEnd}`);
     return null;
   }
   
-  // Validate minimum distances and ordering
-  if (!validateIntersectionOrder(intersections, data)) {
+  // Apply small buffer (1% of total duration)
+  const bufferSize = Math.max(3, Math.floor(data.length * 0.01));
+  
+  upStart = Math.max(0, upStart - bufferSize);
+  upEnd = Math.min(data.length - 1, upEnd + bufferSize);
+  downStart = Math.max(0, downStart - bufferSize);
+  downEnd = Math.min(data.length - 1, downEnd + bufferSize);
+  
+  // Final validation
+  if (!(upStart < upEnd && upEnd < downStart && downStart < downEnd)) {
+    console.log(`Invalid triangle marker order: ${upStart} < ${upEnd} < ${downStart} < ${downEnd}`);
     return null;
   }
+  
+  console.log(`Triangle markers found:`);
+  console.log(`  upStart: idx=${upStart}, pos=${data[upStart].position.toFixed(3)}mm`);
+  console.log(`  upEnd: idx=${upEnd}, pos=${data[upEnd].position.toFixed(3)}mm`);
+  console.log(`  downStart: idx=${downStart}, pos=${data[downStart].position.toFixed(3)}mm`);
+  console.log(`  downEnd: idx=${downEnd}, pos=${data[downEnd].position.toFixed(3)}mm`);
   
   // Calculate velocities for each ramp
-  const upVelocity = calculateVelocity(data, {
-    startIndex: intersections.upStart,
-    endIndex: intersections.upEnd
-  });
-  
-  const downVelocity = Math.abs(calculateVelocity(data, {
-    startIndex: intersections.downStart,
-    endIndex: intersections.downEnd
-  }));
+  const upVelocity = calculateVelocity(data, { startIndex: upStart, endIndex: upEnd });
+  const downVelocity = Math.abs(calculateVelocity(data, { startIndex: downStart, endIndex: downEnd }));
   
   return {
     fileName: fileName,
     rampUp: {
-      startIndex: intersections.upStart,
-      endIndex: intersections.upEnd,
-      startTime: data[intersections.upStart].time,
-      endTime: data[intersections.upEnd].time,
-      startPosition: data[intersections.upStart].position,
-      endPosition: data[intersections.upEnd].position,
+      startIndex: upStart,
+      endIndex: upEnd,
+      startTime: data[upStart].time,
+      endTime: data[upEnd].time,
+      startPosition: data[upStart].position,
+      endPosition: data[upEnd].position,
       velocity: upVelocity,
-      duration: data[intersections.upEnd].time - data[intersections.upStart].time
+      duration: data[upEnd].time - data[upStart].time
     },
     rampDown: {
-      startIndex: intersections.downStart,
-      endIndex: intersections.downEnd,
-      startTime: data[intersections.downStart].time,
-      endTime: data[intersections.downEnd].time,
-      startPosition: data[intersections.downStart].position,
-      endPosition: data[intersections.downEnd].position,
+      startIndex: downStart,
+      endIndex: downEnd,
+      startTime: data[downStart].time,
+      endTime: data[downEnd].time,
+      startPosition: data[downStart].position,
+      endPosition: data[downEnd].position,
       velocity: downVelocity,
-      duration: data[intersections.downEnd].time - data[intersections.downStart].time
+      duration: data[downEnd].time - data[downStart].time
     },
-    detectionMethod: 'automatic'
+    detectionMethod: 'triangle_based'
   };
 };
 
 /**
- * Find position intersections with 5mm and 25mm thresholds
- */
-const findPositionIntersections = (data, lowThreshold, highThreshold) => {
-  let upStart = -1;    // First crossing of 5mm (going up)
-  let upEnd = -1;      // First crossing of 25mm (going up)
-  let downStart = -1;  // Second crossing of 25mm (going down)
-  let downEnd = -1;    // Second crossing of 5mm (going down)
-  
-  let highCrossings = 0;  // Count crossings of 25mm threshold
-  let lowCrossings = 0;   // Count crossings of 5mm threshold
-  
-  for (let i = 1; i < data.length; i++) {
-    const prevPos = data[i-1].position;
-    const currPos = data[i].position;
-    
-    // Check for 5mm threshold crossings
-    if (prevPos < lowThreshold && currPos >= lowThreshold) {
-      // Crossing 5mm upward
-      lowCrossings++;
-      if (lowCrossings === 1) {
-        upStart = i; // First upward crossing = ramp up start
-      }
-    } else if (prevPos > lowThreshold && currPos <= lowThreshold) {
-      // Crossing 5mm downward
-      lowCrossings++;
-      if (lowCrossings === 2) {
-        downEnd = i; // Second downward crossing = ramp down end
-        break; // We have all points we need
-      }
-    }
-    
-    // Check for 25mm threshold crossings
-    if (prevPos < highThreshold && currPos >= highThreshold) {
-      // Crossing 25mm upward
-      highCrossings++;
-      if (highCrossings === 1) {
-        upEnd = i; // First upward crossing = ramp up end
-      }
-    } else if (prevPos > highThreshold && currPos <= highThreshold) {
-      // Crossing 25mm downward
-      highCrossings++;
-      if (highCrossings === 2) {
-        downStart = i; // Second downward crossing = ramp down start
-      }
-    }
-  }
-  
-  // Return null if we didn't find all 4 intersection points
-  if (upStart === -1 || upEnd === -1 || downStart === -1 || downEnd === -1) {
-    return null;
-  }
-  
-  return {
-    upStart,
-    upEnd,
-    downStart,
-    downEnd
-  };
-};
-
-/**
- * Validate that intersection points are in correct order and have minimum distances
- */
-const validateIntersectionOrder = (intersections, data) => {
-  const { upStart, upEnd, downStart, downEnd } = intersections;
-  
-  // Check logical order: upStart < upEnd < downStart < downEnd
-  if (!(upStart < upEnd && upEnd < downStart && downStart < downEnd)) {
-    return false;
-  }
-  
-  // Check minimum distances (convert to approximate data points)
-  const avgTimeStep = (data[data.length-1].time - data[0].time) / data.length;
-  const minPoints = Math.round(SLOPE_DETECTION.MIN_RAMP_SECONDS / avgTimeStep);
-  
-  // Check minimum ramp durations
-  if ((upEnd - upStart) < minPoints || (downEnd - downStart) < minPoints) {
-    return false;
-  }
-  
-  // Check minimum gap between ramps
-  const minGapPoints = Math.round(SLOPE_DETECTION.MIN_GAP_SECONDS / avgTimeStep);
-  if ((downStart - upEnd) < minGapPoints) {
-    return false;
-  }
-  
-  return true;
-};
-
-/**
- * Generate fallback markers when detection fails
+ * Generate fallback markers when triangle detection fails
  */
 export const generateDualFallbackMarkers = (data, fileName) => {
   if (!data || data.length < DATA_VALIDATION.MIN_DATA_POINTS) {

@@ -44,19 +44,20 @@ const ExportContainer = ({
 
     try {
       const mappedResults = createUserAssignedVoltageMapping(dualSlopeResults, voltageAssignments);
+      const pdfFilename = generatePDFFilename(testFormData);
       
-      // Generate PDF
-      generatePDF({
+      // Generate PDF (downloads to user) and get PDF data for server
+      const pdfData = generatePDF({
         testFormData,
         voltageData: mappedResults,
         speedCheckResults,
         regressionData
-      });
+      }, true); // Pass true to also return PDF data
       
       console.log('PDF export successful');
       
-      // Save project to SQLite database file
-      await saveProjectToDatabase(mappedResults);
+      // Save project to database with PDF data
+      await saveProjectToDatabase(mappedResults, pdfData, pdfFilename);
       
     } catch (error) {
       console.error('PDF Export failed:', error);
@@ -64,8 +65,8 @@ const ExportContainer = ({
     }
   };
 
-  // Save complete project snapshot to SQLite database file
-  const saveProjectToDatabase = async (mappedResults) => {
+  // Save project to SQLite database with PDF data
+  const saveProjectToDatabase = async (mappedResults, pdfData, pdfFilename) => {
     try {
       // Check if API server is running
       const isConnected = await ApiClient.checkConnection();
@@ -84,7 +85,8 @@ const ExportContainer = ({
         regressionData,
         speedCheckResults,
         processedFiles,
-        pdfFilename: generatePDFFilename(testFormData)
+        pdfFilename: pdfFilename,
+        pdfData: pdfData // PDF ArrayBuffer data
       };
       
       // Save to SQLite database via API
@@ -92,12 +94,14 @@ const ExportContainer = ({
       
       if (result.success) {
         console.log(`✅ Project saved to database: ${result.folderName}`);
-        showSaveNotification(`Project saved to database (${result.action})`);
+        if (result.pdfSaved) {
+          console.log(`📄 PDF copy saved to server: ${result.pdfPath}`);
+        }
+        showSaveNotification(`Project and PDF saved to server (${result.action})`);
       }
       
     } catch (error) {
       console.error('Database save failed:', error);
-      // Don't show error to user - this is background functionality
       console.warn('💡 Make sure to run: npm run server (in separate terminal)');
     }
   };

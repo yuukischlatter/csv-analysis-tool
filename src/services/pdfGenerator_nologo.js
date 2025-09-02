@@ -1,6 +1,6 @@
 /**
  * PDF Generator Service for Schlatter Speed Check Reports
- * Adapted from standalone version to work with React app data
+ * MODIFIED: Now also returns PDF data for server storage
  */
 
 import { jsPDF } from 'jspdf';
@@ -32,10 +32,11 @@ const getAppVersion = () => {
 };
 
 /**
- * Main PDF generation function
+ * Main PDF generation function - MODIFIED
  * @param {Object} reactData - Data from React app
+ * @param {boolean} returnData - If true, also return PDF data for server storage
  */
-export const generatePDF = (reactData) => {
+export const generatePDF = (reactData, returnData = false) => {
   try {
     console.log('Starting PDF generation...');
     
@@ -68,8 +69,15 @@ export const generatePDF = (reactData) => {
     // Add version information at bottom left
     addVersionInfo(doc, colors);
     
+    // Save PDF (downloads to user as before)
     doc.save(pdfData.filename);
     console.log(`PDF generated: ${pdfData.filename}`);
+    
+    // NEW: Also return PDF data for server storage if requested
+    if (returnData) {
+      const pdfArrayBuffer = doc.output('arraybuffer');
+      return pdfArrayBuffer;
+    }
     
   } catch (error) {
     console.error('PDF generation failed:', error);

@@ -10,7 +10,8 @@ const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-const PORT = 3001;
+//const PORT = 3001;
+const PORT = 80;
 
 // Middleware
 app.use(cors());
@@ -473,7 +474,8 @@ app.get('*', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+//app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 SpeedChecker server running at http://localhost:${PORT}`);
   console.log(`📊 Database file: ${DB_PATH}`);
   console.log(`📁 Project data: ${PROJECTS_DIR}`);

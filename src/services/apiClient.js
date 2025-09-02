@@ -3,7 +3,10 @@
  * Handles communication with Express backend
  */
 
-const API_BASE_URL = 'http://localhost:3001/api';
+//const API_BASE_URL = 'http://localhost:3001/api';
+//const API_BASE_URL = `http://${window.location.hostname}:3001/api`;
+const API_BASE_URL = `http://${window.location.hostname}/api`;
+//http://10.4.1.83:8080
 
 class ApiClient {
   // Save project to SQLite database file with PDF data

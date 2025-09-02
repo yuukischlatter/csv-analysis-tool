@@ -1,7 +1,7 @@
 import React from 'react';
 import { createUserAssignedVoltageMapping, downloadDualCSV } from '../services/voltageMapper';
 import { generatePDF } from '../services/pdfGenerator';
-import DatabaseService from '../services/databaseService';
+import ApiClient from '../services/apiClient';
 
 const ExportContainer = ({
   dualSlopeResults,
@@ -9,9 +9,9 @@ const ExportContainer = ({
   testFormData,
   speedCheckResults,
   regressionData,
-  processedFiles,  // Add this prop to get original data
-  approvalStatus,  // Add this prop
-  manuallyAdjusted, // Add this prop
+  processedFiles,
+  approvalStatus,
+  manuallyAdjusted,
   setError
 }) => {
 
@@ -55,8 +55,8 @@ const ExportContainer = ({
       
       console.log('PDF export successful');
       
-      // NEW: Save project to database after successful PDF generation
-      await saveProjectSnapshot(mappedResults);
+      // Save project to SQLite database file
+      await saveProjectToDatabase(mappedResults);
       
     } catch (error) {
       console.error('PDF Export failed:', error);
@@ -64,12 +64,16 @@ const ExportContainer = ({
     }
   };
 
-  // NEW: Save complete project snapshot to database
-  const saveProjectSnapshot = async (mappedResults) => {
+  // Save complete project snapshot to SQLite database file
+  const saveProjectToDatabase = async (mappedResults) => {
     try {
-      // Initialize database service
-      const dbService = await DatabaseService.create();
-      
+      // Check if API server is running
+      const isConnected = await ApiClient.checkConnection();
+      if (!isConnected) {
+        console.warn('⚠️ Database server not running. Start with: npm run server');
+        return;
+      }
+
       // Prepare data for saving
       const projectData = {
         testFormData,
@@ -83,19 +87,18 @@ const ExportContainer = ({
         pdfFilename: generatePDFFilename(testFormData)
       };
       
-      // Save to database
-      const projectId = await dbService.saveProjectSnapshot(projectData);
+      // Save to SQLite database via API
+      const result = await ApiClient.saveProject(projectData);
       
-      if (projectId) {
-        console.log(`✓ Project saved automatically: ${projectId}`);
-        // Optional: Show user notification (non-intrusive)
-        showSaveNotification('Project saved successfully');
+      if (result.success) {
+        console.log(`✅ Project saved to database: ${result.folderName}`);
+        showSaveNotification(`Project saved to database (${result.action})`);
       }
       
     } catch (error) {
-      console.error('Project save failed:', error);
+      console.error('Database save failed:', error);
       // Don't show error to user - this is background functionality
-      // but log it for debugging
+      console.warn('💡 Make sure to run: npm run server (in separate terminal)');
     }
   };
 
@@ -108,13 +111,9 @@ const ExportContainer = ({
     return `SpeedChecker_Report_${new Date().toISOString().split('T')[0]}.pdf`;
   };
 
-  // Show non-intrusive save notification
+  // Show save notification
   const showSaveNotification = (message) => {
-    // Optional: Add a subtle notification
     console.log(`💾 ${message}`);
-    
-    // You could add a toast notification here if desired
-    // For now, just console log to keep it simple
   };
 
   // Don't render if no voltage assignments

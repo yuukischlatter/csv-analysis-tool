@@ -349,9 +349,9 @@ const AnalysisContainer = ({
         testFormData={testFormData}
         speedCheckResults={speedCheckResults}
         regressionData={regressionData}
-        processedFiles={processedFiles}        // NEW: Pass processed files
-        approvalStatus={approvalStatus}        // NEW: Pass approval status
-        manuallyAdjusted={manuallyAdjusted}    // NEW: Pass manual adjustment tracking
+        processedFiles={processedFiles}      
+        approvalStatus={approvalStatus}       
+        manuallyAdjusted={manuallyAdjusted}   
         setError={setError}
       />
     </>

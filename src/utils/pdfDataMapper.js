@@ -199,6 +199,99 @@ export const validatePDFData = (data) => {
 };
 
 /**
+ * Calculate Bezier control points using Catmull-Rom spline
+ * @param {Array} dataPoints - Array of {voltage, velocity} points (should be sorted)
+ * @returns {Array} Array of Bezier segments with control points
+ */
+export const calculateBezierControlPoints = (dataPoints) => {
+  if (!dataPoints || dataPoints.length < 2) {
+    return null;
+  }
+  
+  // If only 2 points, return null (will fall back to straight line)
+  if (dataPoints.length === 2) {
+    return null;
+  }
+  
+  const segments = [];
+  const tension = 0.5; // Tension factor for curve tightness
+  
+  for (let i = 0; i < dataPoints.length - 1; i++) {
+    // Get the four points needed for Catmull-Rom calculation
+    const p0 = dataPoints[i - 1] || dataPoints[i]; // Use current point if no previous
+    const p1 = dataPoints[i];
+    const p2 = dataPoints[i + 1];
+    const p3 = dataPoints[i + 2] || dataPoints[i + 1]; // Use next point if no point after
+    
+    // Calculate tangents
+    const t1 = {
+      voltage: tension * (p2.voltage - p0.voltage),
+      velocity: tension * (p2.velocity - p0.velocity)
+    };
+    
+    const t2 = {
+      voltage: tension * (p3.voltage - p1.voltage),
+      velocity: tension * (p3.velocity - p1.velocity)
+    };
+    
+    // Convert to Bezier control points
+    const cp1 = {
+      voltage: p1.voltage + t1.voltage / 3,
+      velocity: p1.velocity + t1.velocity / 3
+    };
+    
+    const cp2 = {
+      voltage: p2.voltage - t2.voltage / 3,
+      velocity: p2.velocity - t2.velocity / 3
+    };
+    
+    segments.push({
+      start: { voltage: p1.voltage, velocity: p1.velocity },
+      cp1: cp1,
+      cp2: cp2,
+      end: { voltage: p2.voltage, velocity: p2.velocity }
+    });
+  }
+  
+  return segments;
+};
+
+/**
+ * Transform Bezier segments from data coordinates to PDF coordinates
+ * @param {Array} bezierSegments - Bezier segments in data space
+ * @param {Object} chartParams - Chart transformation parameters
+ * @returns {Array} Bezier segments in PDF coordinate space
+ */
+export const transformToPDFCoordinates = (bezierSegments, chartParams) => {
+  if (!bezierSegments || bezierSegments.length === 0) {
+    return null;
+  }
+  
+  const { x, y, voltageRange, velocityRange, xScale, yScale } = chartParams;
+  
+  return bezierSegments.map(segment => {
+    return {
+      start: {
+        x: x + (segment.start.voltage - voltageRange[0]) * xScale,
+        y: y + (velocityRange[1] - segment.start.velocity) * yScale
+      },
+      cp1: {
+        x: x + (segment.cp1.voltage - voltageRange[0]) * xScale,
+        y: y + (velocityRange[1] - segment.cp1.velocity) * yScale
+      },
+      cp2: {
+        x: x + (segment.cp2.voltage - voltageRange[0]) * xScale,
+        y: y + (velocityRange[1] - segment.cp2.velocity) * yScale
+      },
+      end: {
+        x: x + (segment.end.voltage - voltageRange[0]) * xScale,
+        y: y + (velocityRange[1] - segment.end.velocity) * yScale
+      }
+    };
+  });
+};
+
+/**
  * Create complete PDF data package
  * @param {Object} reactData - Data from React app
  * @returns {Object} Complete PDF data package

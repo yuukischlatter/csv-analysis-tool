@@ -5,7 +5,7 @@
 
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { createPDFDataPackage } from '../utils/pdfDataMapper';
+import { createPDFDataPackage, calculateBezierControlPoints, transformToPDFCoordinates } from '../utils/pdfDataMapper';
 
 // Get version from package.json
 const getAppVersion = () => {
@@ -436,17 +436,54 @@ function addChartDataPoints(doc, data, x, y, voltageRange, velocityRange, xScale
   
   const chartPoints = sortedData.map(point => ({
     x: x + (point.voltage - voltageRange[0]) * xScale,
-    y: y + (velocityRange[1] - point.velocity) * yScale
+    y: y + (velocityRange[1] - point.velocity) * yScale,
+    voltage: point.voltage,
+    velocity: point.velocity
   }));
   
-  // Connecting lines
+  // NEW: Calculate Bezier control points for smooth curve
+  const chartParams = {
+    x: x,
+    y: y,
+    width: x + (voltageRange[1] - voltageRange[0]) * xScale,
+    height: y + (velocityRange[1] - velocityRange[0]) * yScale,
+    voltageRange: voltageRange,
+    velocityRange: velocityRange,
+    xScale: xScale,
+    yScale: yScale
+  };
+  
+  // Get Bezier segments with control points
+  const bezierSegments = calculateBezierControlPoints(sortedData);
+  const pdfBezierSegments = transformToPDFCoordinates(bezierSegments, chartParams);
+  
+  // Draw smooth curve using Bezier curves
   doc.setDrawColor(...colors.schlatterBlue);
   doc.setLineWidth(0.4);
-  for (let i = 0; i < chartPoints.length - 1; i++) {
-    doc.line(chartPoints[i].x, chartPoints[i].y, chartPoints[i + 1].x, chartPoints[i + 1].y);
+  
+  if (pdfBezierSegments && pdfBezierSegments.length > 0) {
+    // Move to first point
+    doc.moveTo(pdfBezierSegments[0].start.x, pdfBezierSegments[0].start.y);
+    
+    // Draw each Bezier segment
+    pdfBezierSegments.forEach(segment => {
+      doc.curveTo(
+        segment.cp1.x, segment.cp1.y,
+        segment.cp2.x, segment.cp2.y,
+        segment.end.x, segment.end.y
+      );
+    });
+    
+    // Stroke the complete path
+    doc.stroke();
+  } else {
+    // Fallback to straight lines if Bezier calculation fails
+    for (let i = 0; i < chartPoints.length - 1; i++) {
+      doc.line(chartPoints[i].x, chartPoints[i].y, chartPoints[i + 1].x, chartPoints[i + 1].y);
+    }
   }
   
-  // Data points
+  // Data points (diamonds) - unchanged
   doc.setFillColor(...colors.schlatterBlue);
   doc.setDrawColor(...colors.schlatterBlue);
   doc.setLineWidth(0.2);

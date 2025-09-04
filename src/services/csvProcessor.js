@@ -4,14 +4,21 @@ import { FILE_VALIDATION } from '../constants/validation';
 /**
  * CSV Processor Service
  * Parses CSV files and extracts time (column 1) and position (column 4)
+ * Now includes file creation timestamp for chronological sorting
  */
 
 export const processCSVFile = (file) => {
   return new Promise((resolve, reject) => {
+    // Extract file creation timestamp
+    const createdAt = file.lastModified || Date.now();
+    const createdDate = new Date(createdAt);
+    
+    console.log(`Processing ${file.name} - Created: ${createdDate.toLocaleString()}`);
+    
     Papa.parse(file, {
       complete: (results) => {
         try {
-          const processedData = extractTimeAndPosition(results.data, file.name);
+          const processedData = extractTimeAndPosition(results.data, file.name, createdAt, createdDate);
           resolve(processedData);
         } catch (error) {
           reject(error);
@@ -26,7 +33,7 @@ export const processCSVFile = (file) => {
   });
 };
 
-const extractTimeAndPosition = (rawData, fileName) => {
+const extractTimeAndPosition = (rawData, fileName, createdAt, createdDate) => {
   if (!rawData || rawData.length === 0) {
     throw new Error(`No data found in ${fileName}`);
   }
@@ -68,7 +75,10 @@ const extractTimeAndPosition = (rawData, fileName) => {
   return {
     fileName: fileName,
     data: timePositionData,
-    totalPoints: timePositionData.length
+    totalPoints: timePositionData.length,
+    createdAt: createdAt,           // Timestamp for sorting
+    createdDate: createdDate,       // Human-readable date
+    fileSize: rawData.length        // Original CSV row count
   };
 };
 
@@ -85,5 +95,30 @@ export const validateCSVData = (processedData) => {
     }
   }
 
+  // Validate timestamp
+  if (!processedData.createdAt || !processedData.createdDate) {
+    throw new Error('Missing file creation timestamp');
+  }
+
   return true;
+};
+
+/**
+ * Sort processed files by creation timestamp (oldest first)
+ * @param {Array} processedFiles - Array of processed CSV results
+ * @returns {Array} Sorted array (oldest to newest)
+ */
+export const sortFilesByTimestamp = (processedFiles) => {
+  if (!processedFiles || processedFiles.length === 0) {
+    return [];
+  }
+
+  const sorted = [...processedFiles].sort((a, b) => a.createdAt - b.createdAt);
+  
+  console.log('Files sorted by creation date (oldest to newest):');
+  sorted.forEach((file, index) => {
+    console.log(`  ${index + 1}. ${file.fileName} - ${file.createdDate.toLocaleString()}`);
+  });
+
+  return sorted;
 };

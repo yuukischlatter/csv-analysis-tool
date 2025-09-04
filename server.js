@@ -87,7 +87,13 @@ function initializeDatabase() {
 app.post('/api/projects/save', (req, res) => {
   try {
     const projectData = req.body;
-    const folderName = generateFolderName(projectData.testFormData);
+    
+    // Check if this is an update or new save
+    const isUpdate = projectData.projectId || projectData.folderName || projectData.updateMode;
+    const folderName = projectData.folderName || generateFolderName(projectData.testFormData);
+    
+    console.log(isUpdate ? `📝 Updating project: ${folderName}` : `✨ Creating new project: ${folderName}`);
+    
     const projectFolder = path.join(PROJECTS_DIR, folderName);
     
     // Create project structure
@@ -106,7 +112,8 @@ app.post('/api/projects/save', (req, res) => {
       projectInfo: {
         folderName: folderName,
         savedAt: new Date().toISOString(),
-        version: '1.0.1'
+        version: '1.0.1',
+        isUpdate: isUpdate
       }
     };
     const metadataToSave = { ...completeMetadata };
@@ -115,7 +122,7 @@ app.post('/api/projects/save', (req, res) => {
     
     // Save to database
     const record = prepareProjectRecord(projectData, folderName);
-    saveToDatabase(record, folderName, projectData, res);
+    saveToDatabase(record, folderName, projectData, res, isUpdate);
     
   } catch (error) {
     console.error('Project save failed:', error.message);
@@ -269,20 +276,27 @@ function saveFileAnalysisMetadata(projectFolder, fileName, analysisData) {
 }
 
 // Database operations
-function saveToDatabase(record, folderName, projectData, res) {
-  const selectSQL = 'SELECT id FROM projects WHERE folder_name = ?';
-  db.get(selectSQL, [folderName], (err, row) => {
-    if (err) {
-      console.error('Database query failed:', err.message);
-      return res.status(500).json({ error: 'Database query failed' });
-    }
-    
-    if (row) {
-      updateProject(record, folderName, row.id, projectData, res);
-    } else {
-      insertProject(record, projectData, res);
-    }
-  });
+function saveToDatabase(record, folderName, projectData, res, isUpdate) {
+  // If updating and we have a projectId, use that
+  if (isUpdate && projectData.projectId) {
+    // Direct update using projectId
+    updateProject(record, folderName, projectData.projectId, projectData, res);
+  } else {
+    // Check if folder exists (for backwards compatibility)
+    const selectSQL = 'SELECT id FROM projects WHERE folder_name = ?';
+    db.get(selectSQL, [folderName], (err, row) => {
+      if (err) {
+        console.error('Database query failed:', err.message);
+        return res.status(500).json({ error: 'Database query failed' });
+      }
+      
+      if (row) {
+        updateProject(record, folderName, row.id, projectData, res);
+      } else {
+        insertProject(record, projectData, res);
+      }
+    });
+  }
 }
 
 function updateProject(record, folderName, projectId, projectData, res) {

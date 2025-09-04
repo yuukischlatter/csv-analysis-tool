@@ -16,7 +16,8 @@ const FileUploadContainer = ({
   setManuallyAdjusted,
   setSelectedFile,
   setError,
-  setIsAnalyzing
+  setIsAnalyzing,
+  setHasChanges
 }) => {
 
   const checkForDuplicateFiles = (newFiles, existingFiles) => {
@@ -45,6 +46,9 @@ const FileUploadContainer = ({
       console.log('All files already processed, skipping...');
       return;
     }
+
+    // Mark as changed when new files are added
+    setHasChanges(true);
 
     // Maintain chronological order in final file list
     const allFiles = [...processedFiles, ...uniqueFiles].sort((a, b) => a.createdAt - b.createdAt);

@@ -31,7 +31,11 @@ const AnalysisContainer = ({
   speedCheckResults,
   setSpeedCheckResults,
   setError,
-  loadedSpeedCheckResults  // ADD THIS AS A PROP
+  loadedSpeedCheckResults,
+  setHasChanges,
+  loadedProjectId,
+  loadedFolderName,
+  hasChanges
 }) => {
 
   const updateRegressionData = () => {
@@ -142,7 +146,8 @@ const AnalysisContainer = ({
         setVoltageAssignments(newVoltageAssignments);
       }
 
-      // REMOVED: setTimeout(() => updateRegressionData(), 100);
+      // Mark as changed
+      setHasChanges(true);
 
       console.log(`Updated ${fileName}: auto-unapproved due to manual adjustment`);
 
@@ -176,9 +181,10 @@ const AnalysisContainer = ({
     };
     setVoltageAssignments(newVoltageAssignments);
 
-    console.log(`✓ Approved: ${fileName} for ±${selectedVoltage}V`);
+    // Mark as changed
+    setHasChanges(true);
 
-    // REMOVED: setTimeout(() => updateRegressionData(), 100);
+    console.log(`✓ Approved: ${fileName} for ±${selectedVoltage}V`);
 
     // Auto-navigate to next unapproved file
     const nextFile = getNextUnapprovedFile(fileName);
@@ -254,8 +260,8 @@ const AnalysisContainer = ({
     <>
       <DualResultsTable 
         results={mappedResults}
-        dualSlopeResults={dualSlopeResults}  // ADDED: Pass all files
-        voltageAssignments={voltageAssignments}  // ADDED: Pass voltage assignments
+        dualSlopeResults={dualSlopeResults}
+        voltageAssignments={voltageAssignments}
         approvalStatus={approvalStatus}
         manuallyAdjusted={manuallyAdjusted}
         onFileSelect={handleFileSelect}
@@ -341,14 +347,15 @@ const AnalysisContainer = ({
                 regressionData={regressionData}
                 testFormData={testFormData}
                 onAnalysisUpdate={setSpeedCheckResults}
-                initialAnalysis={loadedSpeedCheckResults}  // USE THE PROP HERE
+                initialAnalysis={loadedSpeedCheckResults}
+                onManualChange={() => setHasChanges(true)}
               />
             )}
           </div>
         </div>
       )}
 
-      {/* Export Container - now with PDF export support */}
+      {/* Export Container - now with project tracking */}
       <ExportContainer
         dualSlopeResults={dualSlopeResults}
         voltageAssignments={voltageAssignments}
@@ -359,6 +366,10 @@ const AnalysisContainer = ({
         approvalStatus={approvalStatus}       
         manuallyAdjusted={manuallyAdjusted}   
         setError={setError}
+        loadedProjectId={loadedProjectId}
+        loadedFolderName={loadedFolderName}
+        hasChanges={hasChanges}
+        setHasChanges={setHasChanges}
       />
     </>
   );

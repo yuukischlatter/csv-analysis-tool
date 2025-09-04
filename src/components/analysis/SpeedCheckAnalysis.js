@@ -7,7 +7,8 @@ const SpeedCheckAnalysis = ({
   regressionData, 
   testFormData,
   onAnalysisUpdate,
-  initialAnalysis 
+  initialAnalysis,
+  onManualChange 
 }) => {
   const [analysis, setAnalysis] = useState(null);
   const [manualSlopeFactor, setManualSlopeFactor] = useState(
@@ -69,6 +70,10 @@ const SpeedCheckAnalysis = ({
   const handleSliderChange = (event) => {
     const newFactor = parseFloat(event.target.value);
     setManualSlopeFactor(newFactor);
+
+    if (onManualChange) {
+      onManualChange(); 
+    }
     
     // Update direct input to match
     if (analysis) {
@@ -80,6 +85,10 @@ const SpeedCheckAnalysis = ({
   const handleDirectSlopeChange = (event) => {
     const value = event.target.value;
     setDirectSlopeInput(value);
+
+    if (onManualChange && value !== '' && !isNaN(parseFloat(value))) {
+      onManualChange(); 
+    }
     
     // Calculate corresponding factor
     if (analysis && value !== '' && !isNaN(parseFloat(value))) {

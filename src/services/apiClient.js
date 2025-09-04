@@ -23,6 +23,14 @@ class ApiClient {
         delete projectData.pdfData; // Remove ArrayBuffer to avoid JSON serialization issues
       }
 
+      // Check if this is an update
+      if (projectData.projectId || projectData.folderName) {
+        projectData.updateMode = true;
+        console.log(`Updating project: ${projectData.folderName || projectData.projectId}`);
+      } else {
+        console.log('Creating new project');
+      }
+
       const response = await fetch(`${API_BASE_URL}/projects/save`, {
         method: 'POST',
         headers: {

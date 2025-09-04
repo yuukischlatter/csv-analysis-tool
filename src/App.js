@@ -28,8 +28,14 @@ function App() {
   // Load modal state
   const [showLoadModal, setShowLoadModal] = useState(false);
 
+  // Project tracking state
+  const [loadedProjectId, setLoadedProjectId] = useState(null);
+  const [loadedFolderName, setLoadedFolderName] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
+
   const handleFormDataChange = (formData) => {
     setTestFormData(formData);
+    setHasChanges(true);
     console.log('Form data updated:', formData);
   };
 
@@ -47,6 +53,11 @@ function App() {
     // Clear any existing error
     setError(null);
     
+    // Store loaded project info
+    setLoadedProjectId(appState.projectId || null);
+    setLoadedFolderName(appState.folderName || null);
+    setHasChanges(false);  // Reset changes flag on load
+    
     // Restore all state from loaded project
     setProcessedFiles(appState.processedFiles || []);
     setDualSlopeResults(appState.dualSlopeResults || []);
@@ -61,6 +72,8 @@ function App() {
     setIsFormCollapsed(false); // Expand form to show loaded data
     
     console.log('Project loaded successfully');
+    console.log('Loaded project ID:', appState.projectId);
+    console.log('Loaded folder name:', appState.folderName);
     console.log('Loaded testFormData:', appState.testFormData);
     console.log('Loaded speedCheckResults:', appState.speedCheckResults);
   };
@@ -82,20 +95,34 @@ function App() {
               Schlatter Industries
             </p>
           </div>
-          <button
-            onClick={() => setShowLoadModal(true)}
-            style={{
-              padding: '10px 20px',
-              fontSize: '14px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Load Project
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setShowLoadModal(true)}
+              style={{
+                padding: '10px 20px',
+                fontSize: '14px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Load Project
+            </button>
+            {loadedProjectId && (
+              <span style={{ 
+                fontSize: '12px', 
+                color: hasChanges ? '#ff9800' : '#4caf50',
+                padding: '5px 10px',
+                backgroundColor: hasChanges ? '#fff3e0' : '#e8f5e9',
+                borderRadius: '4px',
+                border: hasChanges ? '1px solid #ffb74d' : '1px solid #81c784'
+              }}>
+                {hasChanges ? '● Modified' : '✓ Loaded'}
+              </span>
+            )}
+          </div>
         </div>
       </header>
 
@@ -175,6 +202,7 @@ function App() {
         setSelectedFile={setSelectedFile}
         setError={setError}
         setIsAnalyzing={setIsAnalyzing}
+        setHasChanges={setHasChanges}
       />
 
       {/* Analysis Status */}
@@ -204,6 +232,10 @@ function App() {
         setSpeedCheckResults={setSpeedCheckResults}
         setError={setError}
         loadedSpeedCheckResults={speedCheckResults}  // PASS IT AS A SEPARATE PROP
+        setHasChanges={setHasChanges}
+        loadedProjectId={loadedProjectId}
+        loadedFolderName={loadedFolderName}
+        hasChanges={hasChanges}
       />
 
       {/* Empty State */}

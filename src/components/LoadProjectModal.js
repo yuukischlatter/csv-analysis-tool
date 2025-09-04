@@ -40,6 +40,11 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
       if (projectData && projectData.complete_app_state) {
         // Parse the complete app state
         const appState = JSON.parse(projectData.complete_app_state);
+        
+        // Add project metadata to the app state
+        appState.projectId = projectData.id;
+        appState.folderName = projectData.folder_name;
+        
         onLoadProject(appState);
         onClose();
       } else {

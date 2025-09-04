@@ -12,7 +12,11 @@ const ExportContainer = ({
   processedFiles,
   approvalStatus,
   manuallyAdjusted,
-  setError
+  setError,
+  loadedProjectId,
+  loadedFolderName,
+  hasChanges,
+  setHasChanges
 }) => {
 
   const handleCSVExport = () => {
@@ -75,6 +79,13 @@ const ExportContainer = ({
         return;
       }
 
+      // Check if we should save or skip
+      if (loadedProjectId && !hasChanges) {
+        console.log('📋 No changes detected, skipping database save');
+        console.log('✅ PDF generated from loaded project without saving');
+        return;
+      }
+
       // Prepare data for saving
       const projectData = {
         testFormData,
@@ -86,18 +97,29 @@ const ExportContainer = ({
         speedCheckResults,
         processedFiles,
         pdfFilename: pdfFilename,
-        pdfData: pdfData // PDF ArrayBuffer data
+        pdfData: pdfData, // PDF ArrayBuffer data
+        projectId: loadedProjectId,  // Include for update
+        folderName: loadedFolderName, // Include for update
+        isUpdate: !!loadedProjectId  // Flag to indicate update mode
       };
       
       // Save to SQLite database via API
       const result = await ApiClient.saveProject(projectData);
       
       if (result.success) {
-        console.log(`✅ Project saved to database: ${result.folderName}`);
+        const action = loadedProjectId ? 'updated' : 'created';
+        console.log(`✅ Project ${action}: ${result.folderName}`);
+        
         if (result.pdfSaved) {
           console.log(`📄 PDF copy saved to server: ${result.pdfPath}`);
         }
-        showSaveNotification(`Project and PDF saved to server (${result.action})`);
+        
+        showSaveNotification(`Project ${action} and PDF saved to server`);
+        
+        // Reset changes flag after successful save
+        if (setHasChanges) {
+          setHasChanges(false);
+        }
       }
       
     } catch (error) {
@@ -132,7 +154,8 @@ const ExportContainer = ({
       borderTop: '1px solid #ddd',
       display: 'flex',
       gap: '15px',
-      justifyContent: 'flex-start'
+      justifyContent: 'flex-start',
+      alignItems: 'center'
     }}>
       <button
         onClick={handleCSVExport}
@@ -170,6 +193,16 @@ const ExportContainer = ({
       >
         Export PDF
       </button>
+
+      {loadedProjectId && (
+        <span style={{ 
+          fontSize: '12px', 
+          color: hasChanges ? '#ff9800' : '#666',
+          marginLeft: '10px'
+        }}>
+          {hasChanges ? 'Changes will be saved' : 'No changes to save'}
+        </span>
+      )}
     </div>
   );
 };

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MASCHINEN_TYPEN } from '../../data/machines';
 import { getVentilOptions, getParkerData } from '../../data/ventils';
 
-const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }) => {
+const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, initialData }) => {
   const [formData, setFormData] = useState({
     // Auftragsdaten
     auftragsNr: '',
@@ -25,6 +25,27 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse }
     druckVentil: '',
     oeltemperatur: ''
   });
+
+  // Load initial data when it changes (from loading a project)
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        auftragsNr: initialData.auftragsNr || '',
+        maschinentyp: initialData.maschinentyp || '',
+        pruefer: initialData.pruefer || '',
+        datum: initialData.datum || '',
+        artNrSCH: initialData.artNrSCH || '',
+        artNrParker: initialData.artNrParker || '',
+        nenndurchfluss: initialData.nenndurchfluss || '',
+        snParker: initialData.snParker || '',
+        ventilOffsetOriginal: initialData.ventilOffsetOriginal || '',
+        ventilOffsetKorrektur: initialData.ventilOffsetKorrektur || '',
+        ventilOffsetNachKorrektur: initialData.ventilOffsetNachKorrektur || '',
+        druckVentil: initialData.druckVentil || '',
+        oeltemperatur: initialData.oeltemperatur || ''
+      });
+    }
+  }, [initialData]);
 
   const handleInputChange = (field, value) => {
     const newFormData = { ...formData, [field]: value };

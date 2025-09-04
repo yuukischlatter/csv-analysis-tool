@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import TestDataForm from './components/forms/TestDataForm';
 import FileUploadContainer from './containers/FileUploadContainer';
 import AnalysisContainer from './containers/AnalysisContainer';
+import LoadProjectModal from './components/LoadProjectModal';
 import { COLORS } from './constants/ui';
 
 function App() {
@@ -24,6 +25,9 @@ function App() {
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   const [speedCheckResults, setSpeedCheckResults] = useState(null);
 
+  // Load modal state
+  const [showLoadModal, setShowLoadModal] = useState(false);
+
   const handleFormDataChange = (formData) => {
     setTestFormData(formData);
     console.log('Form data updated:', formData);
@@ -37,6 +41,30 @@ function App() {
     setError(null);
   };
 
+  const handleLoadProject = (appState) => {
+    console.log('Loading project state...');
+    
+    // Clear any existing error
+    setError(null);
+    
+    // Restore all state from loaded project
+    setProcessedFiles(appState.processedFiles || []);
+    setDualSlopeResults(appState.dualSlopeResults || []);
+    setFailedFiles(appState.failedFiles || []);
+    setSelectedFile(null); // Reset selection, user can pick a file
+    setApprovalStatus(appState.approvalStatus || {});
+    setManuallyAdjusted(appState.manuallyAdjusted || {});
+    setVoltageAssignments(appState.voltageAssignments || {});
+    setTestFormData(appState.testFormData || null);
+    setRegressionData(appState.regressionData || []);
+    setSpeedCheckResults(appState.speedCheckResults || null);
+    setIsFormCollapsed(false); // Expand form to show loaded data
+    
+    console.log('Project loaded successfully');
+    console.log('Loaded testFormData:', appState.testFormData);
+    console.log('Loaded speedCheckResults:', appState.speedCheckResults);
+  };
+
   return (
     <div style={{ 
       padding: '20px', 
@@ -45,12 +73,30 @@ function App() {
       margin: '0 auto'
     }}>
       <header style={{ marginBottom: '30px', borderBottom: `1px solid ${COLORS.BORDER_DEFAULT}`, paddingBottom: '20px' }}>
-        <h1 style={{ margin: '0', fontSize: '24px' }}>
-          SpeedChecker
-        </h1>
-        <p style={{ margin: '5px 0 0 0', color: COLORS.TEXT_SECONDARY }}>
-          Schlatter Industries
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ margin: '0', fontSize: '24px' }}>
+              SpeedChecker
+            </h1>
+            <p style={{ margin: '5px 0 0 0', color: COLORS.TEXT_SECONDARY }}>
+              Schlatter Industries
+            </p>
+          </div>
+          <button
+            onClick={() => setShowLoadModal(true)}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Load Project
+          </button>
+        </div>
       </header>
 
       {/* Error Display */}
@@ -106,11 +152,12 @@ function App() {
         </div>
       )}
 
-      {/* Test Data Form */}
+      {/* Test Data Form - NOW WITH initialData PROP */}
       <TestDataForm 
         onFormDataChange={handleFormDataChange} 
         isCollapsed={isFormCollapsed}
         onToggleCollapse={handleToggleFormCollapse}
+        initialData={testFormData}
       />
 
       {/* File Upload */}
@@ -137,7 +184,7 @@ function App() {
         </div>
       )}
 
-      {/* Analysis Container */}
+      {/* Analysis Container - NOW PASSES speedCheckResults */}
       <AnalysisContainer
         processedFiles={processedFiles}
         dualSlopeResults={dualSlopeResults}
@@ -156,6 +203,7 @@ function App() {
         speedCheckResults={speedCheckResults}
         setSpeedCheckResults={setSpeedCheckResults}
         setError={setError}
+        loadedSpeedCheckResults={speedCheckResults}  // PASS IT AS A SEPARATE PROP
       />
 
       {/* Empty State */}
@@ -164,6 +212,13 @@ function App() {
           Upload CSV files to begin speed analysis
         </div>
       )}
+
+      {/* Load Project Modal */}
+      <LoadProjectModal
+        isOpen={showLoadModal}
+        onClose={() => setShowLoadModal(false)}
+        onLoadProject={handleLoadProject}
+      />
     </div>
   );
 }

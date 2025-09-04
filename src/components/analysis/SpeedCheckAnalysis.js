@@ -6,16 +6,28 @@ import SpeedCheckChart from '../charts/SpeedCheckChart';
 const SpeedCheckAnalysis = ({ 
   regressionData, 
   testFormData,
-  onAnalysisUpdate 
+  onAnalysisUpdate,
+  initialAnalysis 
 }) => {
   const [analysis, setAnalysis] = useState(null);
-  const [manualSlopeFactor, setManualSlopeFactor] = useState(SPEED_CHECK.SLOPE_FACTOR_RANGE.default);
+  const [manualSlopeFactor, setManualSlopeFactor] = useState(
+    initialAnalysis?.manualSlopeFactor || SPEED_CHECK.SLOPE_FACTOR_RANGE.default
+  );
   const [directSlopeInput, setDirectSlopeInput] = useState('');
   const [error, setError] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Get machine type from test form data
   const machineType = testFormData?.maschinentyp || 'GAA100';
+
+  // Initialize from saved analysis when loading a project
+  useEffect(() => {
+    if (initialAnalysis) {
+      setAnalysis(initialAnalysis);
+      setManualSlopeFactor(initialAnalysis.manualSlopeFactor || 1.0);
+      setDirectSlopeInput(initialAnalysis.manualSlope?.toFixed(4) || '');
+    }
+  }, [initialAnalysis]);
 
   // Perform analysis when inputs change
   useEffect(() => {
@@ -38,7 +50,7 @@ const SpeedCheckAnalysis = ({
       setError(null);
 
       // Update direct slope input to match calculated value
-      if (directSlopeInput === '') {
+      if (directSlopeInput === '' || !initialAnalysis) {
         setDirectSlopeInput(newAnalysis.manualSlope.toFixed(4));
       }
 

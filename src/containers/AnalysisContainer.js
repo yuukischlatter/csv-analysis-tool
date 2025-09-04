@@ -340,6 +340,7 @@ const AnalysisContainer = ({
               data={regressionData}
               width={CHART_DIMENSIONS.REGRESSION.width}
               height={CHART_DIMENSIONS.REGRESSION.height}
+              manualSlope={speedCheckResults?.manualSlope}
             />
 
             {regressionData.length > 0 && (

@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { calculateLinearRegression, generateRegressionLine, calculateSmoothCurve } from '../../services/regressionAnalysis';
 import { CHART_DIMENSIONS } from '../../constants/charts';
 
-const RegressionChart = ({ data, width = CHART_DIMENSIONS.REGRESSION.width, height = CHART_DIMENSIONS.REGRESSION.height }) => {
+const RegressionChart = ({ data, width = CHART_DIMENSIONS.REGRESSION.width, height = CHART_DIMENSIONS.REGRESSION.height, manualSlope }) => {
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -149,9 +149,19 @@ const RegressionChart = ({ data, width = CHART_DIMENSIONS.REGRESSION.width, heig
         .attr("d", line);
     }
 
-    // Add regression line (thin red line) - extend across full X domain
-    if (regression) {
-      const regressionLineData = generateRegressionLine(regression, xDomain[0], xDomain[1]);
+    // Add regression line (thin red line) - USE MANUAL SLOPE IF PROVIDED
+    if (regression || manualSlope) {
+      // Use manual slope if provided, otherwise use calculated regression
+      const slopeToUse = manualSlope || (regression ? regression.slope : 0);
+      const interceptToUse = regression ? regression.yIntercept : 0;
+      
+      const regressionLineData = [];
+      for (let v = xDomain[0]; v <= xDomain[1]; v += 0.1) {
+        regressionLineData.push({
+          voltage: v,
+          velocity: slopeToUse * v + interceptToUse
+        });
+      }
       
       const regressionLine = d3.line()
         .x(d => xScale(d.voltage))
@@ -208,7 +218,7 @@ const RegressionChart = ({ data, width = CHART_DIMENSIONS.REGRESSION.width, heig
       .attr("stroke-width", 1)
       .attr("opacity", 0.5);
 
-  }, [data, width, height]);
+  }, [data, width, height, manualSlope]); // Added manualSlope to dependencies
 
   if (!data || data.length === 0) {
     return (

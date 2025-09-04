@@ -84,15 +84,7 @@ const FileUpload = ({ onFilesProcessed }) => {
         ) : (
           <div>
             <p style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 'bold' }}>
-              📄 Select CSV Measurement Files
-            </p>
-            <p style={{ margin: '0 0 10px 0', color: '#333' }}>
-              Choose multiple CSV files (Ctrl+Click or Shift+Click)
-            </p>
-            <p style={{ fontSize: '12px', color: '#666', margin: '0' }}>
-              Files will be automatically sorted by creation date<br/>
-              (Oldest = 0.1V, Newest = 10.0V)<br/>
-              <strong>Explorer will only show CSV files</strong>
+              Select CSV Measurement Files
             </p>
           </div>
         )}

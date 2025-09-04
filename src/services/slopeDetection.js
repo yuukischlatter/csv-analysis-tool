@@ -141,7 +141,7 @@ const detectTriangleBasedMarkers = (data, fileName) => {
       velocity: downVelocity,
       duration: data[downEnd].time - data[downStart].time
     },
-    detectionMethod: 'triangle_based'
+    detectionMethod: 'automatic'  // CHANGED FROM 'triangle_based' TO 'automatic'
   };
 };
 

@@ -120,6 +120,8 @@ const AnalysisContainer = ({
       );
 
       const fileName = updatedDualSlope.fileName;
+      
+      // Only set manuallyAdjusted to true when user actually drags markers (detectionMethod becomes 'manual')
       setManuallyAdjusted(prev => ({
         ...prev,
         [fileName]: true
@@ -251,7 +253,9 @@ const AnalysisContainer = ({
   return (
     <>
       <DualResultsTable 
-        results={mappedResults} 
+        results={mappedResults}
+        dualSlopeResults={dualSlopeResults}  // ADDED: Pass all files
+        voltageAssignments={voltageAssignments}  // ADDED: Pass voltage assignments
         approvalStatus={approvalStatus}
         manuallyAdjusted={manuallyAdjusted}
         onFileSelect={handleFileSelect}
@@ -273,7 +277,8 @@ const AnalysisContainer = ({
               )}
               <span style={{ 
                 fontSize: '12px', 
-                color: selectedFile.dualSlope.detectionMethod === 'automatic' ? 'green' : 'orange',
+                color: selectedFile.dualSlope.detectionMethod === 'automatic' ? 'green' : 
+                       selectedFile.dualSlope.detectionMethod === 'fallback' ? 'orange' : 'red',
                 fontWeight: 'bold'
               }}>
                 {selectedFile.dualSlope.detectionMethod === 'automatic' ? 'Auto-detected' : 

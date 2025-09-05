@@ -151,6 +151,11 @@ class DatabaseService {
       druck_ventil: parseFloat(testFormData?.druckVentil) || null,
       oeltemperatur: parseFloat(testFormData?.oeltemperatur) || null,
       
+      // NEW: Voltage to Position Calibration
+      calibration_offset: parseFloat(testFormData?.calibrationOffset) || null,
+      calibration_max_position: parseFloat(testFormData?.calibrationMaxPosition) || null,
+      calibration_max_voltage: parseFloat(testFormData?.calibrationMaxVoltage) || null,
+      
       // Analysis Results Summary
       file_count: dualSlopeResults?.length || 0,
       pdf_filename: pdfFilename || '',

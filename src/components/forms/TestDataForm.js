@@ -23,7 +23,12 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
     ventilOffsetKorrektur: '',
     ventilOffsetNachKorrektur: '',
     druckVentil: '',
-    oeltemperatur: ''
+    oeltemperatur: '',
+    
+    // Voltage to Position Calibration (NEW)
+    calibrationOffset: '',
+    calibrationMaxPosition: '',
+    calibrationMaxVoltage: ''
   });
 
   // Load initial data when it changes (from loading a project)
@@ -42,7 +47,11 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
         ventilOffsetKorrektur: initialData.ventilOffsetKorrektur || '',
         ventilOffsetNachKorrektur: initialData.ventilOffsetNachKorrektur || '',
         druckVentil: initialData.druckVentil || '',
-        oeltemperatur: initialData.oeltemperatur || ''
+        oeltemperatur: initialData.oeltemperatur || '',
+        // Include calibration fields when loading project
+        calibrationOffset: initialData.calibrationOffset || '',
+        calibrationMaxPosition: initialData.calibrationMaxPosition || '',
+        calibrationMaxVoltage: initialData.calibrationMaxVoltage || ''
       });
     }
   }, [initialData]);
@@ -399,6 +408,87 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                 <small style={{ color: '#666', fontSize: '12px' }}>
                   50 ± 5°C I.O. (Hinweis: Nullpunkt kann um 10°C zu 0.20% driften, entspricht zu 0.01V UEQ)
                 </small>
+              </div>
+            </div>
+          </div>
+
+          {/* Voltage to Position Calibration - UPDATED */}
+          <div style={{ 
+            border: '1px solid #ddd', 
+            borderRadius: '4px', 
+            padding: '15px', 
+            marginBottom: '15px',
+            backgroundColor: '#fafafa'  // Same as others
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>
+              Voltage to Position Calibration
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              {/* Reordered: Position at Max first */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                  Position at Max Voltage:
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.calibrationMaxPosition}
+                    onChange={(e) => handleInputChange('calibrationMaxPosition', e.target.value)}
+                    style={{ 
+                      padding: '8px', 
+                      border: '1px solid #ccc', 
+                      borderRadius: '4px', 
+                      width: '150px' 
+                    }}
+                  />
+                  <span style={{ fontSize: '14px' }}>mm</span>
+                </div>
+              </div>
+
+              {/* Max Voltage second */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                  Max Voltage Value:
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="number"
+                    step="0.00001"
+                    value={formData.calibrationMaxVoltage}
+                    onChange={(e) => handleInputChange('calibrationMaxVoltage', e.target.value)}
+                    style={{ 
+                      padding: '8px', 
+                      border: '1px solid #ccc', 
+                      borderRadius: '4px', 
+                      width: '150px' 
+                    }}
+                  />
+                  <span style={{ fontSize: '14px' }}>V</span>
+                </div>
+              </div>
+
+              {/* Voltage Offset last */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                  Voltage Offset to Zero:
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={formData.calibrationOffset}
+                    onChange={(e) => handleInputChange('calibrationOffset', e.target.value)}
+                    style={{ 
+                      padding: '8px', 
+                      border: '1px solid #ccc', 
+                      borderRadius: '4px', 
+                      width: '150px' 
+                    }}
+                  />
+                  <span style={{ fontSize: '14px' }}>V</span>
+                </div>
               </div>
             </div>
           </div>

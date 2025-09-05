@@ -62,7 +62,6 @@ function App() {
     setProcessedFiles(appState.processedFiles || []);
     setDualSlopeResults(appState.dualSlopeResults || []);
     setFailedFiles(appState.failedFiles || []);
-    setSelectedFile(null); // Reset selection, user can pick a file
     setApprovalStatus(appState.approvalStatus || {});
     setManuallyAdjusted(appState.manuallyAdjusted || {});
     setVoltageAssignments(appState.voltageAssignments || {});
@@ -70,6 +69,30 @@ function App() {
     setRegressionData(appState.regressionData || []);
     setSpeedCheckResults(appState.speedCheckResults || null);
     setIsFormCollapsed(false); // Expand form to show loaded data
+    
+    // Auto-select first file (chronologically first / lowest voltage)
+    if (appState.processedFiles && appState.processedFiles.length > 0 && 
+        appState.dualSlopeResults && appState.dualSlopeResults.length > 0) {
+      
+      // Sort by creation date to get chronologically first (usually 0.1V)
+      const sortedFiles = [...appState.processedFiles].sort((a, b) => a.createdAt - b.createdAt);
+      const firstFile = sortedFiles[0];
+      
+      // Find matching dual slope result
+      const matchingDualSlope = appState.dualSlopeResults.find(ds => ds.fileName === firstFile.fileName);
+      
+      if (matchingDualSlope) {
+        setSelectedFile({
+          data: firstFile,
+          dualSlope: matchingDualSlope
+        });
+        console.log(`Auto-selected first file: ${firstFile.fileName}`);
+      } else {
+        setSelectedFile(null);
+      }
+    } else {
+      setSelectedFile(null);
+    }
     
     console.log('Project loaded successfully');
     console.log('Loaded project ID:', appState.projectId);
@@ -187,7 +210,7 @@ function App() {
         initialData={testFormData}
       />
 
-      {/* File Upload */}
+      {/* File Upload - NOW WITH testFormData PROP */}
       <FileUploadContainer
         processedFiles={processedFiles}
         setProcessedFiles={setProcessedFiles}
@@ -203,6 +226,7 @@ function App() {
         setError={setError}
         setIsAnalyzing={setIsAnalyzing}
         setHasChanges={setHasChanges}
+        testFormData={testFormData}  // NEW: Pass testFormData
       />
 
       {/* Analysis Status */}
@@ -241,7 +265,7 @@ function App() {
       {/* Empty State */}
       {processedFiles.length === 0 && !isAnalyzing && (
         <div style={{ textAlign: 'center', padding: '40px', color: COLORS.TEXT_SECONDARY }}>
-          Upload CSV files to begin speed analysis
+          Add calibration first then upload CSV
         </div>
       )}
 

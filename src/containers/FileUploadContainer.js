@@ -17,8 +17,37 @@ const FileUploadContainer = ({
   setSelectedFile,
   setError,
   setIsAnalyzing,
-  setHasChanges
+  setHasChanges,
+  testFormData  // NEW: Accept testFormData prop
 }) => {
+
+  // NEW: Calculate calibration data from form inputs
+  const getCalibrationData = () => {
+    if (!testFormData) return null;
+    
+    const { calibrationOffset, calibrationMaxPosition, calibrationMaxVoltage } = testFormData;
+    
+    // Check if all calibration fields are filled
+    if (!calibrationOffset || !calibrationMaxPosition || !calibrationMaxVoltage) {
+      return null;  // Use default behavior
+    }
+    
+    const offset = parseFloat(calibrationOffset);
+    const maxPos = parseFloat(calibrationMaxPosition);
+    const maxVolt = parseFloat(calibrationMaxVoltage);
+    
+    if (isNaN(offset) || isNaN(maxPos) || isNaN(maxVolt)) {
+      return null;
+    }
+    
+    const adjustedVoltage = maxVolt - offset;
+    const mmPerVolt = maxPos / adjustedVoltage;
+    
+    return {
+      offset: offset,
+      mmPerVolt: mmPerVolt
+    };
+  };
 
   const checkForDuplicateFiles = (newFiles, existingFiles) => {
     const existingFileNames = new Set(existingFiles.map(f => f.fileName));
@@ -133,7 +162,10 @@ const FileUploadContainer = ({
   };
 
   return (
-    <FileUpload onFilesProcessed={handleFilesProcessed} />
+    <FileUpload 
+      onFilesProcessed={handleFilesProcessed}
+      calibrationData={getCalibrationData()}  // NEW: Pass calibration data
+    />
   );
 };
 

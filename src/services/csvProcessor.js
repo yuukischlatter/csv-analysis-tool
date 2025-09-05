@@ -5,9 +5,10 @@ import { FILE_VALIDATION } from '../constants/validation';
  * CSV Processor Service
  * Parses CSV files and extracts time (column 1) and position (column 4)
  * Now includes file creation timestamp for chronological sorting
+ * Supports voltage-to-position calibration conversion
  */
 
-export const processCSVFile = (file) => {
+export const processCSVFile = (file, calibrationData = null) => {
   return new Promise((resolve, reject) => {
     // Extract file creation timestamp
     const createdAt = file.lastModified || Date.now();
@@ -15,10 +16,21 @@ export const processCSVFile = (file) => {
     
     console.log(`Processing ${file.name} - Created: ${createdDate.toLocaleString()}`);
     
+    // Log calibration if provided
+    if (calibrationData) {
+      console.log(`Using calibration: offset=${calibrationData.offset}, mmPerVolt=${calibrationData.mmPerVolt}`);
+    }
+    
     Papa.parse(file, {
       complete: (results) => {
         try {
-          const processedData = extractTimeAndPosition(results.data, file.name, createdAt, createdDate);
+          const processedData = extractTimeAndPosition(
+            results.data, 
+            file.name, 
+            createdAt, 
+            createdDate,
+            calibrationData  // Pass calibration data
+          );
           resolve(processedData);
         } catch (error) {
           reject(error);
@@ -33,7 +45,7 @@ export const processCSVFile = (file) => {
   });
 };
 
-const extractTimeAndPosition = (rawData, fileName, createdAt, createdDate) => {
+const extractTimeAndPosition = (rawData, fileName, createdAt, createdDate, calibrationData) => {
   if (!rawData || rawData.length === 0) {
     throw new Error(`No data found in ${fileName}`);
   }
@@ -45,6 +57,11 @@ const extractTimeAndPosition = (rawData, fileName, createdAt, createdDate) => {
   }
 
   const timePositionData = [];
+  
+  // Determine if we should use calibration or default multiplier
+  const useCalibration = calibrationData && 
+                        calibrationData.offset !== undefined && 
+                        calibrationData.mmPerVolt !== undefined;
 
   for (let i = 0; i < rawData.length; i++) {
     const row = rawData[i];
@@ -55,11 +72,21 @@ const extractTimeAndPosition = (rawData, fileName, createdAt, createdDate) => {
     }
 
     const time = parseFloat(row[FILE_VALIDATION.TIME_COLUMN]);
-    const position = parseFloat(row[FILE_VALIDATION.POSITION_COLUMN]) * FILE_VALIDATION.POSITION_MULTIPLIER;
+    const rawValue = parseFloat(row[FILE_VALIDATION.POSITION_COLUMN]);
 
     // Skip rows with invalid numbers
-    if (isNaN(time) || isNaN(position)) {
+    if (isNaN(time) || isNaN(rawValue)) {
       continue;
+    }
+
+    let position;
+    if (useCalibration) {
+      // New calibrated conversion: treat as voltage, convert to position
+      const voltage = rawValue;
+      position = (voltage - calibrationData.offset) * calibrationData.mmPerVolt;
+    } else {
+      // Legacy behavior: multiply by 10
+      position = rawValue * FILE_VALIDATION.POSITION_MULTIPLIER;
     }
 
     timePositionData.push({
@@ -78,7 +105,8 @@ const extractTimeAndPosition = (rawData, fileName, createdAt, createdDate) => {
     totalPoints: timePositionData.length,
     createdAt: createdAt,           // Timestamp for sorting
     createdDate: createdDate,       // Human-readable date
-    fileSize: rawData.length        // Original CSV row count
+    fileSize: rawData.length,       // Original CSV row count
+    calibrationUsed: useCalibration  // Track if calibration was used
   };
 };
 

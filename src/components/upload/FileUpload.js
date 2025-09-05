@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { processCSVFile } from '../../services/csvProcessor';
 
-const FileUpload = ({ onFilesProcessed }) => {
+const FileUpload = ({ onFilesProcessed, calibrationData }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const fileInputRef = useRef(null);
@@ -14,6 +14,14 @@ const FileUpload = ({ onFilesProcessed }) => {
 
     const csvFiles = Array.from(files);
     console.log(`Selected ${csvFiles.length} CSV files`);
+    
+    // Log calibration status
+    if (calibrationData) {
+      console.log('Using voltage-to-position calibration for file processing');
+      console.log(`Calibration: offset=${calibrationData.offset}, mmPerVolt=${calibrationData.mmPerVolt}`);
+    } else {
+      console.log('Using default multiplier (×10) for file processing');
+    }
 
     setIsProcessing(true);
     const processedResults = [];
@@ -21,7 +29,8 @@ const FileUpload = ({ onFilesProcessed }) => {
     try {
       for (const file of csvFiles) {
         try {
-          const result = await processCSVFile(file);
+          // Pass calibration data to processor
+          const result = await processCSVFile(file, calibrationData);
           processedResults.push(result);
           console.log(`✓ Processed ${file.name} (created: ${result.createdDate.toLocaleString()})`);
         } catch (error) {
@@ -40,13 +49,37 @@ const FileUpload = ({ onFilesProcessed }) => {
         fileInputRef.current.value = '';
       }
     }
-  }, [onFilesProcessed]);
+  }, [onFilesProcessed, calibrationData]);
 
   const handleButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
+
+  // Check if calibration is complete
+  const isCalibrationComplete = calibrationData && 
+                                calibrationData.offset !== undefined && 
+                                calibrationData.mmPerVolt !== undefined;
+
+  // Hide upload if calibration not complete
+  if (!isCalibrationComplete) {
+    return (
+      <div style={{ 
+        margin: '20px 0',
+        padding: '40px',
+        textAlign: 'center',
+        border: '2px dashed #ccc',
+        borderRadius: '4px',
+        backgroundColor: '#fafafa',
+        color: '#666'
+      }}>
+        <p style={{ margin: '0', fontSize: '16px' }}>
+          Add calibration first then upload CSV
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ margin: '20px 0' }}>

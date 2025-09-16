@@ -336,12 +336,14 @@ const AnalysisContainer = ({
               assignedVoltages={getAssignedVoltages()}
             />
 
+            {false && ( // Just add "false &&" 
             <RegressionChart 
               data={regressionData}
               width={CHART_DIMENSIONS.REGRESSION.width}
               height={CHART_DIMENSIONS.REGRESSION.height}
               manualSlope={speedCheckResults?.manualSlope}
             />
+            )}
 
             {regressionData.length > 0 && (
               <SpeedCheckAnalysis 

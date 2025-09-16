@@ -1,170 +1,272 @@
-import React, { useRef, useEffect } from 'react';
-import * as d3 from 'd3';
-import { 
-  createScale, 
-  addGridLines, 
-  addSpeedLimitLines, 
-  addRegressionLines, 
-  addDataPoints, 
-  addDeviationAnnotations, 
-  addAxes, 
-  addChartTitle,
-  CHART_STYLES 
-} from '../../utils/chartUtils';
-import { CHART_DIMENSIONS } from '../../constants/charts';
+import React, { useRef, useEffect, useState } from 'react';
+import * as Plotly from 'plotly.js-dist';
 
-const SpeedCheckChart = ({ analysis, regressionData, width = CHART_DIMENSIONS.SPEED_CHECK_DUAL.width, height = CHART_DIMENSIONS.SPEED_CHECK_DUAL.height}) => {
-  const svgRef = useRef(null);
+const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 }) => {
+  const plotRef = useRef(null);
+  const [selectedPoints, setSelectedPoints] = useState(new Set());
 
   useEffect(() => {
-    if (!analysis || !svgRef.current) {
+    if (!analysis || !plotRef.current) {
       return;
     }
 
-    // Clear previous chart
-    d3.select(svgRef.current).selectAll("*").remove();
-
-    renderSingleChart();
+    renderPlotlyChart();
   }, [analysis, regressionData, width, height]);
 
-  const renderSingleChart = () => {
-    const svg = d3.select(svgRef.current)
-      .attr("width", width)
-      .attr("height", height);
+  const renderPlotlyChart = () => {
+    if (!analysis) return;
 
-    // Single chart takes 95% width
-    const chartWidth = Math.floor(width * 0.95);
-    renderMainChart(svg, 0, chartWidth, height);
-  };
-
-  const renderMainChart = (svg, xOffset, chartContainerWidth, chartContainerHeight) => {
-    const margin = { top: 50, right: 20, bottom: 70, left: 80 };
-    const chartWidth = chartContainerWidth - margin.left - margin.right;
-    const chartHeight = chartContainerHeight - margin.top - margin.bottom;
-
-    const g = svg.append("g")
-      .attr("transform", `translate(${xOffset + margin.left},${margin.top})`);
-
-    // Main chart ranges - focused on 0-4.5V range (no negative values)
-    const xDomain = [0, 4.5];
-    const yDomain = [0, 13];
-
-    // Create scales
-    const xScale = createScale(xDomain, [0, chartWidth]);
-    const yScale = createScale(yDomain, [chartHeight, 0]);
-
-    // Add grid lines
-    addGridLines(g, xScale, yScale, chartWidth, chartHeight);
-
-    // Add axes
-    addAxes(g, xScale, yScale, chartWidth, chartHeight, {
-      x: "Eingangsspannung UE [V]",
-      y: "Schlittengeschwindigkeit [mm/s]"
-    });
-
-    // Add chart title
-    addChartTitle(g, "Speed Check Analysis", chartWidth);
-
-    // Get filtered measurement data from real user data (positive voltages only, including origin)
-    const measurementData = getPositiveUserDataWithOrigin();
-
-    // Add measured data points and line
-    addDataPoints(g, measurementData, xScale, yScale);
-
-    // Add regression lines
-    addRegressionLines(g, analysis, xScale, yScale, xDomain);
-
-    // Add speed limit lines
-    addSpeedLimitLines(g, analysis.machineParams, yScale, chartWidth);
-
-    // Add deviation annotations
-    const visibleRange = [xDomain, yDomain];
-    addDeviationAnnotations(g, analysis.deviations, xScale, yScale, visibleRange);
-
-    // Add main chart legend
-    addMainLegend(g, chartWidth, chartHeight);
-  };
-
-  const getPositiveUserDataWithOrigin = () => {
-    // Always start with the reference point (0V, 0mm/s)
-    const dataWithOrigin = [
-      { voltage: 0, velocity: 0 } // Reference point
+    // Prepare measured data points (including origin)
+    const measuredDataPoints = getMeasuredDataPoints();
+    
+    // Create Plotly traces
+    const traces = [
+      createMeasuredDataTrace(measuredDataPoints),
+      createCalculatedRegressionTrace(),
+      createManualRegressionTrace(),
+      ...createSpeedLimitTraces()
     ];
 
-    if (regressionData && regressionData.length > 0) {
-      // Filter for positive voltages only (ramp up data) and sort by voltage
-      const positiveData = regressionData
-        .filter(point => point.voltage > 0 && point.rampType === 'up')
-        .map(point => ({
-          voltage: point.voltage,
-          velocity: point.velocity
-        }))
-        .sort((a, b) => a.voltage - b.voltage);
+    // Layout configuration
+    const layout = {
+      title: {
+        text: 'Speed Check Analysis',
+        font: { size: 16, color: 'black' }
+      },
+      xaxis: {
+        title: {
+          text: 'Eingangsspannung UE [V]',
+          font: { size: 14, color: 'black' }
+        },
+        range: [0, 4.5], // Default view
+        showgrid: true,
+        gridcolor: '#ccc',
+        gridwidth: 1,
+        zeroline: true,
+        zerolinecolor: '#999',
+        zerolinewidth: 1
+      },
+      yaxis: {
+        title: {
+          text: 'Schlittengeschwindigkeit [mm/s]',
+          font: { size: 14, color: 'black' }
+        },
+        range: [0, 13],
+        showgrid: true,
+        gridcolor: '#ccc',
+        gridwidth: 1,
+        zeroline: true,
+        zerolinecolor: '#999',
+        zerolinewidth: 1
+      },
+      showlegend: true,
+      legend: {
+        x: 0.05,
+        y: 0.95,
+        bgcolor: 'rgba(255,255,255,0.9)',
+        bordercolor: '#ccc',
+        borderwidth: 1
+      },
+      margin: { t: 50, r: 20, b: 70, l: 80 },
+      plot_bgcolor: 'white',
+      paper_bgcolor: 'white'
+    };
 
-      // Add the positive data to our origin point
-      dataWithOrigin.push(...positiveData);
+    // Configuration
+    const config = {
+      displayModeBar: true,
+      displaylogo: false,
+      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+      toImageButtonOptions: {
+        format: 'png',
+        filename: 'speed_check_analysis',
+        height: height,
+        width: width,
+        scale: 1
+      }
+    };
+
+    // Plot the chart
+    Plotly.newPlot(plotRef.current, traces, layout, config);
+
+    // Add click handler for data point selection
+    plotRef.current.on('plotly_click', handlePointClick);
+  };
+
+  const getMeasuredDataPoints = () => {
+    const measuredDataPoints = regressionData ? regressionData.map(point => ({
+      voltage: point.voltage,
+      velocity: point.velocity
+    })) : [];
+    
+    // Add origin point if not present
+    const hasOrigin = measuredDataPoints.some(point => point.voltage === 0);
+    if (!hasOrigin) {
+      measuredDataPoints.push({ voltage: 0, velocity: 0 });
+    }
+    
+    // FIXED: Sort by voltage to ensure correct line connection order
+    return measuredDataPoints.sort((a, b) => a.voltage - b.voltage);
+  };
+
+  const createMeasuredDataTrace = (dataPoints) => {
+    return {
+      x: dataPoints.map(p => p.voltage),
+      y: dataPoints.map(p => p.velocity),
+      mode: 'markers+lines',
+      type: 'scatter',
+      name: 'Messwerte (v)',
+      line: {
+        color: 'black',
+        width: 2
+      },
+      marker: {
+        size: 10,        // Larger black dots
+        color: 'black',
+        line: {
+          width: 2,
+          color: 'white'
+        }
+      },
+      hovertemplate: '<b>Voltage:</b> %{x:.2f}V<br><b>Velocity:</b> %{y:.6f} mm/s<extra></extra>'
+    };
+  };
+
+  const createCalculatedRegressionTrace = () => {
+    const xRange = [];
+    const yRange = [];
+    
+    // Generate line from -10V to +10V
+    for (let x = -10; x <= 10; x += 0.1) {
+      xRange.push(x);
+      yRange.push(analysis.calculatedSlope * x + (analysis.intercept || 0));
     }
 
-    return dataWithOrigin;
+    return {
+      x: xRange,
+      y: yRange,
+      mode: 'lines',
+      type: 'scatter',
+      name: 'Regressionsgerade (berechnet)',
+      line: {
+        color: 'blue',
+        width: 2
+      },
+      hovertemplate: '<b>Calculated Line</b><br>Voltage: %{x:.2f}V<br>Velocity: %{y:.6f} mm/s<extra></extra>'
+    };
   };
 
-  const addMainLegend = (g, chartWidth, chartHeight) => {
-    const legendData = [
-      { color: CHART_STYLES.colors.dataPoints, label: 'Messwerte (v)', type: 'line' },
-      { color: CHART_STYLES.colors.calculatedLine, label: 'Regressionsgerade (berechnet)', type: 'line' },
-      { color: CHART_STYLES.colors.manualLine, label: 'Regressionsgerade (gewählt)', type: 'line' },
-      { color: CHART_STYLES.colors.speedLimits.lower, label: 'Brenngeschwindigkeit Grenzen', type: 'dashed' }
-    ];
+  const createManualRegressionTrace = () => {
+    const xRange = [];
+    const yRange = [];
+    
+    // Generate line from -10V to +10V using manual slope
+    for (let x = -10; x <= 10; x += 0.1) {
+      xRange.push(x);
+      yRange.push(analysis.manualSlope * x + (analysis.intercept || 0));
+    }
 
-    const legend = g.append("g")
-      .attr("class", "legend")
-      .attr("transform", `translate(${chartWidth - 200}, 20)`);
+    return {
+      x: xRange,
+      y: yRange,
+      mode: 'lines',
+      type: 'scatter',
+      name: 'Regressionsgerade (gewählt)',
+      line: {
+        color: 'red',
+        width: 2
+      },
+      hovertemplate: '<b>Manual Line</b><br>Voltage: %{x:.2f}V<br>Velocity: %{y:.6f} mm/s<extra></extra>'
+    };
+  };
 
-    legendData.forEach((item, index) => {
-      const legendRow = legend.append("g")
-        .attr("transform", `translate(0, ${index * 18})`);
+  const createSpeedLimitTraces = () => {
+    if (!analysis.machineParams) return [];
 
-      // Legend line/symbol
-      if (item.type === 'line') {
-        legendRow.append("line")
-          .attr("x1", 0)
-          .attr("x2", 15)
-          .attr("y1", 0)
-          .attr("y2", 0)
-          .attr("stroke", item.color)
-          .attr("stroke-width", 2);
-      } else if (item.type === 'dashed') {
-        legendRow.append("line")
-          .attr("x1", 0)
-          .attr("x2", 15)
-          .attr("y1", 0)
-          .attr("y2", 0)
-          .attr("stroke", item.color)
-          .attr("stroke-width", 1)
-          .attr("stroke-dasharray", "5,5");
-      }
-
-      // Legend text
-      legendRow.append("text")
-        .attr("x", 20)
-        .attr("y", 0)
-        .attr("dy", "0.35em")
-        .style("font-size", "10px")
-        .style("fill", "black")
-        .text(item.label);
+    const traces = [];
+    const xRange = [-10, 10];
+    
+    // Lower speed limit
+    traces.push({
+      x: xRange,
+      y: [analysis.machineParams.lower, analysis.machineParams.lower],
+      mode: 'lines',
+      type: 'scatter',
+      name: 'Brenngeschwindigkeit Grenzen',
+      line: {
+        color: 'lightgreen',
+        width: 1,
+        dash: 'dash'
+      },
+      showlegend: true,
+      hovertemplate: '<b>Lower Speed Limit:</b> %{y:.1f} mm/s<extra></extra>'
     });
 
-    // Legend border
-    const legendBox = legend.node().getBBox();
-    legend.insert("rect", ":first-child")
-      .attr("x", legendBox.x - 3)
-      .attr("y", legendBox.y - 3)
-      .attr("width", legendBox.width + 6)
-      .attr("height", legendBox.height + 6)
-      .attr("fill", "white")
-      .attr("stroke", "#ccc")
-      .attr("stroke-width", 1)
-      .attr("opacity", 0.9);
+    // Middle speed limit
+    traces.push({
+      x: xRange,
+      y: [analysis.machineParams.middle, analysis.machineParams.middle],
+      mode: 'lines',
+      type: 'scatter',
+      name: '',
+      line: {
+        color: 'green',
+        width: 1,
+        dash: 'dash'
+      },
+      showlegend: false,
+      hovertemplate: '<b>Middle Speed Limit:</b> %{y:.1f} mm/s<extra></extra>'
+    });
+
+    // Upper speed limit
+    traces.push({
+      x: xRange,
+      y: [analysis.machineParams.upper, analysis.machineParams.upper],
+      mode: 'lines',
+      type: 'scatter',
+      name: '',
+      line: {
+        color: 'lightgreen',
+        width: 1,
+        dash: 'dash'
+      },
+      showlegend: false,
+      hovertemplate: '<b>Upper Speed Limit:</b> %{y:.1f} mm/s<extra></extra>'
+    });
+
+    return traces;
+  };
+
+  const handlePointClick = (data) => {
+    if (data.points && data.points.length > 0) {
+      const point = data.points[0];
+      
+      // Only handle clicks on measured data points (first trace)
+      if (point.curveNumber === 0) {
+        const pointKey = `${point.x}-${point.y}`;
+        const newSelected = new Set(selectedPoints);
+        
+        if (selectedPoints.has(pointKey)) {
+          newSelected.delete(pointKey);
+        } else {
+          newSelected.add(pointKey);
+        }
+        
+        setSelectedPoints(newSelected);
+        
+        // Update marker colors to show selection
+        const colors = getMeasuredDataPoints().map((_, index) => {
+          const key = `${point.x}-${point.y}`;
+          return newSelected.has(key) ? 'orange' : 'black';
+        });
+        
+        const update = {
+          'marker.color': [colors]
+        };
+        
+        Plotly.restyle(plotRef.current, update, [0]);
+      }
+    }
   };
 
   if (!analysis) {
@@ -190,7 +292,13 @@ const SpeedCheckChart = ({ analysis, regressionData, width = CHART_DIMENSIONS.SP
         padding: '10px',
         backgroundColor: 'white'
       }}>
-        <svg ref={svgRef}></svg>
+        <div 
+          ref={plotRef} 
+          style={{ 
+            width: '100%', 
+            height: `${height}px` 
+          }} 
+        />
       </div>
     </div>
   );

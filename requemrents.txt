@@ -1,0 +1,26 @@
+PS C:\Users\scy\Documents\Ventil_Kennlinien\csv-analysis-tool> npm list --depth=0
+speedchecker@1.0.1 C:\Users\scy\Documents\Ventil_Kennlinien\csv-analysis-tool
+├── @babel/core@7.28.0
+├── @babel/preset-react@7.27.1
+├── babel-loader@10.0.0
+├── concurrently@9.2.0
+├── cors@2.8.5
+├── cross-env@7.0.3
+├── d3@7.9.0
+├── electron-builder@26.0.12
+├── electron@25.9.0
+├── express@4.21.2
+├── html-webpack-plugin@5.6.3
+├── jspdf-autotable@3.8.4
+├── jspdf@2.5.2
+├── multer@1.4.5-lts.2
+├── papaparse@5.5.3
+├── plotly.js-dist@3.1.0
+├── react-dom@19.1.0
+├── react-dropzone@14.3.8
+├── react@19.1.0
+├── sqlite3@5.1.7
+├── wait-on@8.0.3
+├── webpack-cli@6.0.1
+├── webpack-dev-server@5.2.2
+└── webpack@5.100.1

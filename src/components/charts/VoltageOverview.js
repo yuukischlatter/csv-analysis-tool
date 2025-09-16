@@ -41,14 +41,16 @@ const VoltageOverview = ({ assignedVoltages }) => {
         border: '1px solid #ccc',
         borderRadius: '4px',
         backgroundColor: 'white',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        width: '100%'
       }}>
         
         {/* First Row: Voltages */}
         <div style={{ 
           display: 'flex',
           borderBottom: '1px solid #ccc',
-          backgroundColor: '#f5f5f5'
+          backgroundColor: '#f5f5f5',
+          width: '100%'
         }}>
           <div style={{
             padding: '8px 12px',
@@ -72,7 +74,8 @@ const VoltageOverview = ({ assignedVoltages }) => {
                 minWidth: '50px',
                 borderRight: index < AVAILABLE_VOLTAGES.length - 1 ? '1px solid #eee' : 'none',
                 color: '#333',
-                backgroundColor: isVoltageAssigned(voltage) ? '#e8f5e8' : '#fff'
+                backgroundColor: isVoltageAssigned(voltage) ? '#e8f5e8' : '#fff',
+                flex: 1
               }}
             >
               {formatVoltageMagnitude(voltage)}
@@ -82,7 +85,8 @@ const VoltageOverview = ({ assignedVoltages }) => {
 
         {/* Second Row: Status */}
         <div style={{ 
-          display: 'flex'
+          display: 'flex',
+          width: '100%'
         }}>
           <div style={{
             padding: '8px 12px',
@@ -106,7 +110,8 @@ const VoltageOverview = ({ assignedVoltages }) => {
                 minWidth: '50px',
                 borderRight: index < AVAILABLE_VOLTAGES.length - 1 ? '1px solid #eee' : 'none',
                 color: getStatusColor(voltage),
-                backgroundColor: isVoltageAssigned(voltage) ? '#e8f5e8' : '#ffebee'
+                backgroundColor: isVoltageAssigned(voltage) ? '#e8f5e8' : '#ffebee',
+                flex: 1
               }}
             >
               {getStatusIcon(voltage)}
@@ -114,23 +119,6 @@ const VoltageOverview = ({ assignedVoltages }) => {
           ))}
         </div>
       </div>
-
-      {/* Completion Message */}
-      {completedCount === totalCount && (
-        <div style={{
-          marginTop: '10px',
-          padding: '8px 12px',
-          backgroundColor: '#e8f5e8',
-          border: '1px solid #4CAF50',
-          borderRadius: '4px',
-          color: '#2e7d32',
-          fontSize: '12px',
-          fontWeight: 'bold',
-          textAlign: 'center'
-        }}>
-          🎉 All voltage assignments completed! Ready for export.
-        </div>
-      )}
     </div>
   );
 };

@@ -32,6 +32,7 @@
     "jspdf-autotable": "^3.5.25",
     "multer": "^1.4.5-lts.1",
     "papaparse": "^5.5.3",
+    "plotly.js-dist": "^3.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-dropzone": "^14.3.8",

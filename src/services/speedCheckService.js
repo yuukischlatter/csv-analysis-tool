@@ -63,8 +63,8 @@ export const calculateRegressionSlope = (regressionData, voltageLimit = VOLTAGE_
     throw new Error('Cannot calculate regression - division by zero');
   }
 
-  const slope = (n * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / n;
+  const slope = sumXY / sumXX;  // Slope-only regression formula
+  const intercept = 0;          // Force intercept to zero
 
   return {
     slope: slope,

@@ -184,11 +184,11 @@ const SpeedCheckAnalysis = ({
             </div>
           )}
 
-          {/* Chart Container - MOVED TO TOP */}
+          {/* Chart Container - UPDATED FOR PLOTLY */}
           {analysis && (
             <div style={{ 
               width: '100%',
-              overflow: 'hidden',
+              height: '800px', // Fixed height for Plotly
               marginBottom: '20px'
             }}>
               <SpeedCheckChart 

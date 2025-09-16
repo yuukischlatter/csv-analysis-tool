@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import DualResultsTable from '../components/export/ResultsTable';
-import ChartContainer from '../components/charts/ChartContainer';
 import ApprovalButton from '../components/common/ApprovalButton';
 import RegressionChart from '../components/charts/RegressionChart';
 import VoltageOverview from '../components/charts/VoltageOverview';

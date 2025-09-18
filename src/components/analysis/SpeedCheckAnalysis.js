@@ -21,16 +21,31 @@ const SpeedCheckAnalysis = ({
   // Get machine type from test form data
   const machineType = testFormData?.maschinentyp || 'GAA100';
 
+  // Calculate the "master" direct slope value (what the slider represents)
+  const masterDirectSlopeValue = analysis ? (analysis.calculatedSlope * manualSlopeFactor).toFixed(4) : '';
+
+  // Check if there's a pending change (text field different from slider)
+  const hasPendingChange = directSlopeInput !== '' && directSlopeInput !== masterDirectSlopeValue;
+
   // Initialize from saved analysis when loading a project
   useEffect(() => {
     if (initialAnalysis) {
       setAnalysis(initialAnalysis);
-      setManualSlopeFactor(initialAnalysis.manualSlopeFactor || 1.0);
+      const factor = initialAnalysis.manualSlopeFactor || 1.0;
+      setManualSlopeFactor(factor);
+      // Set text field to match the loaded analysis
       setDirectSlopeInput(initialAnalysis.manualSlope?.toFixed(4) || '');
     }
   }, [initialAnalysis]);
 
-  // Perform analysis when inputs change
+  // Update text field when slider changes (slider is master)
+  useEffect(() => {
+    if (analysis && !hasPendingChange) {
+      setDirectSlopeInput(masterDirectSlopeValue);
+    }
+  }, [analysis, masterDirectSlopeValue, hasPendingChange]);
+
+  // Perform analysis when slider factor changes
   useEffect(() => {
     if (!regressionData || regressionData.length === 0) {
       setAnalysis(null);
@@ -50,11 +65,6 @@ const SpeedCheckAnalysis = ({
       setAnalysis(newAnalysis);
       setError(null);
 
-      // Update direct slope input to match calculated value
-      if (directSlopeInput === '' || !initialAnalysis) {
-        setDirectSlopeInput(newAnalysis.manualSlope.toFixed(4));
-      }
-
       // Notify parent component
       if (onAnalysisUpdate) {
         onAnalysisUpdate(newAnalysis);
@@ -71,28 +81,23 @@ const SpeedCheckAnalysis = ({
     const newFactor = parseFloat(event.target.value);
     setManualSlopeFactor(newFactor);
 
+    // Slider is master - discard any pending text changes
+    setDirectSlopeInput(''); // Will be updated by useEffect to match slider
+
     if (onManualChange) {
-      onManualChange(); 
-    }
-    
-    // Update direct input to match
-    if (analysis) {
-      const newManualSlope = analysis.calculatedSlope * newFactor;
-      setDirectSlopeInput(newManualSlope.toFixed(4));
+      onManualChange();
     }
   };
 
   const handleDirectSlopeChange = (event) => {
     const value = event.target.value;
     setDirectSlopeInput(value);
+    // Don't update slider or analysis yet - wait for apply button
+  };
 
-    if (onManualChange && value !== '' && !isNaN(parseFloat(value))) {
-      onManualChange(); 
-    }
-    
-    // Calculate corresponding factor
-    if (analysis && value !== '' && !isNaN(parseFloat(value))) {
-      const inputSlope = parseFloat(value);
+  const handleApplyTextValue = () => {
+    if (analysis && directSlopeInput !== '' && !isNaN(parseFloat(directSlopeInput))) {
+      const inputSlope = parseFloat(directSlopeInput);
       const newFactor = inputSlope / analysis.calculatedSlope;
       
       // Clamp factor to valid range
@@ -102,14 +107,16 @@ const SpeedCheckAnalysis = ({
       );
       
       setManualSlopeFactor(clampedFactor);
+      
+      if (onManualChange) {
+        onManualChange();
+      }
     }
   };
 
   const handleResetToCalculated = () => {
     setManualSlopeFactor(1.0);
-    if (analysis) {
-      setDirectSlopeInput(analysis.calculatedSlope.toFixed(4));
-    }
+    setDirectSlopeInput(''); // Will be updated by useEffect
   };
 
   const handleToggleCollapse = () => {
@@ -209,7 +216,7 @@ const SpeedCheckAnalysis = ({
               border: '1px solid #eee'
             }}>
               
-              {/* Top Row: Calculated Slope (left) + Direct Slope Input (right) */}
+              {/* Top Row: Calculated Slope (left) + Direct Slope Input with Apply Button (right) */}
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: '1fr 1fr', 
@@ -235,20 +242,45 @@ const SpeedCheckAnalysis = ({
                   <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
                     Direct Slope Input (mm/s per V):
                   </label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={directSlopeInput}
-                    onChange={handleDirectSlopeChange}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      fontFamily: 'monospace'
-                    }}
-                  />
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={directSlopeInput}
+                      onChange={handleDirectSlopeChange}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        border: hasPendingChange ? '2px solid #007bff' : '1px solid #ccc',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        fontFamily: 'monospace',
+                        backgroundColor: hasPendingChange ? '#f0f8ff' : 'white'
+                      }}
+                    />
+                    {hasPendingChange && (
+                      <button
+                        onClick={handleApplyTextValue}
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: '36px',
+                          height: '36px'
+                        }}
+                        title="Apply typed value"
+                      >
+                        ✓
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

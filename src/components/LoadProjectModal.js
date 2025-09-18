@@ -77,7 +77,7 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
         backgroundColor: 'white',
         borderRadius: '8px',
         padding: '20px',
-        maxWidth: '800px',
+        maxWidth: '900px',
         width: '90%',
         maxHeight: '80vh',
         overflow: 'auto',
@@ -92,7 +92,7 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
           borderBottom: '1px solid #ddd',
           paddingBottom: '10px'
         }}>
-          <h2 style={{ margin: 0 }}>Load Project</h2>
+          <h2 style={{ margin: 0 }}>Load Valve</h2>
           <button
             onClick={onClose}
             style={{
@@ -139,6 +139,7 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
             <thead>
               <tr style={{ borderBottom: '2px solid #ddd' }}>
                 <th style={{ padding: '10px', textAlign: 'left' }}>Auftrag-Nr</th>
+                <th style={{ padding: '10px', textAlign: 'left' }}>S/N Parker</th>
                 <th style={{ padding: '10px', textAlign: 'left' }}>Date</th>
                 <th style={{ padding: '10px', textAlign: 'left' }}>Machine</th>
                 <th style={{ padding: '10px', textAlign: 'center' }}>Files</th>
@@ -146,27 +147,43 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
               </tr>
             </thead>
             <tbody>
-              {projects.map((project) => (
-                <tr
-                  key={project.id}
-                  onClick={() => handleLoadProject(project.id)}
-                  style={{
-                    borderBottom: '1px solid #eee',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                >
-                  <td style={{ padding: '10px' }}>{project.auftrag_nr || 'Unknown'}</td>
-                  <td style={{ padding: '10px' }}>{project.datum || '-'}</td>
-                  <td style={{ padding: '10px' }}>{project.maschinentyp || '-'}</td>
-                  <td style={{ padding: '10px', textAlign: 'center' }}>{project.file_count || 0}</td>
-                  <td style={{ padding: '10px' }}>
-                    {new Date(project.created_at).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
+              {projects.map((project) => {
+                // Extract S/N Parker from project data
+                let snParker = '-';
+                try {
+                  if (project.complete_app_state) {
+                    const appState = JSON.parse(project.complete_app_state);
+                    if (appState.testFormData && appState.testFormData.snParker) {
+                      snParker = appState.testFormData.snParker;
+                    }
+                  }
+                } catch (e) {
+                  // Keep default '-' if parsing fails
+                }
+
+                return (
+                  <tr
+                    key={project.id}
+                    onClick={() => handleLoadProject(project.id)}
+                    style={{
+                      borderBottom: '1px solid #eee',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                  >
+                    <td style={{ padding: '10px' }}>{project.auftrag_nr || 'Unknown'}</td>
+                    <td style={{ padding: '10px' }}>{snParker}</td>
+                    <td style={{ padding: '10px' }}>{project.datum || '-'}</td>
+                    <td style={{ padding: '10px' }}>{project.maschinentyp || '-'}</td>
+                    <td style={{ padding: '10px', textAlign: 'center' }}>{project.file_count || 0}</td>
+                    <td style={{ padding: '10px' }}>
+                      {new Date(project.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

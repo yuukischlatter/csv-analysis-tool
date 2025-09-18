@@ -131,7 +131,7 @@ function App() {
                 cursor: 'pointer'
               }}
             >
-              Load Project
+              Load Valve
             </button>
             {loadedProjectId && (
               <span style={{ 

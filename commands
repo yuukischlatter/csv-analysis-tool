@@ -1,4 +1,3 @@
 # Entwicklung starten (Browser)
 npm run build
-cd build
-live-server
+npm run server

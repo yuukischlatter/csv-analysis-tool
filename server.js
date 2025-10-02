@@ -10,8 +10,7 @@ const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-const PORT = 3001;
-//const PORT = 80;
+const PORT = 8080;
 
 // Middleware
 app.use(cors());

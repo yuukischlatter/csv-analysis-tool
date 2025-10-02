@@ -2,16 +2,11 @@
   "name": "speedchecker",
   "version": "1.0.1",
   "description": "SpeedChecker Tool",
-  "main": "electron.js",
+  "main": "server.js",
   "homepage": "./",
   "scripts": {
     "start": "webpack serve --mode development",
     "build": "webpack --mode production",
-    "electron": "electron .",
-    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron-simple": "webpack --mode development && electron .",
-    "electron-pack": "npm run build && electron-builder",
-    "dist": "npm run build && electron-builder --publish=never",
     "server": "node server.js",
     "dev": "concurrently \"npm run build:watch\" \"npm run server\"",
     "build:watch": "webpack --mode development --watch"
@@ -19,7 +14,6 @@
   "keywords": [
     "speed",
     "analysis",
-    "electron",
     "schlatter"
   ],
   "author": "Schlatter Industries",
@@ -44,44 +38,9 @@
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.0",
     "cross-env": "^7.0.3",
-    "electron": "^25.9.0",
-    "electron-builder": "^26.0.12",
     "html-webpack-plugin": "^5.6.3",
-    "wait-on": "^8.0.3",
     "webpack": "^5.100.1",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2"
-  },
-  "build": {
-    "appId": "com.schlatter.speedchecker",
-    "productName": "SpeedChecker",
-    "icon": "public/assets/icon.ico",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "build/**/*",
-      "electron.js",
-      "package.json"
-    ],
-    "win": {
-      "icon": "public/assets/icon.ico",
-      "target": [
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "forceCodeSigning": false,
-      "verifyUpdateCodeSignature": false,
-      "signAndEditExecutable": false,
-      "signExts": null
-    },
-    "portable": {
-      "artifactName": "SpeedChecker.exe"
-    },
-    "forceCodeSigning": false
   }
 }

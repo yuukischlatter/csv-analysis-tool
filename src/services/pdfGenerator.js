@@ -9,26 +9,7 @@ import { createPDFDataPackage, calculateBezierControlPoints, transformToPDFCoord
 
 // Get version from package.json
 const getAppVersion = () => {
-  try {
-    // In Electron environment, we can access the main process
-    if (window.require) {
-      const { remote } = window.require('electron');
-      const app = remote ? remote.app : window.require('electron').app;
-      return app.getVersion();
-    }
-    
-    // Fallback: try to read package.json directly
-    if (window.fs && window.fs.readFileSync) {
-      const packageJson = JSON.parse(window.fs.readFileSync('package.json', 'utf8'));
-      return packageJson.version;
-    }
-    
-    // If neither works, return a default
-    return '1.0.0';
-  } catch (error) {
-    console.warn('Could not retrieve app version:', error);
-    return '1.0.0';
-  }
+  return '1.0.1'; // Or read from environment variable if needed
 };
 
 /**

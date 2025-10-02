@@ -3,7 +3,21 @@
  * Handles communication with Express backend
  */
 
-const API_BASE_URL = `http://${window.location.hostname}:8080/api`;
+let API_BASE_URL = `http://${window.location.hostname}:8080/api`;
+
+// Fetch server configuration on load
+(async () => {
+  try {
+    const response = await fetch(`http://${window.location.hostname}:8080/api/config`);
+    if (response.ok) {
+      const config = await response.json();
+      API_BASE_URL = config.apiBaseUrl;
+      console.log('API configured to use:', API_BASE_URL);
+    }
+  } catch (error) {
+    console.log('Using default API URL:', API_BASE_URL);
+  }
+})();
 
 class ApiClient {
   // Save project to SQLite database file with PDF data

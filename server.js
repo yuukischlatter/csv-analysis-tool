@@ -11,6 +11,7 @@ const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const PORT = 8080;
+const HOSTNAME = 'idv1483.schlatter.ch';
 
 // Middleware
 app.use(cors());
@@ -85,6 +86,15 @@ function initializeDatabase() {
     }
   });
 }
+
+// API endpoint to get server configuration
+app.get('/api/config', (req, res) => {
+  res.json({
+    hostname: HOSTNAME,
+    port: PORT,
+    apiBaseUrl: `http://${HOSTNAME}:${PORT}/api`
+  });
+});
 
 // Save project snapshot
 app.post('/api/projects/save', (req, res) => {

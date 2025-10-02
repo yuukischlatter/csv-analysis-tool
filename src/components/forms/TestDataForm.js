@@ -25,10 +25,14 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
     druckVentil: '',
     oeltemperatur: '',
     
-    // Voltage to Position Calibration (NEW)
+    // Voltage to Position Calibration
     calibrationOffset: '',
     calibrationMaxPosition: '',
-    calibrationMaxVoltage: ''
+    calibrationMaxVoltage: '',
+    
+    // Geprüft/Eingebaut
+    geprueftAn: '',
+    eingebautIn: ''
   });
 
   // Load initial data when it changes (from loading a project)
@@ -48,10 +52,11 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
         ventilOffsetNachKorrektur: initialData.ventilOffsetNachKorrektur || '',
         druckVentil: initialData.druckVentil || '',
         oeltemperatur: initialData.oeltemperatur || '',
-        // Include calibration fields when loading project
         calibrationOffset: initialData.calibrationOffset || '',
         calibrationMaxPosition: initialData.calibrationMaxPosition || '',
-        calibrationMaxVoltage: initialData.calibrationMaxVoltage || ''
+        calibrationMaxVoltage: initialData.calibrationMaxVoltage || '',
+        geprueftAn: initialData.geprueftAn || '',
+        eingebautIn: initialData.eingebautIn || ''
       });
     }
   }, [initialData]);
@@ -412,20 +417,19 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
             </div>
           </div>
 
-          {/* Voltage to Position Calibration - UPDATED */}
+          {/* Voltage to Position Calibration */}
           <div style={{ 
             border: '1px solid #ddd', 
             borderRadius: '4px', 
             padding: '15px', 
             marginBottom: '15px',
-            backgroundColor: '#fafafa'  // Same as others
+            backgroundColor: '#fafafa'
           }}>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>
               Voltage to Position Calibration
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-              {/* Reordered: Position at Max first */}
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
                   Position at Max Voltage:
@@ -447,7 +451,6 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                 </div>
               </div>
 
-              {/* Max Voltage second */}
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
                   Max Voltage Value:
@@ -469,7 +472,6 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                 </div>
               </div>
 
-              {/* Voltage Offset last */}
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
                   Voltage Offset to Zero:
@@ -489,6 +491,36 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                   />
                   <span style={{ fontSize: '14px' }}>V</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Geprüft/Eingebaut */}
+          <div style={{ 
+            border: '1px solid #ddd', 
+            borderRadius: '4px', 
+            padding: '15px', 
+            marginBottom: '15px',
+            backgroundColor: '#fafafa'
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Geprüft an:</label>
+                <input
+                  type="text"
+                  value={formData.geprueftAn}
+                  onChange={(e) => handleInputChange('geprueftAn', e.target.value)}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Eingebaut in:</label>
+                <input
+                  type="text"
+                  value={formData.eingebautIn}
+                  onChange={(e) => handleInputChange('eingebautIn', e.target.value)}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                />
               </div>
             </div>
           </div>

@@ -110,13 +110,19 @@ function App() {
     }}>
       <header style={{ marginBottom: '30px', borderBottom: `1px solid ${COLORS.BORDER_DEFAULT}`, paddingBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <img 
+              src="assets/schlatter-logo.png" 
+              alt="Schlatter" 
+              style={{ height: '100px' }}
+              onError={(e) => {
+                console.warn('Logo not found, hiding image');
+                e.target.style.display = 'none';
+              }}
+            />
             <h1 style={{ margin: '0', fontSize: '24px' }}>
               SpeedChecker
             </h1>
-            <p style={{ margin: '5px 0 0 0', color: COLORS.TEXT_SECONDARY }}>
-              Schlatter Industries
-            </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
@@ -131,7 +137,7 @@ function App() {
                 cursor: 'pointer'
               }}
             >
-              Load Valve
+              Load Ventil
             </button>
             {loadedProjectId && (
               <span style={{ 

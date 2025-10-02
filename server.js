@@ -82,7 +82,7 @@ function initializeDatabase() {
     if (err) {
       console.error('Table creation failed:', err.message);
     } else {
-      console.log('✓ Database table initialized');
+      console.log('Database table initialized');
     }
   });
 }
@@ -96,7 +96,7 @@ app.post('/api/projects/save', (req, res) => {
     const isUpdate = projectData.projectId || projectData.folderName || projectData.updateMode;
     const folderName = projectData.folderName || generateFolderName(projectData.testFormData);
     
-    console.log(isUpdate ? `📝 Updating project: ${folderName}` : `✨ Creating new project: ${folderName}`);
+    console.log(isUpdate ? `Updating project: ${folderName}` : `Creating new project: ${folderName}`);
     
     const projectFolder = path.join(PROJECTS_DIR, folderName);
     
@@ -149,7 +149,7 @@ function createProjectStructure(projectFolder) {
     }
   });
   
-  console.log(`✓ Project structure created: ${path.basename(projectFolder)}`);
+  console.log(`Project structure created: ${path.basename(projectFolder)}`);
 }
 
 // Save project files
@@ -332,7 +332,7 @@ function updateProject(record, folderName, projectId, projectData, res) {
       return res.status(500).json({ error: 'Database update failed' });
     }
     
-    console.log(`✅ Project updated in database: ${folderName}`);
+    console.log(`Project updated in database: ${folderName}`);
     res.json({ 
       success: true, 
       projectId: projectId, 
@@ -371,7 +371,7 @@ function insertProject(record, projectData, res) {
       return res.status(500).json({ error: 'Database insert failed' });
     }
     
-    console.log(`✅ Project saved to database: ${record.folder_name} (ID: ${this.lastID})`);
+    console.log(`Project saved to database: ${record.folder_name} (ID: ${this.lastID})`);
     res.json({ 
       success: true, 
       projectId: this.lastID, 
@@ -494,14 +494,14 @@ app.get('*', (req, res) => {
 // Start server
 //app.listen(PORT, () => {
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 SpeedChecker server running at http://localhost:${PORT}`);
-  console.log(`📊 Database file: ${DB_PATH}`);
-  console.log(`📁 Project data: ${PROJECTS_DIR}`);
+  console.log(`SpeedChecker server running at http://localhost:${PORT}`);
+  console.log(`Database file: ${DB_PATH}`);
+  console.log(`Project data: ${PROJECTS_DIR}`);
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down server...');
+  console.log('\n Shutting down server...');
   db.close((err) => {
     if (err) {
       console.error(err.message);

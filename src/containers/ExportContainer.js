@@ -75,14 +75,14 @@ const ExportContainer = ({
       // Check if API server is running
       const isConnected = await ApiClient.checkConnection();
       if (!isConnected) {
-        console.warn('⚠️ Database server not running. Start with: npm run server');
+        console.warn('Database server not running. Start with: npm run server');
         return;
       }
 
       // Check if we should save or skip
       if (loadedProjectId && !hasChanges) {
-        console.log('📋 No changes detected, skipping database save');
-        console.log('✅ PDF generated from loaded project without saving');
+        console.log('No changes detected, skipping database save');
+        console.log('PDF generated from loaded project without saving');
         return;
       }
 
@@ -108,10 +108,10 @@ const ExportContainer = ({
       
       if (result.success) {
         const action = loadedProjectId ? 'updated' : 'created';
-        console.log(`✅ Project ${action}: ${result.folderName}`);
+        console.log(`Project ${action}: ${result.folderName}`);
         
         if (result.pdfSaved) {
-          console.log(`📄 PDF copy saved to server: ${result.pdfPath}`);
+          console.log(`PDF copy saved to server: ${result.pdfPath}`);
         }
         
         showSaveNotification(`Project ${action} and PDF saved to server`);
@@ -124,7 +124,7 @@ const ExportContainer = ({
       
     } catch (error) {
       console.error('Database save failed:', error);
-      console.warn('💡 Make sure to run: npm run server (in separate terminal)');
+      console.warn('Make sure to run: npm run server (in separate terminal)');
     }
   };
 
@@ -139,7 +139,7 @@ const ExportContainer = ({
 
   // Show save notification
   const showSaveNotification = (message) => {
-    console.log(`💾 ${message}`);
+    console.log(`Save ${message}`);
   };
 
   // Don't render if no voltage assignments

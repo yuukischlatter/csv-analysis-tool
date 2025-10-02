@@ -23,7 +23,7 @@ const ApprovalButton = ({
     if (availableVoltages.length > 0 && selectedVoltage === '' && !isApproved) {
       const lowestVoltage = Math.min(...availableVoltages);
       setSelectedVoltage(lowestVoltage);
-      console.log(`🎯 Auto-selected lowest voltage: ±${lowestVoltage}V for ${fileName}`);
+      console.log(`Auto-selected lowest voltage: ±${lowestVoltage}V for ${fileName}`);
     }
   }, [availableVoltages, selectedVoltage, isApproved, fileName]);
 
@@ -150,7 +150,7 @@ const ApprovalButton = ({
           borderRadius: '4px',
           border: '1px solid #f44336'
         }}>
-          <strong>⚠️ No voltages available</strong>
+          <strong>No voltages available</strong>
           <br />
           All voltage assignments have been used. Unapprove other files to free up voltages.
         </div>

@@ -44,10 +44,10 @@ class ApiClient {
       }
 
       const result = await response.json();
-      console.log(`✓ Project ${result.action}: ${result.folderName} (ID: ${result.projectId})`);
+      console.log(`Project ${result.action}: ${result.folderName} (ID: ${result.projectId})`);
       
       if (result.pdfSaved) {
-        console.log(`📄 PDF saved to server: ${result.pdfPath}`);
+        console.log(`PDF saved to server: ${result.pdfPath}`);
       }
       
       return result;
@@ -120,7 +120,7 @@ class ApiClient {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      console.log(`✓ Downloaded PDF: ${filename}`);
+      console.log(`Downloaded PDF: ${filename}`);
       return true;
     } catch (error) {
       console.error('API download PDF failed:', error);

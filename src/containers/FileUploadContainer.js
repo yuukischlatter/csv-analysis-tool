@@ -18,10 +18,10 @@ const FileUploadContainer = ({
   setError,
   setIsAnalyzing,
   setHasChanges,
-  testFormData  // NEW: Accept testFormData prop
+  testFormData
 }) => {
 
-  // NEW: Calculate calibration data from form inputs
+  // Calculate calibration data from form inputs
   const getCalibrationData = () => {
     if (!testFormData) return null;
     
@@ -147,11 +147,11 @@ const FileUploadContainer = ({
         }
       }
 
-      console.log(`✅ Processed ${newResults.length} new files in chronological order (${failed.length} failed)`);
+      console.log(`Processed ${newResults.length} new files in chronological order (${failed.length} failed)`);
       if (chronologicalFiles.length > 0) {
         const oldest = chronologicalFiles[0];
         const newest = chronologicalFiles[chronologicalFiles.length - 1];
-        console.log(`📅 Chronological range: ${oldest.fileName} (${oldest.createdDate.toLocaleString()}) → ${newest.fileName} (${newest.createdDate.toLocaleString()})`);
+        console.log(`Chronological range: ${oldest.fileName} (${oldest.createdDate.toLocaleString()}) → ${newest.fileName} (${newest.createdDate.toLocaleString()})`);
       }
 
     } catch (error) {
@@ -164,7 +164,7 @@ const FileUploadContainer = ({
   return (
     <FileUpload 
       onFilesProcessed={handleFilesProcessed}
-      calibrationData={getCalibrationData()}  // NEW: Pass calibration data
+      calibrationData={getCalibrationData()}
     />
   );
 };

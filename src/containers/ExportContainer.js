@@ -19,6 +19,58 @@ const ExportContainer = ({
   setHasChanges
 }) => {
 
+  const handleSaveProject = async () => {
+    try {
+      // Check if API server is running
+      const isConnected = await ApiClient.checkConnection();
+      if (!isConnected) {
+        alert('Database server not running. Please start with: npm run server');
+        console.warn('Database server not running. Start with: npm run server');
+        return;
+      }
+
+      // Check if we should save or skip
+      if (loadedProjectId && !hasChanges) {
+        alert('No changes to save');
+        console.log('No changes detected, skipping save');
+        return;
+      }
+
+      // Prepare data for saving (without PDF generation)
+      const projectData = {
+        testFormData,
+        dualSlopeResults,
+        voltageAssignments,
+        approvalStatus,
+        manuallyAdjusted,
+        regressionData,
+        speedCheckResults,
+        processedFiles,
+        projectId: loadedProjectId,  // Include for update
+        folderName: loadedFolderName, // Include for update
+        isUpdate: !!loadedProjectId  // Flag to indicate update mode
+      };
+      
+      // Save to SQLite database via API
+      const result = await ApiClient.saveProject(projectData);
+      
+      if (result.success) {
+        const action = loadedProjectId ? 'updated' : 'saved';
+        console.log(`Project ${action}: ${result.folderName}`);
+        alert(`Project ${action} successfully!`);
+        
+        // Reset changes flag after successful save
+        if (setHasChanges) {
+          setHasChanges(false);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert(`Save failed: ${error.message}`);
+    }
+  };
+
   const handleCSVExport = () => {
     if (Object.keys(voltageAssignments).length === 0) {
       alert('No voltage assignments to export');
@@ -158,6 +210,28 @@ const ExportContainer = ({
       alignItems: 'center'
     }}>
       <button
+        onClick={handleSaveProject}
+        style={{
+          padding: '10px 20px',
+          fontSize: '14px',
+          border: '1px solid #28a745',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          backgroundColor: '#28a745',
+          color: 'white',
+          transition: 'background-color 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.backgroundColor = '#218838';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.backgroundColor = '#28a745';
+        }}
+      >
+        Save Project
+      </button>
+
+      <button
         onClick={handleCSVExport}
         style={{
           padding: '10px 20px',
@@ -197,10 +271,11 @@ const ExportContainer = ({
       {loadedProjectId && (
         <span style={{ 
           fontSize: '12px', 
-          color: hasChanges ? '#ff9800' : '#666',
-          marginLeft: '10px'
+          color: hasChanges ? '#ff9800' : '#28a745',
+          marginLeft: '10px',
+          fontWeight: hasChanges ? 'normal' : 'bold'
         }}>
-          {hasChanges ? 'Changes will be saved' : 'No changes to save'}
+          {hasChanges ? '● Unsaved changes' : '✓ All changes saved'}
         </span>
       )}
     </div>

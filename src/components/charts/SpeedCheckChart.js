@@ -16,10 +16,8 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
   const renderPlotlyChart = () => {
     if (!analysis) return;
 
-    // Prepare measured data points (including origin)
     const measuredDataPoints = getMeasuredDataPoints();
     
-    // Create Plotly traces
     const traces = [
       createMeasuredDataTrace(measuredDataPoints),
       createCalculatedRegressionTrace(),
@@ -27,7 +25,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
       ...createSpeedLimitTraces()
     ];
 
-    // Layout configuration
     const layout = {
       title: {
         text: 'Speed Check Analysis',
@@ -38,7 +35,7 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
           text: 'Eingangsspannung UE [V]',
           font: { size: 14, color: 'black' }
         },
-        range: [0, 4.5], // Default view
+        range: [0, 4.5],
         showgrid: true,
         gridcolor: '#ccc',
         gridwidth: 1,
@@ -69,10 +66,10 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
       },
       margin: { t: 50, r: 20, b: 70, l: 80 },
       plot_bgcolor: 'white',
-      paper_bgcolor: 'white'
+      paper_bgcolor: 'white',
+      annotations: createDeviationAnnotations()
     };
 
-    // Configuration
     const config = {
       displayModeBar: true,
       displaylogo: false,
@@ -86,10 +83,7 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
       }
     };
 
-    // Plot the chart
     Plotly.newPlot(plotRef.current, traces, layout, config);
-
-    // Add click handler for data point selection
     plotRef.current.on('plotly_click', handlePointClick);
   };
 
@@ -99,13 +93,11 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
       velocity: point.velocity
     })) : [];
     
-    // Add origin point if not present
     const hasOrigin = measuredDataPoints.some(point => point.voltage === 0);
     if (!hasOrigin) {
       measuredDataPoints.push({ voltage: 0, velocity: 0 });
     }
     
-    // FIXED: Sort by voltage to ensure correct line connection order
     return measuredDataPoints.sort((a, b) => a.voltage - b.voltage);
   };
 
@@ -121,7 +113,7 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
         width: 2
       },
       marker: {
-        size: 10,        // Larger black dots
+        size: 10,
         color: 'black',
         line: {
           width: 2,
@@ -136,7 +128,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
     const xRange = [];
     const yRange = [];
     
-    // Generate line from -10V to +10V
     for (let x = -10; x <= 10; x += 0.1) {
       xRange.push(x);
       yRange.push(analysis.calculatedSlope * x + (analysis.intercept || 0));
@@ -160,7 +151,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
     const xRange = [];
     const yRange = [];
     
-    // Generate line from -10V to +10V using manual slope
     for (let x = -10; x <= 10; x += 0.1) {
       xRange.push(x);
       yRange.push(analysis.manualSlope * x + (analysis.intercept || 0));
@@ -186,7 +176,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
     const traces = [];
     const xRange = [-10, 10];
     
-    // Lower speed limit
     traces.push({
       x: xRange,
       y: [analysis.machineParams.lower, analysis.machineParams.lower],
@@ -202,7 +191,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
       hovertemplate: '<b>Lower Speed Limit:</b> %{y:.1f} mm/s<extra></extra>'
     });
 
-    // Middle speed limit
     traces.push({
       x: xRange,
       y: [analysis.machineParams.middle, analysis.machineParams.middle],
@@ -218,7 +206,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
       hovertemplate: '<b>Middle Speed Limit:</b> %{y:.1f} mm/s<extra></extra>'
     });
 
-    // Upper speed limit
     traces.push({
       x: xRange,
       y: [analysis.machineParams.upper, analysis.machineParams.upper],
@@ -237,11 +224,60 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
     return traces;
   };
 
+  const createDeviationAnnotations = () => {
+    if (!analysis.deviations || analysis.deviations.length === 0) {
+      return [];
+    }
+
+    const THRESHOLDS = {
+      GREEN: 5,
+      ORANGE: 20
+    };
+
+    const getDeviationColor = (deviation) => {
+      const absDeviation = Math.abs(deviation);
+      if (absDeviation <= THRESHOLDS.GREEN) return 'green';
+      if (absDeviation <= THRESHOLDS.ORANGE) return 'orange';
+      return 'red';
+    };
+
+    const annotations = [];
+
+    analysis.deviations.forEach(dev => {
+      if (dev.measuredVoltage === 0) return;
+
+      const measuredV = dev.measuredVoltage;
+      const measuredVel = dev.measuredVelocity;
+      const deviation = dev.deviation;
+
+      const sign = deviation > 0 ? '+' : '';
+      const deviationText = `${sign}${deviation.toFixed(1)}%`;
+      const color = getDeviationColor(deviation);
+
+      annotations.push({
+        x: measuredV,
+        y: measuredVel,
+        text: deviationText,
+        showarrow: false,
+        font: {
+          size: 11,
+          color: color,
+          family: 'Arial, sans-serif',
+          weight: 'bold'
+        },
+        xanchor: 'center',
+        yanchor: 'bottom',
+        yshift: 10
+      });
+    });
+
+    return annotations;
+  };
+
   const handlePointClick = (data) => {
     if (data.points && data.points.length > 0) {
       const point = data.points[0];
       
-      // Only handle clicks on measured data points (first trace)
       if (point.curveNumber === 0) {
         const pointKey = `${point.x}-${point.y}`;
         const newSelected = new Set(selectedPoints);
@@ -254,7 +290,6 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
         
         setSelectedPoints(newSelected);
         
-        // Update marker colors to show selection
         const colors = getMeasuredDataPoints().map((_, index) => {
           const key = `${point.x}-${point.y}`;
           return newSelected.has(key) ? 'orange' : 'black';

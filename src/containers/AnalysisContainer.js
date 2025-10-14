@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import DualResultsTable from '../components/export/ResultsTable';
 import ApprovalButton from '../components/common/ApprovalButton';
 import RegressionChart from '../components/charts/RegressionChart';
@@ -36,6 +36,10 @@ const AnalysisContainer = ({
   loadedFolderName,
   hasChanges
 }) => {
+
+  const handleAnalysisUpdate = useCallback((newAnalysis) => {
+    setSpeedCheckResults(newAnalysis);
+  }, [setSpeedCheckResults]);
 
   const updateRegressionData = () => {
     if (Object.keys(voltageAssignments).length > 0) {
@@ -125,27 +129,23 @@ const AnalysisContainer = ({
 
       const fileName = updatedDualSlope.fileName;
       
-      // Only set manuallyAdjusted to true when user actually drags markers (detectionMethod becomes 'manual')
       setManuallyAdjusted(prev => ({
         ...prev,
         [fileName]: true
       }));
 
-      // Auto-unapprove when user makes changes
       const newApprovalStatus = {
         ...approvalStatus,
         [fileName]: false
       };
       setApprovalStatus(newApprovalStatus);
 
-      // Remove voltage assignment if file was unapproved
       if (voltageAssignments[fileName]) {
         const newVoltageAssignments = { ...voltageAssignments };
         delete newVoltageAssignments[fileName];
         setVoltageAssignments(newVoltageAssignments);
       }
 
-      // Mark as changed
       setHasChanges(true);
 
       console.log(`Updated ${fileName}: auto-unapproved due to manual adjustment`);
@@ -166,26 +166,22 @@ const AnalysisContainer = ({
   };
 
   const handleApprovalWithVoltage = (fileName, selectedVoltage) => {
-    // Mark current file as approved
     const newApprovalStatus = {
       ...approvalStatus,
       [fileName]: true
     };
     setApprovalStatus(newApprovalStatus);
 
-    // Assign voltage to this file
     const newVoltageAssignments = {
       ...voltageAssignments,
       [fileName]: selectedVoltage
     };
     setVoltageAssignments(newVoltageAssignments);
 
-    // Mark as changed
     setHasChanges(true);
 
     console.log(`✓ Approved: ${fileName} for ±${selectedVoltage}V`);
 
-    // Auto-navigate to next unapproved file
     const nextFile = getNextUnapprovedFile(fileName);
     if (nextFile) {
       const fileData = processedFiles.find(f => f.fileName === nextFile.fileName);
@@ -206,12 +202,10 @@ const AnalysisContainer = ({
     const unapprovedFiles = dualSlopeResults.filter(result => !approvalStatus[result.fileName]);
     const currentIndex = unapprovedFiles.findIndex(result => result.fileName === currentFileName);
     
-    // Look for next unapproved file
     if (currentIndex >= 0 && currentIndex < unapprovedFiles.length - 1) {
       return unapprovedFiles[currentIndex + 1];
     }
     
-    // If no next file, return first unapproved file (excluding current)
     const otherUnapproved = unapprovedFiles.filter(result => result.fileName !== currentFileName);
     return otherUnapproved.length > 0 ? otherUnapproved[0] : null;
   };
@@ -221,7 +215,6 @@ const AnalysisContainer = ({
   const isCurrentFileApproved = selectedFile ? approvalStatus[selectedFile.dualSlope.fileName] : false;
   const isCurrentFileManuallyAdjusted = selectedFile ? manuallyAdjusted[selectedFile.dualSlope.fileName] : false;
 
-  // Chart rendering effect
   useEffect(() => {
     if (selectedFile && selectedFile.data && selectedFile.dualSlope) {
       const chartElement = document.querySelector('#chart-svg');
@@ -245,12 +238,10 @@ const AnalysisContainer = ({
     }
   }, [selectedFile]);
 
-  // Update regression data when assignments change
   useEffect(() => {
     updateRegressionData();
   }, [voltageAssignments, approvalStatus]);
 
-  // Don't render anything if no results
   if (!dualSlopeResults || dualSlopeResults.length === 0) {
     return null;
   }
@@ -335,7 +326,7 @@ const AnalysisContainer = ({
               assignedVoltages={getAssignedVoltages()}
             />
 
-            {false && ( // Just add "false &&" 
+            {false && (
             <RegressionChart 
               data={regressionData}
               width={CHART_DIMENSIONS.REGRESSION.width}
@@ -348,7 +339,7 @@ const AnalysisContainer = ({
               <SpeedCheckAnalysis 
                 regressionData={regressionData}
                 testFormData={testFormData}
-                onAnalysisUpdate={setSpeedCheckResults}
+                onAnalysisUpdate={handleAnalysisUpdate}
                 initialAnalysis={loadedSpeedCheckResults}
                 onManualChange={() => setHasChanges(true)}
               />
@@ -357,7 +348,6 @@ const AnalysisContainer = ({
         </div>
       )}
 
-      {/* Export Container - now with project tracking */}
       <ExportContainer
         dualSlopeResults={dualSlopeResults}
         voltageAssignments={voltageAssignments}

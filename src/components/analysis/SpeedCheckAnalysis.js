@@ -17,77 +17,40 @@ const SpeedCheckAnalysis = ({
   const [directSlopeInput, setDirectSlopeInput] = useState('');
   const [error, setError] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
+  const debounceTimer = useRef(null);
 
-  const onAnalysisUpdateRef = useRef(onAnalysisUpdate);
-  const movementHistoryRef = useRef([]);
-  const lockTimeoutRef = useRef(null);
-
-  useEffect(() => {
-    onAnalysisUpdateRef.current = onAnalysisUpdate;
-  }, [onAnalysisUpdate]);
-
+  // Get machine type from test form data
   const machineType = testFormData?.maschinentyp || 'GAA100';
 
+  // Calculate the "master" direct slope value (what the slider represents)
   const masterDirectSlopeValue = analysis ? (analysis.calculatedSlope * manualSlopeFactor).toFixed(4) : '';
 
+  // Check if there's a pending change (text field different from slider)
   const hasPendingChange = directSlopeInput !== '' && directSlopeInput !== masterDirectSlopeValue;
 
-  const detectVibration = (newValue) => {
-    const now = Date.now();
-    movementHistoryRef.current.push({ value: newValue, time: now });
-
-    movementHistoryRef.current = movementHistoryRef.current.filter(m => now - m.time < 500);
-
-    if (movementHistoryRef.current.length < 4) {
-      return false;
-    }
-
-    const recent = movementHistoryRef.current.slice(-4);
-    let directionChanges = 0;
-    
-    for (let i = 1; i < recent.length; i++) {
-      const prevDiff = i === 1 ? 0 : recent[i-1].value - recent[i-2].value;
-      const currDiff = recent[i].value - recent[i-1].value;
-      
-      if (prevDiff !== 0 && currDiff !== 0) {
-        if ((prevDiff > 0 && currDiff < 0) || (prevDiff < 0 && currDiff > 0)) {
-          directionChanges++;
-        }
-      }
-    }
-
-    return directionChanges >= 2;
-  };
-
+  // FIXED: Initialize from saved analysis ONLY ONCE on mount
   useEffect(() => {
-    if (initialAnalysis) {
+    if (initialAnalysis && !analysis) {
       setAnalysis(initialAnalysis);
       const factor = initialAnalysis.manualSlopeFactor || 1.0;
       setManualSlopeFactor(factor);
       setDirectSlopeInput(initialAnalysis.manualSlope?.toFixed(4) || '');
     }
-  }, [initialAnalysis]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
+  // Update text field when slider changes (slider is master)
   useEffect(() => {
     if (analysis && !hasPendingChange) {
       setDirectSlopeInput(masterDirectSlopeValue);
     }
   }, [analysis, masterDirectSlopeValue, hasPendingChange]);
 
+  // FIXED: Perform analysis when slider factor changes
   useEffect(() => {
-    console.log('>>> ANALYSIS EFFECT RUNNING <<<');
-    console.log('manualSlopeFactor:', manualSlopeFactor);
-    console.log('isLocked:', isLocked);
-    
     if (!regressionData || regressionData.length === 0) {
       setAnalysis(null);
       setError(null);
-      return;
-    }
-
-    if (isLocked) {
-      console.log('ANALYSIS BLOCKED - Slider is locked');
       return;
     }
 
@@ -103,8 +66,9 @@ const SpeedCheckAnalysis = ({
       setAnalysis(newAnalysis);
       setError(null);
 
-      if (onAnalysisUpdateRef.current) {
-        onAnalysisUpdateRef.current(newAnalysis);
+      // Notify parent component
+      if (onAnalysisUpdate) {
+        onAnalysisUpdate(newAnalysis);
       }
 
     } catch (err) {
@@ -112,51 +76,32 @@ const SpeedCheckAnalysis = ({
       setError(err.message);
       setAnalysis(null);
     }
-  }, [regressionData, manualSlopeFactor, machineType, isLocked]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [regressionData, manualSlopeFactor, machineType]); // FIXED: Removed onAnalysisUpdate from deps
 
   const handleSliderChange = (event) => {
     const newFactor = parseFloat(event.target.value);
-    
-    console.log('=== SLIDER CHANGE ===');
-    console.log('New factor:', newFactor);
-    console.log('Current factor:', manualSlopeFactor);
-    console.log('Is locked:', isLocked);
-    console.log('Movement history:', movementHistoryRef.current);
-
-    if (isLocked) {
-      console.log('BLOCKED - Slider is locked');
-      return;
-    }
-
-    if (detectVibration(newFactor)) {
-      console.log('VIBRATION DETECTED - Locking slider');
-      setIsLocked(true);
-      movementHistoryRef.current = [];
-
-      if (lockTimeoutRef.current) {
-        clearTimeout(lockTimeoutRef.current);
-      }
-
-      lockTimeoutRef.current = setTimeout(() => {
-        setIsLocked(false);
-        console.log('Slider unlocked');
-      }, 300);
-
-      return;
-    }
-
-    console.log('Setting new factor:', newFactor);
     setManualSlopeFactor(newFactor);
-    setDirectSlopeInput('');
 
-    if (onManualChange) {
-      onManualChange();
+    // Slider is master - discard any pending text changes
+    setDirectSlopeInput(''); // Will be updated by useEffect to match slider
+
+    // FIXED: Debounce the parent notification
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
     }
+
+    debounceTimer.current = setTimeout(() => {
+      if (onManualChange) {
+        onManualChange();
+      }
+    }, 100);
   };
 
   const handleDirectSlopeChange = (event) => {
     const value = event.target.value;
     setDirectSlopeInput(value);
+    // Don't update slider or analysis yet - wait for apply button
   };
 
   const handleApplyTextValue = () => {
@@ -164,6 +109,7 @@ const SpeedCheckAnalysis = ({
       const inputSlope = parseFloat(directSlopeInput);
       const newFactor = inputSlope / analysis.calculatedSlope;
       
+      // Clamp factor to valid range
       const clampedFactor = Math.max(
         SPEED_CHECK.SLOPE_FACTOR_RANGE.min, 
         Math.min(SPEED_CHECK.SLOPE_FACTOR_RANGE.max, newFactor)
@@ -179,28 +125,30 @@ const SpeedCheckAnalysis = ({
 
   const handleResetToCalculated = () => {
     setManualSlopeFactor(1.0);
-    setDirectSlopeInput('');
-    movementHistoryRef.current = [];
+    setDirectSlopeInput(''); // Will be updated by useEffect
   };
 
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
 
+  // Cleanup debounce timer on unmount
   useEffect(() => {
     return () => {
-      if (lockTimeoutRef.current) {
-        clearTimeout(lockTimeoutRef.current);
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
       }
     };
   }, []);
 
+  // Don't render if no regression data
   if (!regressionData || regressionData.length === 0) {
     return null;
   }
 
   return (
     <div style={{ marginTop: '30px' }}>
+      {/* Header */}
       <div 
         onClick={handleToggleCollapse}
         style={{ 
@@ -237,6 +185,7 @@ const SpeedCheckAnalysis = ({
         </div>
       </div>
 
+      {/* Content */}
       {!isCollapsed && (
         <div style={{
           border: '1px solid #ddd',
@@ -246,6 +195,7 @@ const SpeedCheckAnalysis = ({
           padding: '20px'
         }}>
           
+          {/* Error Display */}
           {error && (
             <div style={{ 
               background: '#ffebee', 
@@ -259,10 +209,11 @@ const SpeedCheckAnalysis = ({
             </div>
           )}
 
+          {/* Chart Container - UPDATED FOR PLOTLY */}
           {analysis && (
             <div style={{ 
               width: '100%',
-              height: '800px',
+              height: '800px', // Fixed height for Plotly
               marginBottom: '20px'
             }}>
               <SpeedCheckChart 
@@ -274,6 +225,7 @@ const SpeedCheckAnalysis = ({
             </div>
           )}
 
+          {/* Controls - MOVED TO BOTTOM */}
           {analysis && (
             <div style={{ 
               padding: '15px',
@@ -282,6 +234,7 @@ const SpeedCheckAnalysis = ({
               border: '1px solid #eee'
             }}>
               
+              {/* Top Row: Calculated Slope (left) + Direct Slope Input with Apply Button (right) */}
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: '1fr 1fr', 
@@ -349,6 +302,7 @@ const SpeedCheckAnalysis = ({
                 </div>
               </div>
 
+              {/* Bottom Row: Full-width slider (left) + Small reset button (right) */}
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: '1fr auto', 
@@ -366,15 +320,12 @@ const SpeedCheckAnalysis = ({
                     step={SPEED_CHECK.SLOPE_FACTOR_RANGE.step}
                     value={manualSlopeFactor}
                     onChange={handleSliderChange}
-                    disabled={isLocked}
                     style={{
                       width: '100%',
                       height: '6px',
                       borderRadius: '3px',
-                      background: isLocked ? '#ffcccc' : '#ddd',
-                      outline: 'none',
-                      opacity: isLocked ? 0.6 : 1,
-                      cursor: isLocked ? 'not-allowed' : 'pointer'
+                      background: '#ddd',
+                      outline: 'none'
                     }}
                   />
                   <div style={{ 

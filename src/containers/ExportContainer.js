@@ -36,7 +36,9 @@ const ExportContainer = ({
         return;
       }
 
-      // Prepare data for saving (without PDF generation)
+      // Prepare data for saving
+      // NOTE: processedFiles sent as processedFilesForDisk so server can save CSV to disk
+      //       but NOT included in complete_app_state (loaded from disk instead)
       const projectData = {
         testFormData,
         dualSlopeResults,
@@ -45,7 +47,8 @@ const ExportContainer = ({
         manuallyAdjusted,
         regressionData,
         speedCheckResults,
-        processedFiles,
+        failedFiles: [], // Add if you have failed files state
+        processedFilesForDisk: processedFiles, // Server uses this to save CSV files
         projectId: loadedProjectId,  // Include for update
         folderName: loadedFolderName, // Include for update
         isUpdate: !!loadedProjectId  // Flag to indicate update mode
@@ -139,6 +142,7 @@ const ExportContainer = ({
       }
 
       // Prepare data for saving
+      // NOTE: processedFiles sent as processedFilesForDisk so server can save CSV to disk
       const projectData = {
         testFormData,
         dualSlopeResults,
@@ -147,7 +151,8 @@ const ExportContainer = ({
         manuallyAdjusted,
         regressionData,
         speedCheckResults,
-        processedFiles,
+        failedFiles: [], // Add if you have failed files state
+        processedFilesForDisk: processedFiles, // Server uses this to save CSV files
         pdfFilename: pdfFilename,
         pdfData: pdfData, // PDF ArrayBuffer data
         projectId: loadedProjectId,  // Include for update

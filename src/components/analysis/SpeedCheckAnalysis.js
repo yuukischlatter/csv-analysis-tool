@@ -210,7 +210,7 @@ const SpeedCheckAnalysis = ({
             </div>
           )}
 
-          {/* Chart Container */}
+          {/* Chart Container - NOW PASSES testFormData */}
           {analysis && (
             <div style={{ 
               width: '100%',
@@ -220,6 +220,7 @@ const SpeedCheckAnalysis = ({
               <SpeedCheckChart 
                 analysis={analysis}
                 regressionData={regressionData}
+                testFormData={testFormData}
                 width={1100}
                 height={800}
               />

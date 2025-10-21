@@ -1,6 +1,7 @@
 /**
  * Express Server for SpeedChecker
  * Saves raw CSV files, detailed analysis metadata, and PDF copies
+ * LOADS from disk files instead of complete_app_state JSON blob
  */
 
 const express = require('express');
@@ -96,7 +97,228 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// =====================================================
+// NEW: Load project from disk files (FAST)
+// =====================================================
+app.get('/api/projects/:id/load-full', (req, res) => {
+  const projectId = req.params.id;
+  
+  console.log(`Loading project ${projectId} from disk...`);
+  
+  // Get project metadata from database
+  const sql = 'SELECT * FROM projects WHERE id = ?';
+  
+  db.get(sql, [projectId], (err, row) => {
+    if (err) {
+      console.error('Database query failed:', err.message);
+      return res.status(500).json({ error: 'Database query failed' });
+    }
+    
+    if (!row) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    const projectFolder = path.join(PROJECTS_DIR, row.folder_name);
+    
+    if (!fs.existsSync(projectFolder)) {
+      console.error(`Project folder not found: ${projectFolder}`);
+      return res.status(404).json({ error: 'Project folder not found on disk' });
+    }
+    
+    try {
+      // Read CSV files from disk
+      const processedFiles = readAllCSVFiles(projectFolder);
+      console.log(`✓ Loaded ${processedFiles.length} CSV files from disk`);
+      
+      // Read analysis files from disk
+      const analysisData = readAllAnalysisFiles(projectFolder);
+      console.log(`✓ Loaded ${analysisData.analyses.length} analysis files from disk`);
+      
+      // Read metadata file
+      const metadataFiles = fs.readdirSync(projectFolder).filter(f => f.endsWith('_metadata.json'));
+      let savedMetadata = null;
+      if (metadataFiles.length > 0) {
+        const metadataPath = path.join(projectFolder, metadataFiles[0]);
+        savedMetadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+      }
+      
+      // Reconstruct complete app state from disk + database
+      const appState = {
+        projectId: row.id,
+        folderName: row.folder_name,
+        
+        // Form data from database
+        testFormData: {
+          auftragsNr: row.auftrag_nr,
+          maschinentyp: row.maschinentyp,
+          pruefer: row.pruefer,
+          datum: row.datum,
+          artNrSCH: row.art_nr_sch,
+          artNrParker: row.art_nr_parker,
+          nenndurchfluss: row.nenndurchfluss,
+          snParker: row.sn_parker,
+          ventilOffsetOriginal: row.ventil_offset_original,
+          ventilOffsetKorrektur: row.ventil_offset_korrektur,
+          ventilOffsetNachKorrektur: row.ventil_offset_nach_korrektur,
+          druckVentil: row.druck_ventil,
+          oeltemperatur: row.oeltemperatur
+        },
+        
+        // Files loaded from disk
+        processedFiles: processedFiles,
+        
+        // Analysis loaded from disk
+        dualSlopeResults: analysisData.dualSlopeResults,
+        approvalStatus: analysisData.approvalStatus,
+        manuallyAdjusted: analysisData.manuallyAdjusted,
+        voltageAssignments: analysisData.voltageAssignments,
+        
+        // Other data from saved metadata or database
+        regressionData: savedMetadata?.regressionData || [],
+        speedCheckResults: savedMetadata?.speedCheckResults || null,
+        failedFiles: savedMetadata?.failedFiles || []
+      };
+      
+      console.log(`✓ Project ${projectId} loaded successfully from disk`);
+      res.json(appState);
+      
+    } catch (error) {
+      console.error('Failed to load project from disk:', error.message);
+      res.status(500).json({ error: 'Failed to load project from disk', details: error.message });
+    }
+  });
+});
+
+// Read all CSV files from raw_csv folder
+function readAllCSVFiles(projectFolder) {
+  const csvFolder = path.join(projectFolder, 'raw_csv');
+  
+  if (!fs.existsSync(csvFolder)) {
+    console.warn(`CSV folder not found: ${csvFolder}`);
+    return [];
+  }
+  
+  const csvFiles = fs.readdirSync(csvFolder).filter(f => f.endsWith('.csv'));
+  const processedFiles = [];
+  
+  csvFiles.forEach(fileName => {
+    try {
+      const csvPath = path.join(csvFolder, fileName);
+      const csvContent = fs.readFileSync(csvPath, 'utf8');
+      
+      // Parse CSV content
+      const lines = csvContent.split('\n');
+      const data = [];
+      
+      // Skip header line
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const cols = line.split(',');
+        if (cols.length >= 5) {
+          const time = parseFloat(cols[0]);
+          const position = parseFloat(cols[4]) * 1000; // Convert back to mm
+          
+          if (!isNaN(time) && !isNaN(position)) {
+            data.push({ time, position });
+          }
+        }
+      }
+      
+      if (data.length > 0) {
+        // Get file stats for creation time
+        const stats = fs.statSync(csvPath);
+        
+        processedFiles.push({
+          fileName: fileName,
+          data: data,
+          totalPoints: data.length,
+          createdAt: stats.birthtimeMs || stats.mtimeMs,
+          createdDate: new Date(stats.birthtimeMs || stats.mtimeMs),
+          fileSize: lines.length,
+          calibrationUsed: false
+        });
+      }
+      
+    } catch (error) {
+      console.error(`Failed to read CSV file ${fileName}:`, error.message);
+    }
+  });
+  
+  return processedFiles;
+}
+
+// Read all analysis files from analysis folder
+function readAllAnalysisFiles(projectFolder) {
+  const analysisFolder = path.join(projectFolder, 'analysis');
+  
+  if (!fs.existsSync(analysisFolder)) {
+    console.warn(`Analysis folder not found: ${analysisFolder}`);
+    return {
+      analyses: [],
+      dualSlopeResults: [],
+      approvalStatus: {},
+      manuallyAdjusted: {},
+      voltageAssignments: {}
+    };
+  }
+  
+  const analysisFiles = fs.readdirSync(analysisFolder).filter(f => f.endsWith('_analysis.json'));
+  const analyses = [];
+  const dualSlopeResults = [];
+  const approvalStatus = {};
+  const manuallyAdjusted = {};
+  const voltageAssignments = {};
+  
+  analysisFiles.forEach(analysisFileName => {
+    try {
+      const analysisPath = path.join(analysisFolder, analysisFileName);
+      const analysisData = JSON.parse(fs.readFileSync(analysisPath, 'utf8'));
+      
+      analyses.push(analysisData);
+      
+      // Extract dual slope result
+      const fileName = analysisData.fileName;
+      dualSlopeResults.push({
+        fileName: fileName,
+        rampUp: analysisData.rampUp,
+        rampDown: analysisData.rampDown,
+        detectionMethod: analysisData.detectionMethod
+      });
+      
+      // Extract approval status
+      if (analysisData.isApproved) {
+        approvalStatus[fileName] = true;
+      }
+      
+      // Extract manual adjustment status
+      if (analysisData.isManuallyAdjusted) {
+        manuallyAdjusted[fileName] = true;
+      }
+      
+      // Extract voltage assignment
+      if (analysisData.voltageAssignment !== null && analysisData.voltageAssignment !== undefined) {
+        voltageAssignments[fileName] = analysisData.voltageAssignment;
+      }
+      
+    } catch (error) {
+      console.error(`Failed to read analysis file ${analysisFileName}:`, error.message);
+    }
+  });
+  
+  return {
+    analyses,
+    dualSlopeResults,
+    approvalStatus,
+    manuallyAdjusted,
+    voltageAssignments
+  };
+}
+
+// =====================================================
 // Save project snapshot
+// =====================================================
 app.post('/api/projects/save', (req, res) => {
   try {
     const projectData = req.body;
@@ -112,28 +334,35 @@ app.post('/api/projects/save', (req, res) => {
     // Create project structure
     createProjectStructure(projectFolder);
     
-    // Save all project files
+    // Save all project files (CSV, analysis, PDF)
     saveProjectFiles(projectFolder, projectData);
     
-    // Save complete project metadata with Auftrags-Nr in filename
+    // Save complete project metadata (minimal - without processedFiles)
     const auftragsNr = projectData.testFormData?.auftragsNr || 'Unknown';
     const cleanAuftragsNr = auftragsNr.replace(/[^a-zA-Z0-9_-]/g, '_');
     const metadataPath = path.join(projectFolder, `${cleanAuftragsNr}_metadata.json`);
     
     const completeMetadata = {
-      ...projectData,
+      testFormData: projectData.testFormData,
+      dualSlopeResults: projectData.dualSlopeResults,
+      voltageAssignments: projectData.voltageAssignments,
+      approvalStatus: projectData.approvalStatus,
+      manuallyAdjusted: projectData.manuallyAdjusted,
+      regressionData: projectData.regressionData,
+      speedCheckResults: projectData.speedCheckResults,
+      failedFiles: projectData.failedFiles || [],
+      // NOTE: processedFiles NOT included - loaded from disk
       projectInfo: {
         folderName: folderName,
         savedAt: new Date().toISOString(),
-        version: '1.0.1',
+        version: '2.0.0',
         isUpdate: isUpdate
       }
     };
-    const metadataToSave = { ...completeMetadata };
-    delete metadataToSave.pdfDataBase64;
-    fs.writeFileSync(metadataPath, JSON.stringify(metadataToSave, null, 2));
     
-    // Save to database
+    fs.writeFileSync(metadataPath, JSON.stringify(completeMetadata, null, 2));
+    
+    // Save to database (minimal state)
     const record = prepareProjectRecord(projectData, folderName);
     saveToDatabase(record, folderName, projectData, res, isUpdate);
     
@@ -163,7 +392,10 @@ function createProjectStructure(projectFolder) {
 
 // Save project files
 function saveProjectFiles(projectFolder, projectData) {
-  const { processedFiles, dualSlopeResults, voltageAssignments, approvalStatus, manuallyAdjusted, pdfDataBase64, pdfFilename } = projectData;
+  const { processedFiles, processedFilesForDisk, dualSlopeResults, voltageAssignments, approvalStatus, manuallyAdjusted, pdfDataBase64, pdfFilename } = projectData;
+  
+  // Use processedFilesForDisk if available (from save), otherwise use processedFiles
+  const filesToSave = processedFilesForDisk || processedFiles;
   
   // Save PDF file if provided
   if (pdfDataBase64 && pdfFilename) {
@@ -171,8 +403,8 @@ function saveProjectFiles(projectFolder, projectData) {
   }
   
   // Save CSV files and analysis metadata
-  if (processedFiles && dualSlopeResults) {
-    processedFiles.forEach(processedFile => {
+  if (filesToSave && dualSlopeResults) {
+    filesToSave.forEach(processedFile => {
       const fileName = processedFile.fileName;
       const dualSlope = dualSlopeResults.find(ds => ds.fileName === fileName);
       
@@ -188,7 +420,7 @@ function saveProjectFiles(projectFolder, projectData) {
       }
     });
     
-    console.log(`✓ Saved ${processedFiles.length} CSV files and analysis metadata`);
+    console.log(`✓ Saved ${filesToSave.length} CSV files and analysis metadata`);
   }
 }
 
@@ -216,7 +448,7 @@ function saveRawCSVFile(projectFolder, processedFile) {
     
     processedFile.data.forEach(point => {
       const originalPosition = point.position / 1000;
-      csvLines.push(`${point.time},,,,${originalPosition}`);
+      csvLines.push(`${point.time},,,${originalPosition},`);
     });
     
     fs.writeFileSync(csvPath, csvLines.join('\n'));
@@ -469,6 +701,19 @@ function prepareProjectRecord(data, folderName) {
     speedCheckResults
   } = data;
 
+  // Create MINIMAL app state (without processedFiles - loaded from disk!)
+  const minimalAppState = {
+    testFormData,
+    dualSlopeResults,
+    voltageAssignments,
+    approvalStatus: data.approvalStatus,
+    manuallyAdjusted: data.manuallyAdjusted,
+    regressionData: data.regressionData,
+    speedCheckResults,
+    failedFiles: data.failedFiles || []
+    // NOTE: processedFiles NOT included - loaded from disk
+  };
+
   return {
     folder_name: folderName,
     auftrag_nr: testFormData?.auftragsNr || '',
@@ -491,7 +736,7 @@ function prepareProjectRecord(data, folderName) {
     regression_slope: speedCheckResults?.calculatedSlope || null,
     manual_slope_factor: speedCheckResults?.manualSlopeFactor || 1.0,
     final_slope: speedCheckResults?.manualSlope || null,
-    complete_app_state: JSON.stringify(data)
+    complete_app_state: JSON.stringify(minimalAppState) // MUCH smaller now!
   };
 }
 
@@ -501,7 +746,6 @@ app.get('*', (req, res) => {
 });
 
 // Start server
-//app.listen(PORT, () => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`SpeedChecker server running at http://localhost:${PORT}`);
   console.log(`Database file: ${DB_PATH}`);

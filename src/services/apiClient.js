@@ -1,6 +1,7 @@
 /**
  * API Client for SpeedChecker Database Operations
  * Handles communication with Express backend
+ * NEW: Loads projects from disk files instead of complete_app_state JSON blob
  */
 
 let API_BASE_URL = `http://${window.location.hostname}:8080/api`;
@@ -20,7 +21,40 @@ let API_BASE_URL = `http://${window.location.hostname}:8080/api`;
 })();
 
 class ApiClient {
-  // Save project to SQLite database file with PDF data
+  /**
+   * NEW: Load project from disk files (FAST - no JSON parsing of processedFiles)
+   * Reads CSV files and analysis from disk instead of complete_app_state blob
+   */
+  static async loadProjectFromDisk(projectId) {
+    try {
+      console.log(`Loading project ${projectId} from disk...`);
+      const startTime = performance.now();
+      
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/load-full`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const appState = await response.json();
+      
+      const endTime = performance.now();
+      const loadTime = ((endTime - startTime) / 1000).toFixed(2);
+      console.log(`✓ Project ${projectId} loaded from disk in ${loadTime}s`);
+      console.log(`  - ${appState.processedFiles?.length || 0} CSV files`);
+      console.log(`  - ${appState.dualSlopeResults?.length || 0} analysis results`);
+      
+      return appState;
+    } catch (error) {
+      console.error('Load from disk failed:', error);
+      throw new Error(`Failed to load project from disk: ${error.message}`);
+    }
+  }
+
+  /**
+   * Save project to SQLite database file with PDF data
+   * CSV files are saved to disk, NOT in complete_app_state
+   */
   static async saveProject(projectData) {
     try {
       // Convert ArrayBuffer to Base64 for JSON transmission if PDF data exists
@@ -68,7 +102,9 @@ class ApiClient {
     }
   }
 
-  // Get all projects from database
+  /**
+   * Get all projects from database (metadata only)
+   */
   static async getAllProjects() {
     try {
       const response = await fetch(`${API_BASE_URL}/projects`);
@@ -84,7 +120,10 @@ class ApiClient {
     }
   }
 
-  // Get specific project by ID
+  /**
+   * Get specific project metadata by ID (NOT full load)
+   * Use loadProjectFromDisk() for full project load
+   */
   static async getProject(projectId) {
     try {
       const response = await fetch(`${API_BASE_URL}/projects/${projectId}`);
@@ -103,7 +142,9 @@ class ApiClient {
     }
   }
 
-  // Download PDF from server
+  /**
+   * Download PDF from server
+   */
   static async downloadProjectPDF(projectId) {
     try {
       const response = await fetch(`${API_BASE_URL}/projects/${projectId}/pdf`);
@@ -139,7 +180,9 @@ class ApiClient {
     }
   }
 
-  // Check if API server is running
+  /**
+   * Check if API server is running
+   */
   static async checkConnection() {
     try {
       const response = await fetch(`${API_BASE_URL}/projects`);

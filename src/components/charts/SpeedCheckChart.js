@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as Plotly from 'plotly.js-dist';
 
-const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 }) => {
+const SpeedCheckChart = ({ analysis, regressionData, testFormData, width = 1100, height = 800 }) => {
   const plotRef = useRef(null);
   const [selectedPoints, setSelectedPoints] = useState(new Set());
 
@@ -11,7 +11,7 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
     }
 
     renderPlotlyChart();
-  }, [analysis, regressionData, width, height]);
+  }, [analysis, regressionData, testFormData, width, height]);
 
   const renderPlotlyChart = () => {
     if (!analysis) return;
@@ -70,13 +70,16 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
       annotations: createDeviationAnnotations()
     };
 
+    // Generate dynamic filename based on testFormData
+    const exportFilename = generateExportFilename();
+
     const config = {
       displayModeBar: true,
       displaylogo: false,
       modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
       toImageButtonOptions: {
         format: 'png',
-        filename: 'speed_check_analysis',
+        filename: exportFilename,  // Dynamic filename with Auftrag-Nr and date
         height: height,
         width: width,
         scale: 1
@@ -85,6 +88,15 @@ const SpeedCheckChart = ({ analysis, regressionData, width = 1100, height = 800 
 
     Plotly.newPlot(plotRef.current, traces, layout, config);
     plotRef.current.on('plotly_click', handlePointClick);
+  };
+
+  // Generate filename matching PDF export format
+  const generateExportFilename = () => {
+    if (testFormData && testFormData.auftragsNr) {
+      const date = testFormData.datum || new Date().toISOString().split('T')[0];
+      return `SpeedCheck_Chart_${testFormData.auftragsNr}_${date}`;
+    }
+    return `SpeedCheck_Chart_${new Date().toISOString().split('T')[0]}`;
   };
 
   const getMeasuredDataPoints = () => {

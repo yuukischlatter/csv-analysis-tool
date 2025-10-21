@@ -37,23 +37,23 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
     setError(null);
     
     try {
-      const projectData = await ApiClient.getProject(projectId);
-      if (projectData && projectData.complete_app_state) {
-        // Parse the complete app state
-        const appState = JSON.parse(projectData.complete_app_state);
-        
-        // Add project metadata to the app state
-        appState.projectId = projectData.id;
-        appState.folderName = projectData.folder_name;
+      console.log(`Loading project ${projectId} from disk...`);
+      
+      // NEW: Load from disk files instead of complete_app_state JSON blob
+      const appState = await ApiClient.loadProjectFromDisk(projectId);
+      
+      if (appState && appState.processedFiles) {
+        console.log(`✓ Loaded ${appState.processedFiles.length} files from disk`);
+        console.log(`✓ Loaded ${appState.dualSlopeResults?.length || 0} analysis results`);
         
         onLoadProject(appState);
         onClose();
       } else {
-        setError('Invalid project data');
+        setError('Invalid project data - missing files');
       }
     } catch (err) {
       console.error('Failed to load project:', err);
-      setError('Failed to load project data');
+      setError(`Failed to load project: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -68,31 +68,19 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
     const searchLower = searchTerm.toLowerCase();
 
     return projectList.filter(project => {
-      try {
-        // Parse the complete app state to access testFormData
-        if (!project.complete_app_state) {
-          return false;
-        }
+      // Search in visible database fields
+      const searchableFields = [
+        project.auftrag_nr,
+        project.maschinentyp,
+        project.pruefer,
+        project.datum,
+        project.sn_parker,
+        project.folder_name
+      ];
 
-        const appState = JSON.parse(project.complete_app_state);
-        const testFormData = appState.testFormData;
-
-        if (!testFormData) {
-          return false;
-        }
-
-        // Convert all testFormData values to strings and check if search term is found
-        const allValues = Object.values(testFormData)
-          .filter(value => value !== null && value !== undefined)
-          .map(value => String(value).toLowerCase());
-
-        // Check if search term appears in any field
-        return allValues.some(value => value.includes(searchLower));
-
-      } catch (error) {
-        console.warn('Error parsing project for search:', error);
-        return false;
-      }
+      return searchableFields.some(field => 
+        field && String(field).toLowerCase().includes(searchLower)
+      );
     });
   };
 
@@ -182,7 +170,7 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
         {/* Content */}
         {loading && (
           <div style={{ textAlign: 'center', padding: '40px' }}>
-            Loading projects...
+            Loading projects from disk...
           </div>
         )}
 
@@ -223,43 +211,28 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
               </tr>
             </thead>
             <tbody>
-              {filteredProjects.map((project) => {
-                // Extract S/N Parker from project data
-                let snParker = '-';
-                try {
-                  if (project.complete_app_state) {
-                    const appState = JSON.parse(project.complete_app_state);
-                    if (appState.testFormData && appState.testFormData.snParker) {
-                      snParker = appState.testFormData.snParker;
-                    }
-                  }
-                } catch (e) {
-                  // Keep default '-' if parsing fails
-                }
-
-                return (
-                  <tr
-                    key={project.id}
-                    onClick={() => handleLoadProject(project.id)}
-                    style={{
-                      borderBottom: '1px solid #eee',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                  >
-                    <td style={{ padding: '10px' }}>{project.auftrag_nr || 'Unknown'}</td>
-                    <td style={{ padding: '10px' }}>{snParker}</td>
-                    <td style={{ padding: '10px' }}>{project.datum || '-'}</td>
-                    <td style={{ padding: '10px' }}>{project.maschinentyp || '-'}</td>
-                    <td style={{ padding: '10px', textAlign: 'center' }}>{project.file_count || 0}</td>
-                    <td style={{ padding: '10px' }}>
-                      {new Date(project.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredProjects.map((project) => (
+                <tr
+                  key={project.id}
+                  onClick={() => handleLoadProject(project.id)}
+                  style={{
+                    borderBottom: '1px solid #eee',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                >
+                  <td style={{ padding: '10px' }}>{project.auftrag_nr || 'Unknown'}</td>
+                  <td style={{ padding: '10px' }}>{project.sn_parker || '-'}</td>
+                  <td style={{ padding: '10px' }}>{project.datum || '-'}</td>
+                  <td style={{ padding: '10px' }}>{project.maschinentyp || '-'}</td>
+                  <td style={{ padding: '10px', textAlign: 'center' }}>{project.file_count || 0}</td>
+                  <td style={{ padding: '10px' }}>
+                    {new Date(project.created_at).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

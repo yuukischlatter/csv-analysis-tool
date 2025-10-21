@@ -11,42 +11,41 @@ const SpeedCheckAnalysis = ({
   onManualChange 
 }) => {
   const [analysis, setAnalysis] = useState(null);
-  const [manualSlopeFactor, setManualSlopeFactor] = useState(
-    initialAnalysis?.manualSlopeFactor || SPEED_CHECK.SLOPE_FACTOR_RANGE.default
-  );
-  const [directSlopeInput, setDirectSlopeInput] = useState('');
+  const [manualSlopeFactor, setManualSlopeFactor] = useState(1.0);
+  const [isEditingText, setIsEditingText] = useState(false);
+  const [tempTextValue, setTempTextValue] = useState('');
   const [error, setError] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const debounceTimer = useRef(null);
+  
+  // Track if we've loaded initial data
+  const hasLoadedInitial = useRef(false);
 
   // Get machine type from test form data
   const machineType = testFormData?.maschinentyp || 'GAA100';
 
-  // Calculate the "master" direct slope value (what the slider represents)
-  const masterDirectSlopeValue = analysis ? (analysis.calculatedSlope * manualSlopeFactor).toFixed(4) : '';
+  // Calculate the current slope value (derived, not stored)
+  const currentSlopeValue = analysis ? (analysis.calculatedSlope * manualSlopeFactor).toFixed(4) : '';
 
-  // Check if there's a pending change (text field different from slider)
-  const hasPendingChange = directSlopeInput !== '' && directSlopeInput !== masterDirectSlopeValue;
-
-  // FIXED: Initialize from saved analysis ONLY ONCE on mount
+  // Initialize ONCE from saved analysis when loading a project
   useEffect(() => {
-    if (initialAnalysis && !analysis) {
+    if (initialAnalysis && !hasLoadedInitial.current) {
+      console.log('Loading initial analysis...');
       setAnalysis(initialAnalysis);
       const factor = initialAnalysis.manualSlopeFactor || 1.0;
       setManualSlopeFactor(factor);
-      setDirectSlopeInput(initialAnalysis.manualSlope?.toFixed(4) || '');
+      hasLoadedInitial.current = true;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, [initialAnalysis]);
 
-  // Update text field when slider changes (slider is master)
+  // Reset when regression data changes (new project)
   useEffect(() => {
-    if (analysis && !hasPendingChange) {
-      setDirectSlopeInput(masterDirectSlopeValue);
-    }
-  }, [analysis, masterDirectSlopeValue, hasPendingChange]);
+    console.log('Regression data changed, resetting...');
+    hasLoadedInitial.current = false;
+    setIsEditingText(false);
+    setTempTextValue('');
+  }, [regressionData]);
 
-  // FIXED: Perform analysis when slider factor changes
+  // Perform analysis when slider factor OR regression data changes
   useEffect(() => {
     if (!regressionData || regressionData.length === 0) {
       setAnalysis(null);
@@ -76,37 +75,39 @@ const SpeedCheckAnalysis = ({
       setError(err.message);
       setAnalysis(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [regressionData, manualSlopeFactor, machineType]); // FIXED: Removed onAnalysisUpdate from deps
+  }, [regressionData, manualSlopeFactor, machineType, onAnalysisUpdate]);
 
   const handleSliderChange = (event) => {
     const newFactor = parseFloat(event.target.value);
     setManualSlopeFactor(newFactor);
+    
+    // Cancel any text editing
+    setIsEditingText(false);
+    setTempTextValue('');
 
-    // Slider is master - discard any pending text changes
-    setDirectSlopeInput(''); // Will be updated by useEffect to match slider
-
-    // FIXED: Debounce the parent notification
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
+    if (onManualChange) {
+      onManualChange();
     }
-
-    debounceTimer.current = setTimeout(() => {
-      if (onManualChange) {
-        onManualChange();
-      }
-    }, 100);
   };
 
-  const handleDirectSlopeChange = (event) => {
-    const value = event.target.value;
-    setDirectSlopeInput(value);
-    // Don't update slider or analysis yet - wait for apply button
+  const handleTextFocus = () => {
+    setIsEditingText(true);
+    setTempTextValue(currentSlopeValue);
+  };
+
+  const handleTextChange = (event) => {
+    setTempTextValue(event.target.value);
+  };
+
+  const handleTextBlur = () => {
+    // User clicked away without applying - cancel edit
+    setIsEditingText(false);
+    setTempTextValue('');
   };
 
   const handleApplyTextValue = () => {
-    if (analysis && directSlopeInput !== '' && !isNaN(parseFloat(directSlopeInput))) {
-      const inputSlope = parseFloat(directSlopeInput);
+    if (analysis && tempTextValue !== '' && !isNaN(parseFloat(tempTextValue))) {
+      const inputSlope = parseFloat(tempTextValue);
       const newFactor = inputSlope / analysis.calculatedSlope;
       
       // Clamp factor to valid range
@@ -116,6 +117,8 @@ const SpeedCheckAnalysis = ({
       );
       
       setManualSlopeFactor(clampedFactor);
+      setIsEditingText(false);
+      setTempTextValue('');
       
       if (onManualChange) {
         onManualChange();
@@ -125,26 +128,24 @@ const SpeedCheckAnalysis = ({
 
   const handleResetToCalculated = () => {
     setManualSlopeFactor(1.0);
-    setDirectSlopeInput(''); // Will be updated by useEffect
+    setIsEditingText(false);
+    setTempTextValue('');
   };
 
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
 
-  // Cleanup debounce timer on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, []);
-
   // Don't render if no regression data
   if (!regressionData || regressionData.length === 0) {
     return null;
   }
+
+  // What to show in the text field
+  const textFieldValue = isEditingText ? tempTextValue : currentSlopeValue;
+  
+  // Is there a pending change?
+  const hasPendingChange = isEditingText && tempTextValue !== currentSlopeValue;
 
   return (
     <div style={{ marginTop: '30px' }}>
@@ -209,11 +210,11 @@ const SpeedCheckAnalysis = ({
             </div>
           )}
 
-          {/* Chart Container - UPDATED FOR PLOTLY */}
+          {/* Chart Container */}
           {analysis && (
             <div style={{ 
               width: '100%',
-              height: '800px', // Fixed height for Plotly
+              height: '800px',
               marginBottom: '20px'
             }}>
               <SpeedCheckChart 
@@ -225,7 +226,7 @@ const SpeedCheckAnalysis = ({
             </div>
           )}
 
-          {/* Controls - MOVED TO BOTTOM */}
+          {/* Controls */}
           {analysis && (
             <div style={{ 
               padding: '15px',
@@ -264,8 +265,10 @@ const SpeedCheckAnalysis = ({
                     <input
                       type="number"
                       step="0.0001"
-                      value={directSlopeInput}
-                      onChange={handleDirectSlopeChange}
+                      value={textFieldValue}
+                      onChange={handleTextChange}
+                      onFocus={handleTextFocus}
+                      onBlur={handleTextBlur}
                       style={{
                         flex: 1,
                         padding: '8px',
@@ -278,7 +281,7 @@ const SpeedCheckAnalysis = ({
                     />
                     {hasPendingChange && (
                       <button
-                        onClick={handleApplyTextValue}
+                        onMouseDown={handleApplyTextValue}
                         style={{
                           padding: '8px 12px',
                           backgroundColor: '#007bff',

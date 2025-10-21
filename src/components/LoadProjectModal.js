@@ -5,6 +5,7 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -58,6 +59,45 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
     }
   };
 
+  // Filter projects based on search term
+  const filterProjects = (projectList) => {
+    if (!searchTerm || searchTerm.trim() === '') {
+      return projectList; // Show all if search is empty
+    }
+
+    const searchLower = searchTerm.toLowerCase();
+
+    return projectList.filter(project => {
+      try {
+        // Parse the complete app state to access testFormData
+        if (!project.complete_app_state) {
+          return false;
+        }
+
+        const appState = JSON.parse(project.complete_app_state);
+        const testFormData = appState.testFormData;
+
+        if (!testFormData) {
+          return false;
+        }
+
+        // Convert all testFormData values to strings and check if search term is found
+        const allValues = Object.values(testFormData)
+          .filter(value => value !== null && value !== undefined)
+          .map(value => String(value).toLowerCase());
+
+        // Check if search term appears in any field
+        return allValues.some(value => value.includes(searchLower));
+
+      } catch (error) {
+        console.warn('Error parsing project for search:', error);
+        return false;
+      }
+    });
+  };
+
+  const filteredProjects = filterProjects(projects);
+
   if (!isOpen) return null;
 
   return (
@@ -109,6 +149,36 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
           </button>
         </div>
 
+        {/* Search/Filter Input */}
+        <div style={{ marginBottom: '15px' }}>
+          <input
+            type="text"
+            placeholder="Search by machine, serial number, order number, ventil..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 15px',
+              fontSize: '14px',
+              border: '2px solid #ddd',
+              borderRadius: '4px',
+              outline: 'none',
+              transition: 'border-color 0.2s'
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#007bff'}
+            onBlur={(e) => e.target.style.borderColor = '#ddd'}
+          />
+          {searchTerm && (
+            <div style={{ 
+              marginTop: '5px', 
+              fontSize: '12px', 
+              color: '#666' 
+            }}>
+              Found {filteredProjects.length} of {projects.length} projects
+            </div>
+          )}
+        </div>
+
         {/* Content */}
         {loading && (
           <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -134,7 +204,13 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
           </div>
         )}
 
-        {!loading && !error && projects.length > 0 && (
+        {!loading && !error && projects.length > 0 && filteredProjects.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+            No projects match your search "{searchTerm}"
+          </div>
+        )}
+
+        {!loading && !error && filteredProjects.length > 0 && (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #ddd' }}>
@@ -147,7 +223,7 @@ const LoadProjectModal = ({ isOpen, onClose, onLoadProject }) => {
               </tr>
             </thead>
             <tbody>
-              {projects.map((project) => {
+              {filteredProjects.map((project) => {
                 // Extract S/N Parker from project data
                 let snParker = '-';
                 try {

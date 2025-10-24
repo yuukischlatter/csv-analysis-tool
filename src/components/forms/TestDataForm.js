@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MACHINE_TYPE_NAMES } from '../../data/machines';
 import { getVentilOptions, getParkerData } from '../../data/ventils';
 
-const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, initialData }) => {
+const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, initialData, hasUploadedFiles = false }) => {
   const [formData, setFormData] = useState({
     // Order Data
     orderNumber: '',
@@ -38,7 +38,7 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
   // Load initial data when it changes (from loading a project)
   useEffect(() => {
     if (initialData) {
-      setFormData({
+      const newFormData = {
         orderNumber: initialData.orderNumber || '',
         machineType: initialData.machineType || '',
         inspector: initialData.inspector || '',
@@ -57,7 +57,17 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
         calibrationMaxVoltage: initialData.calibrationMaxVoltage || '',
         testedOn: initialData.testedOn || '',
         installedIn: initialData.installedIn || ''
-      });
+      };
+      setFormData(newFormData);
+
+      // Call onFormDataChange when loading initial data
+      if (onFormDataChange) {
+        const processedFormData = { ...newFormData };
+        if (newFormData.date) {
+          processedFormData.dateFormatted = formatDateForPDF(newFormData.date);
+        }
+        onFormDataChange(processedFormData);
+      }
     }
   }, [initialData]);
 
@@ -440,11 +450,15 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                     step="0.1"
                     value={formData.calibrationMaxPosition}
                     onChange={(e) => handleInputChange('calibrationMaxPosition', e.target.value)}
-                    style={{ 
-                      padding: '8px', 
-                      border: '1px solid #ccc', 
-                      borderRadius: '4px', 
-                      width: '150px' 
+                    disabled={hasUploadedFiles}
+                    style={{
+                      padding: '8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      width: '150px',
+                      backgroundColor: hasUploadedFiles ? '#f0f0f0' : 'white',
+                      color: hasUploadedFiles ? '#666' : 'inherit',
+                      cursor: hasUploadedFiles ? 'not-allowed' : 'text'
                     }}
                   />
                   <span style={{ fontSize: '14px' }}>mm</span>
@@ -461,11 +475,15 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                     step="0.00001"
                     value={formData.calibrationMaxVoltage}
                     onChange={(e) => handleInputChange('calibrationMaxVoltage', e.target.value)}
-                    style={{ 
-                      padding: '8px', 
-                      border: '1px solid #ccc', 
-                      borderRadius: '4px', 
-                      width: '150px' 
+                    disabled={hasUploadedFiles}
+                    style={{
+                      padding: '8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      width: '150px',
+                      backgroundColor: hasUploadedFiles ? '#f0f0f0' : 'white',
+                      color: hasUploadedFiles ? '#666' : 'inherit',
+                      cursor: hasUploadedFiles ? 'not-allowed' : 'text'
                     }}
                   />
                   <span style={{ fontSize: '14px' }}>V</span>
@@ -482,11 +500,15 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                     step="0.0001"
                     value={formData.calibrationOffset}
                     onChange={(e) => handleInputChange('calibrationOffset', e.target.value)}
-                    style={{ 
-                      padding: '8px', 
-                      border: '1px solid #ccc', 
-                      borderRadius: '4px', 
-                      width: '150px' 
+                    disabled={hasUploadedFiles}
+                    style={{
+                      padding: '8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      width: '150px',
+                      backgroundColor: hasUploadedFiles ? '#f0f0f0' : 'white',
+                      color: hasUploadedFiles ? '#666' : 'inherit',
+                      cursor: hasUploadedFiles ? 'not-allowed' : 'text'
                     }}
                   />
                   <span style={{ fontSize: '14px' }}>V</span>

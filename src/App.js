@@ -209,11 +209,12 @@ function App() {
       )}
 
       {/* Test Data Form - NOW WITH initialData PROP */}
-      <TestDataForm 
-        onFormDataChange={handleFormDataChange} 
+      <TestDataForm
+        onFormDataChange={handleFormDataChange}
         isCollapsed={isFormCollapsed}
         onToggleCollapse={handleToggleFormCollapse}
         initialData={testFormData}
+        hasUploadedFiles={processedFiles.length > 0}
       />
 
       {/* File Upload - NOW WITH testFormData PROP */}
@@ -232,7 +233,8 @@ function App() {
         setError={setError}
         setIsAnalyzing={setIsAnalyzing}
         setHasChanges={setHasChanges}
-        testFormData={testFormData}  // NEW: Pass testFormData
+        testFormData={testFormData}
+        hasUploadedFiles={processedFiles.length > 0}
       />
 
       {/* Analysis Status */}
@@ -267,13 +269,6 @@ function App() {
         loadedFolderName={loadedFolderName}
         hasChanges={hasChanges}
       />
-
-      {/* Empty State */}
-      {processedFiles.length === 0 && !isAnalyzing && (
-        <div style={{ textAlign: 'center', padding: '40px', color: COLORS.TEXT_SECONDARY }}>
-          Add calibration first then upload CSV
-        </div>
-      )}
 
       {/* Load Project Modal */}
       <LoadProjectModal

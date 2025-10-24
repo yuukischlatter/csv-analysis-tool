@@ -3,10 +3,10 @@ import FileUpload from '../components/upload/FileUpload';
 import { detectDualSlopes } from '../services/slopeDetection';
 import { sortFilesByTimestamp } from '../services/csvProcessor';
 
-const FileUploadContainer = ({ 
-  processedFiles, 
+const FileUploadContainer = ({
+  processedFiles,
   setProcessedFiles,
-  dualSlopeResults, 
+  dualSlopeResults,
   setDualSlopeResults,
   failedFiles,
   setFailedFiles,
@@ -18,7 +18,8 @@ const FileUploadContainer = ({
   setError,
   setIsAnalyzing,
   setHasChanges,
-  testFormData
+  testFormData,
+  hasUploadedFiles
 }) => {
 
   // Calculate calibration data from form inputs
@@ -162,9 +163,10 @@ const FileUploadContainer = ({
   };
 
   return (
-    <FileUpload 
+    <FileUpload
       onFilesProcessed={handleFilesProcessed}
       calibrationData={getCalibrationData()}
+      hasUploadedFiles={hasUploadedFiles}
     />
   );
 };

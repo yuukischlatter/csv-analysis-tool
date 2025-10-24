@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { processCSVFile } from '../../services/csvProcessor';
 
-const FileUpload = ({ onFilesProcessed, calibrationData }) => {
+const FileUpload = ({ onFilesProcessed, calibrationData, hasUploadedFiles = false }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const fileInputRef = useRef(null);
@@ -65,7 +65,7 @@ const FileUpload = ({ onFilesProcessed, calibrationData }) => {
   // Hide upload if calibration not complete
   if (!isCalibrationComplete) {
     return (
-      <div style={{ 
+      <div style={{
         margin: '20px 0',
         padding: '40px',
         textAlign: 'center',
@@ -81,6 +81,11 @@ const FileUpload = ({ onFilesProcessed, calibrationData }) => {
     );
   }
 
+  // Hide upload box if files already uploaded
+  if (hasUploadedFiles) {
+    return null;
+  }
+
   return (
     <div style={{ margin: '20px 0' }}>
       {/* Hidden file input - only shows CSV files in explorer */}
@@ -92,7 +97,7 @@ const FileUpload = ({ onFilesProcessed, calibrationData }) => {
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
-      
+
       {/* File selection button */}
       <div
         onClick={handleButtonClick}
@@ -119,6 +124,32 @@ const FileUpload = ({ onFilesProcessed, calibrationData }) => {
             <p style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 'bold' }}>
               Select CSV Measurement Files
             </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleButtonClick();
+              }}
+              title="Select all CSV files with Ctrl+A in the file dialog"
+              style={{
+                marginTop: '10px',
+                padding: '10px 20px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                fontWeight: '500',
+                transition: 'background-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#0056b3'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#007bff'}
+            >
+              Upload
+            </button>
+            <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+              Select all CSV files with Ctrl+A in the file dialog
+            </div>
           </div>
         )}
       </div>

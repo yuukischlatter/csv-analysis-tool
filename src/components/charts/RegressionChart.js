@@ -118,7 +118,7 @@ const RegressionChart = ({ data, width = CHART_DIMENSIONS.REGRESSION.width, heig
       .style("font-size", "14px")
       .style("font-weight", "bold")
       .style("fill", "black")
-      .text("Eingangsspannung UE [V]");
+      .text("Input Voltage UE [V]");
 
     g.append("text")
       .attr("transform", "rotate(-90)")
@@ -128,7 +128,7 @@ const RegressionChart = ({ data, width = CHART_DIMENSIONS.REGRESSION.width, heig
       .style("font-size", "14px")
       .style("font-weight", "bold")
       .style("fill", "black")
-      .text("Schlittengeschwindigkeit [mm/s]");
+      .text("Carriage Speed [mm/s]");
 
     // Calculate regression
     const regression = calculateLinearRegression(data);

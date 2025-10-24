@@ -32,7 +32,7 @@ const SpeedCheckChart = ({ analysis, regressionData, testFormData, width = 1100,
       },
       xaxis: {
         title: {
-          text: 'Eingangsspannung UE [V]',
+          text: 'Input Voltage UE [V]',
           font: { size: 14, color: 'black' }
         },
         range: [0, 4.5],
@@ -45,7 +45,7 @@ const SpeedCheckChart = ({ analysis, regressionData, testFormData, width = 1100,
       },
       yaxis: {
         title: {
-          text: 'Schlittengeschwindigkeit [mm/s]',
+          text: 'Carriage Speed [mm/s]',
           font: { size: 14, color: 'black' }
         },
         range: [0, 13],

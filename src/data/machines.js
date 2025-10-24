@@ -115,7 +115,7 @@ export const MACHINE_TYPES = Object.keys(MACHINE_DEFINITIONS).reduce((acc, key) 
 }, {});
 
 // Array of machine type names (for form dropdowns)
-export const MASCHINEN_TYPEN = Object.keys(MACHINE_DEFINITIONS);
+export const MACHINE_TYPE_NAMES = Object.keys(MACHINE_DEFINITIONS);
 
 /**
  * Get machine definition by name

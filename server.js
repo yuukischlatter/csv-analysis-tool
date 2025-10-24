@@ -62,11 +62,16 @@ function initializeDatabase() {
       nenndurchfluss TEXT,
       sn_parker TEXT,
       ventil_offset_original REAL,
-      ventil_offset_korrektur REAL, 
+      ventil_offset_korrektur REAL,
       ventil_offset_nach_korrektur REAL,
       druck_ventil REAL,
       oeltemperatur REAL,
-      
+      calibration_offset REAL,
+      calibration_max_position REAL,
+      calibration_max_voltage REAL,
+      geprueft_an TEXT,
+      eingebaut_in TEXT,
+
       -- Analysis Results
       file_count INTEGER,
       pdf_filename TEXT,
@@ -161,7 +166,12 @@ app.get('/api/projects/:id/load-full', (req, res) => {
           ventilOffsetKorrektur: row.ventil_offset_korrektur,
           ventilOffsetNachKorrektur: row.ventil_offset_nach_korrektur,
           druckVentil: row.druck_ventil,
-          oeltemperatur: row.oeltemperatur
+          oeltemperatur: row.oeltemperatur,
+          calibrationOffset: row.calibration_offset,
+          calibrationMaxPosition: row.calibration_max_position,
+          calibrationMaxVoltage: row.calibration_max_voltage,
+          geprueftAn: row.geprueft_an,
+          eingebautIn: row.eingebaut_in
         },
         
         // Files loaded from disk
@@ -546,22 +556,24 @@ function saveToDatabase(record, folderName, projectData, res, isUpdate) {
 
 function updateProject(record, folderName, projectId, projectData, res) {
   const updateSQL = `
-    UPDATE projects SET 
+    UPDATE projects SET
       updated_at = CURRENT_TIMESTAMP,
       auftrag_nr = ?, maschinentyp = ?, pruefer = ?, datum = ?,
       art_nr_sch = ?, art_nr_parker = ?, nenndurchfluss = ?, sn_parker = ?,
       ventil_offset_original = ?, ventil_offset_korrektur = ?, ventil_offset_nach_korrektur = ?,
-      druck_ventil = ?, oeltemperatur = ?, file_count = ?, pdf_filename = ?,
+      druck_ventil = ?, oeltemperatur = ?, calibration_offset = ?, calibration_max_position = ?,
+      calibration_max_voltage = ?, geprueft_an = ?, eingebaut_in = ?, file_count = ?, pdf_filename = ?,
       file_analysis_state = ?, voltage_assignments = ?, regression_slope = ?,
       manual_slope_factor = ?, final_slope = ?, complete_app_state = ?
     WHERE folder_name = ?
   `;
-  
+
   const updateParams = [
     record.auftrag_nr, record.maschinentyp, record.pruefer, record.datum,
     record.art_nr_sch, record.art_nr_parker, record.nenndurchfluss, record.sn_parker,
     record.ventil_offset_original, record.ventil_offset_korrektur, record.ventil_offset_nach_korrektur,
-    record.druck_ventil, record.oeltemperatur, record.file_count, record.pdf_filename,
+    record.druck_ventil, record.oeltemperatur, record.calibration_offset, record.calibration_max_position,
+    record.calibration_max_voltage, record.geprueft_an, record.eingebaut_in, record.file_count, record.pdf_filename,
     record.file_analysis_state, record.voltage_assignments, record.regression_slope,
     record.manual_slope_factor, record.final_slope, record.complete_app_state,
     folderName
@@ -591,17 +603,19 @@ function insertProject(record, projectData, res) {
       folder_name, auftrag_nr, maschinentyp, pruefer, datum,
       art_nr_sch, art_nr_parker, nenndurchfluss, sn_parker,
       ventil_offset_original, ventil_offset_korrektur, ventil_offset_nach_korrektur,
-      druck_ventil, oeltemperatur, file_count, pdf_filename,
+      druck_ventil, oeltemperatur, calibration_offset, calibration_max_position,
+      calibration_max_voltage, geprueft_an, eingebaut_in, file_count, pdf_filename,
       file_analysis_state, voltage_assignments, regression_slope,
       manual_slope_factor, final_slope, complete_app_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
-  
+
   const insertParams = [
     record.folder_name, record.auftrag_nr, record.maschinentyp, record.pruefer, record.datum,
     record.art_nr_sch, record.art_nr_parker, record.nenndurchfluss, record.sn_parker,
     record.ventil_offset_original, record.ventil_offset_korrektur, record.ventil_offset_nach_korrektur,
-    record.druck_ventil, record.oeltemperatur, record.file_count, record.pdf_filename,
+    record.druck_ventil, record.oeltemperatur, record.calibration_offset, record.calibration_max_position,
+    record.calibration_max_voltage, record.geprueft_an, record.eingebaut_in, record.file_count, record.pdf_filename,
     record.file_analysis_state, record.voltage_assignments, record.regression_slope,
     record.manual_slope_factor, record.final_slope, record.complete_app_state
   ];
@@ -729,6 +743,11 @@ function prepareProjectRecord(data, folderName) {
     ventil_offset_nach_korrektur: parseFloat(testFormData?.ventilOffsetNachKorrektur) || null,
     druck_ventil: parseFloat(testFormData?.druckVentil) || null,
     oeltemperatur: parseFloat(testFormData?.oeltemperatur) || null,
+    calibration_offset: parseFloat(testFormData?.calibrationOffset) || null,
+    calibration_max_position: parseFloat(testFormData?.calibrationMaxPosition) || null,
+    calibration_max_voltage: parseFloat(testFormData?.calibrationMaxVoltage) || null,
+    geprueft_an: testFormData?.geprueftAn || '',
+    eingebaut_in: testFormData?.eingebautIn || '',
     file_count: dualSlopeResults?.length || 0,
     pdf_filename: data.pdfFilename || '',
     file_analysis_state: JSON.stringify(dualSlopeResults || []),

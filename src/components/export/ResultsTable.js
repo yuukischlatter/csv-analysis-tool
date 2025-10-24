@@ -136,7 +136,7 @@ const DualResultsTable = ({
           <thead>
             <tr style={{ backgroundColor: '#f5f5f5' }}>
               <th style={headerStyle}>Status</th>
-              <th style={headerStyle}>Eingangsspannung UE (V)</th>
+              <th style={headerStyle}>Input Voltage UE (V)</th>
               <th style={{...headerStyle, width: '200px'}}>File Name</th>
               <th style={headerStyle}>Velocity (mm/s)</th>
               <th style={headerStyle}>Duration (s)</th>

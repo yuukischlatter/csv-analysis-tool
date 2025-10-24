@@ -1,89 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { MASCHINEN_TYPEN } from '../../data/machines';
+import { MACHINE_TYPE_NAMES } from '../../data/machines';
 import { getVentilOptions, getParkerData } from '../../data/ventils';
 
 const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, initialData }) => {
   const [formData, setFormData] = useState({
-    // Auftragsdaten
-    auftragsNr: '',
-    maschinentyp: '',
-    
-    // Prüfung
-    pruefer: '',
-    datum: '',
-    
-    // Regelventil
-    artNrSCH: '',
-    artNrParker: '',
-    nenndurchfluss: '',
-    snParker: '',
-    
-    // Prüfbedingungen
-    ventilOffsetOriginal: '',
-    ventilOffsetKorrektur: '',
-    ventilOffsetNachKorrektur: '',
-    druckVentil: '',
-    oeltemperatur: '',
-    
+    // Order Data
+    orderNumber: '',
+    machineType: '',
+
+    // Inspection
+    inspector: '',
+    date: '',
+
+    // Control Valve
+    articleNumberSCH: '',
+    articleNumberParker: '',
+    nominalFlow: '',
+    serialNumberParker: '',
+
+    // Test Conditions
+    valveOffsetOriginal: '',
+    valveOffsetCorrection: '',
+    valveOffsetAfterCorrection: '',
+    valvePressure: '',
+    oilTemperature: '',
+
     // Voltage to Position Calibration
     calibrationOffset: '',
     calibrationMaxPosition: '',
     calibrationMaxVoltage: '',
-    
-    // Geprüft/Eingebaut
-    geprueftAn: '',
-    eingebautIn: ''
+
+    // Tested/Installed
+    testedOn: '',
+    installedIn: ''
   });
 
   // Load initial data when it changes (from loading a project)
   useEffect(() => {
     if (initialData) {
       setFormData({
-        auftragsNr: initialData.auftragsNr || '',
-        maschinentyp: initialData.maschinentyp || '',
-        pruefer: initialData.pruefer || '',
-        datum: initialData.datum || '',
-        artNrSCH: initialData.artNrSCH || '',
-        artNrParker: initialData.artNrParker || '',
-        nenndurchfluss: initialData.nenndurchfluss || '',
-        snParker: initialData.snParker || '',
-        ventilOffsetOriginal: initialData.ventilOffsetOriginal || '',
-        ventilOffsetKorrektur: initialData.ventilOffsetKorrektur || '',
-        ventilOffsetNachKorrektur: initialData.ventilOffsetNachKorrektur || '',
-        druckVentil: initialData.druckVentil || '',
-        oeltemperatur: initialData.oeltemperatur || '',
+        orderNumber: initialData.orderNumber || '',
+        machineType: initialData.machineType || '',
+        inspector: initialData.inspector || '',
+        date: initialData.date || '',
+        articleNumberSCH: initialData.articleNumberSCH || '',
+        articleNumberParker: initialData.articleNumberParker || '',
+        nominalFlow: initialData.nominalFlow || '',
+        serialNumberParker: initialData.serialNumberParker || '',
+        valveOffsetOriginal: initialData.valveOffsetOriginal || '',
+        valveOffsetCorrection: initialData.valveOffsetCorrection || '',
+        valveOffsetAfterCorrection: initialData.valveOffsetAfterCorrection || '',
+        valvePressure: initialData.valvePressure || '',
+        oilTemperature: initialData.oilTemperature || '',
         calibrationOffset: initialData.calibrationOffset || '',
         calibrationMaxPosition: initialData.calibrationMaxPosition || '',
         calibrationMaxVoltage: initialData.calibrationMaxVoltage || '',
-        geprueftAn: initialData.geprueftAn || '',
-        eingebautIn: initialData.eingebautIn || ''
+        testedOn: initialData.testedOn || '',
+        installedIn: initialData.installedIn || ''
       });
     }
   }, [initialData]);
 
   const handleInputChange = (field, value) => {
     const newFormData = { ...formData, [field]: value };
-    
+
     // Auto-mapping for Ventil selection
-    if (field === 'artNrSCH') {
+    if (field === 'articleNumberSCH') {
       const parkerData = getParkerData(value);
-      newFormData.artNrParker = parkerData.parkerArtNr;
-      newFormData.nenndurchfluss = parkerData.nenndurchfluss;
+      newFormData.articleNumberParker = parkerData.parkerArtNr;
+      newFormData.nominalFlow = parkerData.nenndurchfluss;
     }
-    
+
     setFormData(newFormData);
-    
+
     if (onFormDataChange) {
       // Format date for PDF export if it's a date field
       const processedFormData = { ...newFormData };
-      if (field === 'datum' && value) {
+      if (field === 'date' && value) {
         // Keep the original ISO format for internal use, but add formatted version
-        processedFormData.datumFormatted = formatDateForPDF(value);
-      } else if (processedFormData.datum) {
+        processedFormData.dateFormatted = formatDateForPDF(value);
+      } else if (processedFormData.date) {
         // Ensure formatted date is always available
-        processedFormData.datumFormatted = formatDateForPDF(processedFormData.datum);
+        processedFormData.dateFormatted = formatDateForPDF(processedFormData.date);
       }
-      
+
       onFormDataChange(processedFormData);
     }
   };
@@ -127,7 +127,7 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <h2 style={{ margin: '0', fontSize: '18px', color: '#333' }}>
-            Prüfdaten Eingabe
+            Test Data Entry
           </h2>
           {filledFields > 0 && (
             <span style={{ 
@@ -167,34 +167,34 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
           backgroundColor: 'white',
           padding: '20px'
         }}>
-          {/* Auftragsdaten */}
-          <div style={{ 
-            border: '1px solid #ddd', 
-            borderRadius: '4px', 
-            padding: '15px', 
+          {/* Order Data */}
+          <div style={{
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            padding: '15px',
             marginBottom: '15px',
             backgroundColor: '#fafafa'
           }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Auftragsdaten</h3>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Order Data</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Auftrags-Nr.:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Order No.:</label>
                 <input
                   type="text"
-                  value={formData.auftragsNr}
-                  onChange={(e) => handleInputChange('auftragsNr', e.target.value)}
+                  value={formData.orderNumber}
+                  onChange={(e) => handleInputChange('orderNumber', e.target.value)}
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Maschinentyp:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Machine Type:</label>
                 <select
-                  value={formData.maschinentyp}
-                  onChange={(e) => handleInputChange('maschinentyp', e.target.value)}
+                  value={formData.machineType}
+                  onChange={(e) => handleInputChange('machineType', e.target.value)}
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 >
-                  <option value="">Auswählen...</option>
-                  {MASCHINEN_TYPEN.map(typ => (
+                  <option value="">Select...</option>
+                  {MACHINE_TYPE_NAMES.map(typ => (
                     <option key={typ} value={typ}>{typ}</option>
                   ))}
                 </select>
@@ -202,55 +202,55 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
             </div>
           </div>
 
-          {/* Prüfung */}
-          <div style={{ 
-            border: '1px solid #ddd', 
-            borderRadius: '4px', 
-            padding: '15px', 
+          {/* Inspection */}
+          <div style={{
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            padding: '15px',
             marginBottom: '15px',
             backgroundColor: '#fafafa'
           }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Prüfung</h3>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Inspection</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Prüfer:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Inspector:</label>
                 <input
                   type="text"
-                  value={formData.pruefer}
-                  onChange={(e) => handleInputChange('pruefer', e.target.value)}
+                  value={formData.inspector}
+                  onChange={(e) => handleInputChange('inspector', e.target.value)}
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Datum:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Date:</label>
                 <input
                   type="date"
-                  value={formData.datum}
-                  onChange={(e) => handleInputChange('datum', e.target.value)}
+                  value={formData.date}
+                  onChange={(e) => handleInputChange('date', e.target.value)}
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Regelventil */}
-          <div style={{ 
-            border: '1px solid #ddd', 
-            borderRadius: '4px', 
-            padding: '15px', 
+          {/* Control Valve */}
+          <div style={{
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            padding: '15px',
             marginBottom: '15px',
             backgroundColor: '#fafafa'
           }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Regelventil</h3>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Control Valve</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Art.-Nr. S-CH:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Art. No. S-CH:</label>
                 <select
-                  value={formData.artNrSCH}
-                  onChange={(e) => handleInputChange('artNrSCH', e.target.value)}
+                  value={formData.articleNumberSCH}
+                  onChange={(e) => handleInputChange('articleNumberSCH', e.target.value)}
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 >
-                  <option value="">Auswählen...</option>
+                  <option value="">Select...</option>
                   {ventilOptions.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
@@ -260,21 +260,21 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                 <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>S/N Parker:</label>
                 <input
                   type="text"
-                  value={formData.snParker}
-                  onChange={(e) => handleInputChange('snParker', e.target.value)}
+                  value={formData.serialNumberParker}
+                  onChange={(e) => handleInputChange('serialNumberParker', e.target.value)}
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Art.-Nr. Parker:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Art. No. Parker:</label>
                 <input
                   type="text"
-                  value={formData.artNrParker}
+                  value={formData.articleNumberParker}
                   readOnly
-                  style={{ 
-                    width: '100%', 
-                    padding: '8px', 
-                    border: '1px solid #ccc', 
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ccc',
                     borderRadius: '4px',
                     backgroundColor: '#f0f0f0',
                     color: '#666'
@@ -282,15 +282,15 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Nenndurchfluss:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Nominal Flow:</label>
                 <input
                   type="text"
-                  value={formData.nenndurchfluss}
+                  value={formData.nominalFlow}
                   readOnly
-                  style={{ 
-                    width: '100%', 
-                    padding: '8px', 
-                    border: '1px solid #ccc', 
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ccc',
                     borderRadius: '4px',
                     backgroundColor: '#f0f0f0',
                     color: '#666'
@@ -300,30 +300,30 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
             </div>
           </div>
 
-          {/* Prüfbedingungen */}
-          <div style={{ 
-            border: '1px solid #ddd', 
-            borderRadius: '4px', 
-            padding: '15px', 
+          {/* Test Conditions */}
+          <div style={{
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            padding: '15px',
             marginBottom: '15px',
             backgroundColor: '#fafafa'
           }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Prüfbedingungen</h3>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333' }}>Test Conditions</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '5px', 
-                  fontSize: '14px' 
+                <label style={{
+                  display: 'block',
+                  marginBottom: '5px',
+                  fontSize: '14px'
                 }}>
-                  Ventil-Offset UEQ (mit AQ60), Originalzustand:
+                  Valve Offset UEQ (with AQ60), Original State:
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input
                     type="number"
                     step="0.01"
-                    value={formData.ventilOffsetOriginal}
-                    onChange={(e) => handleInputChange('ventilOffsetOriginal', e.target.value)}
+                    value={formData.valveOffsetOriginal}
+                    onChange={(e) => handleInputChange('valveOffsetOriginal', e.target.value)}
                     style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '150px' }}
                   />
                   <span style={{ fontSize: '14px' }}>V</span>
@@ -332,19 +332,19 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '5px', 
-                  fontSize: '14px' 
+                <label style={{
+                  display: 'block',
+                  marginBottom: '5px',
+                  fontSize: '14px'
                 }}>
-                  Ventil-Offset Korrekturen in Parker-Software, falls angewendet:
+                  Valve Offset Corrections in Parker Software, if applied:
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input
                     type="number"
                     step="0.1"
-                    value={formData.ventilOffsetKorrektur}
-                    onChange={(e) => handleInputChange('ventilOffsetKorrektur', e.target.value)}
+                    value={formData.valveOffsetCorrection}
+                    onChange={(e) => handleInputChange('valveOffsetCorrection', e.target.value)}
                     style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '150px' }}
                   />
                   <span style={{ fontSize: '14px' }}>%</span>
@@ -352,19 +352,19 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '5px', 
-                  fontSize: '14px' 
+                <label style={{
+                  display: 'block',
+                  marginBottom: '5px',
+                  fontSize: '14px'
                 }}>
-                  Ventil-Offset UEQ (mit AQ60), nach allfälliger Korrektur mit Parker-Software:
+                  Valve Offset UEQ (with AQ60), after corrections with Parker Software:
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input
                     type="number"
                     step="0.01"
-                    value={formData.ventilOffsetNachKorrektur}
-                    onChange={(e) => handleInputChange('ventilOffsetNachKorrektur', e.target.value)}
+                    value={formData.valveOffsetAfterCorrection}
+                    onChange={(e) => handleInputChange('valveOffsetAfterCorrection', e.target.value)}
                     style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '150px' }}
                   />
                   <span style={{ fontSize: '14px' }}>V</span>
@@ -373,19 +373,19 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '5px', 
-                  fontSize: '14px' 
+                <label style={{
+                  display: 'block',
+                  marginBottom: '5px',
+                  fontSize: '14px'
                 }}>
-                  Druck am Ventil / an der Pumpe:
+                  Pressure at Valve / Pump:
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input
                     type="number"
                     step="0.1"
-                    value={formData.druckVentil}
-                    onChange={(e) => handleInputChange('druckVentil', e.target.value)}
+                    value={formData.valvePressure}
+                    onChange={(e) => handleInputChange('valvePressure', e.target.value)}
                     style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '150px' }}
                   />
                   <span style={{ fontSize: '14px' }}>Bar</span>
@@ -393,25 +393,25 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '5px', 
-                  fontSize: '14px' 
+                <label style={{
+                  display: 'block',
+                  marginBottom: '5px',
+                  fontSize: '14px'
                 }}>
-                  Öltemperatur (vor Start der Messung):
+                  Oil Temperature (before measurement):
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input
                     type="number"
                     step="0.1"
-                    value={formData.oeltemperatur}
-                    onChange={(e) => handleInputChange('oeltemperatur', e.target.value)}
+                    value={formData.oilTemperature}
+                    onChange={(e) => handleInputChange('oilTemperature', e.target.value)}
                     style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '150px' }}
                   />
                   <span style={{ fontSize: '14px' }}>°C</span>
                 </div>
                 <small style={{ color: '#666', fontSize: '12px' }}>
-                  50 ± 5°C I.O. (Hinweis: Nullpunkt kann um 10°C zu 0.20% driften, entspricht zu 0.01V UEQ)
+                  50 ± 5°C I.O. (Note: Zero point can drift by 0.20% per 10°C, equivalent to 0.01V UEQ)
                 </small>
               </div>
             </div>
@@ -495,30 +495,30 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
             </div>
           </div>
 
-          {/* Geprüft/Eingebaut */}
-          <div style={{ 
-            border: '1px solid #ddd', 
-            borderRadius: '4px', 
-            padding: '15px', 
+          {/* Tested/Installed */}
+          <div style={{
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            padding: '15px',
             marginBottom: '15px',
             backgroundColor: '#fafafa'
           }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Geprüft an:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Tested On:</label>
                 <input
                   type="text"
-                  value={formData.geprueftAn}
-                  onChange={(e) => handleInputChange('geprueftAn', e.target.value)}
+                  value={formData.testedOn}
+                  onChange={(e) => handleInputChange('testedOn', e.target.value)}
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Eingebaut in:</label>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Installed In:</label>
                 <input
                   type="text"
-                  value={formData.eingebautIn}
-                  onChange={(e) => handleInputChange('eingebautIn', e.target.value)}
+                  value={formData.installedIn}
+                  onChange={(e) => handleInputChange('installedIn', e.target.value)}
                   style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 />
               </div>

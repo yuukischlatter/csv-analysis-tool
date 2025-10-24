@@ -2,9 +2,67 @@
  * API Client for SpeedChecker Database Operations
  * Handles communication with Express backend
  * NEW: Loads projects from disk files instead of complete_app_state JSON blob
+ *
+ * Translation Layer: Frontend uses English field names, Backend uses German field names
  */
 
 let API_BASE_URL = `http://${window.location.hostname}:8080/api`;
+
+/**
+ * Translate testFormData from English (frontend) to German (backend)
+ */
+const translateToGerman = (testFormData) => {
+  if (!testFormData) return null;
+
+  return {
+    auftragsNr: testFormData.orderNumber,
+    maschinentyp: testFormData.machineType,
+    pruefer: testFormData.inspector,
+    datum: testFormData.date,
+    artNrSCH: testFormData.articleNumberSCH,
+    artNrParker: testFormData.articleNumberParker,
+    nenndurchfluss: testFormData.nominalFlow,
+    snParker: testFormData.serialNumberParker,
+    ventilOffsetOriginal: testFormData.valveOffsetOriginal,
+    ventilOffsetKorrektur: testFormData.valveOffsetCorrection,
+    ventilOffsetNachKorrektur: testFormData.valveOffsetAfterCorrection,
+    druckVentil: testFormData.valvePressure,
+    oeltemperatur: testFormData.oilTemperature,
+    calibrationOffset: testFormData.calibrationOffset,
+    calibrationMaxPosition: testFormData.calibrationMaxPosition,
+    calibrationMaxVoltage: testFormData.calibrationMaxVoltage,
+    geprueftAn: testFormData.testedOn,
+    eingebautIn: testFormData.installedIn
+  };
+};
+
+/**
+ * Translate testFormData from German (backend) to English (frontend)
+ */
+const translateToEnglish = (testFormData) => {
+  if (!testFormData) return null;
+
+  return {
+    orderNumber: testFormData.auftragsNr,
+    machineType: testFormData.maschinentyp,
+    inspector: testFormData.pruefer,
+    date: testFormData.datum,
+    articleNumberSCH: testFormData.artNrSCH,
+    articleNumberParker: testFormData.artNrParker,
+    nominalFlow: testFormData.nenndurchfluss,
+    serialNumberParker: testFormData.snParker,
+    valveOffsetOriginal: testFormData.ventilOffsetOriginal,
+    valveOffsetCorrection: testFormData.ventilOffsetKorrektur,
+    valveOffsetAfterCorrection: testFormData.ventilOffsetNachKorrektur,
+    valvePressure: testFormData.druckVentil,
+    oilTemperature: testFormData.oeltemperatur,
+    calibrationOffset: testFormData.calibrationOffset,
+    calibrationMaxPosition: testFormData.calibrationMaxPosition,
+    calibrationMaxVoltage: testFormData.calibrationMaxVoltage,
+    testedOn: testFormData.geprueftAn,
+    installedIn: testFormData.eingebautIn
+  };
+};
 
 // Fetch server configuration on load
 (async () => {
@@ -24,26 +82,32 @@ class ApiClient {
   /**
    * NEW: Load project from disk files (FAST - no JSON parsing of processedFiles)
    * Reads CSV files and analysis from disk instead of complete_app_state blob
+   * Translates German field names from backend to English for frontend
    */
   static async loadProjectFromDisk(projectId) {
     try {
       console.log(`Loading project ${projectId} from disk...`);
       const startTime = performance.now();
-      
+
       const response = await fetch(`${API_BASE_URL}/projects/${projectId}/load-full`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const appState = await response.json();
-      
+
+      // Translate testFormData from German to English
+      if (appState.testFormData) {
+        appState.testFormData = translateToEnglish(appState.testFormData);
+      }
+
       const endTime = performance.now();
       const loadTime = ((endTime - startTime) / 1000).toFixed(2);
       console.log(`✓ Project ${projectId} loaded from disk in ${loadTime}s`);
       console.log(`  - ${appState.processedFiles?.length || 0} CSV files`);
       console.log(`  - ${appState.dualSlopeResults?.length || 0} analysis results`);
-      
+
       return appState;
     } catch (error) {
       console.error('Load from disk failed:', error);
@@ -54,24 +118,33 @@ class ApiClient {
   /**
    * Save project to SQLite database file with PDF data
    * CSV files are saved to disk, NOT in complete_app_state
+   * Translates English field names from frontend to German for backend
    */
   static async saveProject(projectData) {
     try {
+      // Clone projectData to avoid mutating original
+      const backendData = { ...projectData };
+
+      // Translate testFormData from English to German
+      if (backendData.testFormData) {
+        backendData.testFormData = translateToGerman(backendData.testFormData);
+      }
+
       // Convert ArrayBuffer to Base64 for JSON transmission if PDF data exists
-      if (projectData.pdfData && projectData.pdfData instanceof ArrayBuffer) {
-        const bytes = new Uint8Array(projectData.pdfData);
+      if (backendData.pdfData && backendData.pdfData instanceof ArrayBuffer) {
+        const bytes = new Uint8Array(backendData.pdfData);
         let binary = '';
         for (let i = 0; i < bytes.byteLength; i++) {
           binary += String.fromCharCode(bytes[i]);
         }
-        projectData.pdfDataBase64 = btoa(binary);
-        delete projectData.pdfData; // Remove ArrayBuffer to avoid JSON serialization issues
+        backendData.pdfDataBase64 = btoa(binary);
+        delete backendData.pdfData; // Remove ArrayBuffer to avoid JSON serialization issues
       }
 
       // Check if this is an update
-      if (projectData.projectId || projectData.folderName) {
-        projectData.updateMode = true;
-        console.log(`Updating project: ${projectData.folderName || projectData.projectId}`);
+      if (backendData.projectId || backendData.folderName) {
+        backendData.updateMode = true;
+        console.log(`Updating project: ${backendData.folderName || backendData.projectId}`);
       } else {
         console.log('Creating new project');
       }
@@ -81,7 +154,7 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(projectData)
+        body: JSON.stringify(backendData)
       });
 
       if (!response.ok) {
@@ -90,11 +163,11 @@ class ApiClient {
 
       const result = await response.json();
       console.log(`Project ${result.action}: ${result.folderName} (ID: ${result.projectId})`);
-      
+
       if (result.pdfSaved) {
         console.log(`PDF saved to server: ${result.pdfPath}`);
       }
-      
+
       return result;
     } catch (error) {
       console.error('API save failed:', error);

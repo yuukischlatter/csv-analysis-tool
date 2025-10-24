@@ -4,9 +4,9 @@
  */
 
 /**
- * Transform React testFormData to PDF format
- * @param {Object} testFormData - Form data from React app
- * @returns {Object} PDF-formatted test data
+ * Transform React testFormData (English) to PDF format (German)
+ * @param {Object} testFormData - Form data from React app (English field names)
+ * @returns {Object} PDF-formatted test data (German field names)
  */
 export const mapTestFormData = (testFormData) => {
   if (!testFormData) {
@@ -28,27 +28,28 @@ export const mapTestFormData = (testFormData) => {
     };
   }
 
+  // Translate English field names to German for PDF generator
   return {
-    // Auftragsdaten
-    auftragsNr: testFormData.auftragsNr || "",
-    maschinentyp: testFormData.maschinentyp || "",
-    
-    // Prüfung
-    pruefer: testFormData.pruefer || "",
-    datum: testFormData.datum || "",
-    
-    // Regelventil
-    artNrSCH: testFormData.artNrSCH || "",
-    artNrParker: testFormData.artNrParker || "",
-    nenndurchfluss: testFormData.nenndurchfluss || "",
-    snParker: testFormData.snParker || "",
-    
-    // Prüfbedingungen
-    ventilOffsetOriginal: testFormData.ventilOffsetOriginal || "",
-    ventilOffsetKorrektur: testFormData.ventilOffsetKorrektur || "",
-    ventilOffsetNachKorrektur: testFormData.ventilOffsetNachKorrektur || "",
-    druckVentil: testFormData.druckVentil || "",
-    oeltemperatur: testFormData.oeltemperatur || ""
+    // Auftragsdaten (Order Data)
+    auftragsNr: testFormData.orderNumber || "",
+    maschinentyp: testFormData.machineType || "",
+
+    // Prüfung (Inspection)
+    pruefer: testFormData.inspector || "",
+    datum: testFormData.date || "",
+
+    // Regelventil (Control Valve)
+    artNrSCH: testFormData.articleNumberSCH || "",
+    artNrParker: testFormData.articleNumberParker || "",
+    nenndurchfluss: testFormData.nominalFlow || "",
+    snParker: testFormData.serialNumberParker || "",
+
+    // Prüfbedingungen (Test Conditions)
+    ventilOffsetOriginal: testFormData.valveOffsetOriginal || "",
+    ventilOffsetKorrektur: testFormData.valveOffsetCorrection || "",
+    ventilOffsetNachKorrektur: testFormData.valveOffsetAfterCorrection || "",
+    druckVentil: testFormData.valvePressure || "",
+    oeltemperatur: testFormData.oilTemperature || ""
   };
 };
 

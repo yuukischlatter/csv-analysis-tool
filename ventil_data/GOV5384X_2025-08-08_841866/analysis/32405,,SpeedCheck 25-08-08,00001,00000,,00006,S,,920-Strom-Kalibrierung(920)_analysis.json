@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-08,00001,00000,,00006,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-06T11:57:21.956Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T11:57:21.956Z",
+  "rampUp": {
+    "startIndex": 1949,
+    "endIndex": 9283,
+    "startTime": 15.600281,
+    "endTime": 74.272972,
+    "startPosition": 6.598248311271686,
+    "endPosition": 34.02150597955754,
+    "velocity": 0.4673938965623011,
+    "duration": 58.67269099999999,
+    "markerSetAt": "2025-10-06T11:57:21.956Z"
+  },
+  "rampDown": {
+    "startIndex": 15184,
+    "endIndex": 29016,
+    "startTime": 121.500061,
+    "endTime": 232.101471,
+    "startPosition": 33.426338507510316,
+    "endPosition": 7.29429248392868,
+    "velocity": 0.23627226835156656,
+    "duration": 110.60141,
+    "markerSetAt": "2025-10-06T11:57:21.956Z"
+  },
+  "voltageAssignment": 0.2,
+  "voltageAssignedAt": "2025-10-06T11:57:21.956Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T11:57:21.956Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 7334,
+      "rampDown": 13832
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-08,00001,00000,,00006,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 1949,
+      "endIndex": 9283,
+      "startTime": 15.600281,
+      "endTime": 74.272972,
+      "startPosition": 6.598248311271686,
+      "endPosition": 34.02150597955754,
+      "velocity": 0.4673938965623011,
+      "duration": 58.67269099999999
+    },
+    "rampDown": {
+      "startIndex": 15184,
+      "endIndex": 29016,
+      "startTime": 121.500061,
+      "endTime": 232.101471,
+      "startPosition": 33.426338507510316,
+      "endPosition": 7.29429248392868,
+      "velocity": 0.23627226835156656,
+      "duration": 110.60141
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003540000,
+    "createdDate": "2025-09-16T06:19:00.000Z"
+  }
+}

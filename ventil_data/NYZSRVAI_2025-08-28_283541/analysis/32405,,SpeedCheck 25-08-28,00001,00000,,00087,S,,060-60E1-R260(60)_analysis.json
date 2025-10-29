@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-28,00001,00000,,00087,S,,060-60E1-R260(60).csv",
+  "analysisTimestamp": "2025-10-06T12:04:43.691Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T12:04:43.691Z",
+  "rampUp": {
+    "startIndex": 447,
+    "endIndex": 913,
+    "startTime": 3.583982,
+    "endTime": 7.311934,
+    "startPosition": 5.447687030669051,
+    "endPosition": 43.571447043074905,
+    "velocity": 10.226462146617191,
+    "duration": 3.727952,
+    "markerSetAt": "2025-10-06T12:04:43.691Z"
+  },
+  "rampDown": {
+    "startIndex": 4173,
+    "endIndex": 4702,
+    "startTime": 33.391041,
+    "endTime": 37.622734,
+    "startPosition": 43.06621319954923,
+    "endPosition": 6.0381472607911775,
+    "velocity": 8.750177751258907,
+    "duration": 4.231693,
+    "markerSetAt": "2025-10-06T12:04:43.691Z"
+  },
+  "voltageAssignment": 4,
+  "voltageAssignedAt": "2025-10-06T12:04:43.691Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T12:04:43.691Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 466,
+      "rampDown": 529
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-28,00001,00000,,00087,S,,060-60E1-R260(60).csv",
+    "rampUp": {
+      "startIndex": 447,
+      "endIndex": 913,
+      "startTime": 3.583982,
+      "endTime": 7.311934,
+      "startPosition": 5.447687030669051,
+      "endPosition": 43.571447043074905,
+      "velocity": 10.226462146617191,
+      "duration": 3.727952
+    },
+    "rampDown": {
+      "startIndex": 4173,
+      "endIndex": 4702,
+      "startTime": 33.391041,
+      "endTime": 37.622734,
+      "startPosition": 43.06621319954923,
+      "endPosition": 6.0381472607911775,
+      "velocity": 8.750177751258907,
+      "duration": 4.231693
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003540000,
+    "createdDate": "2025-09-16T06:19:00.000Z"
+  }
+}

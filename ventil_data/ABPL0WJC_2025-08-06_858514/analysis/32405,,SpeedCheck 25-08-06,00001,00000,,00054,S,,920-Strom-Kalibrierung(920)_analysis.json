@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-06,00001,00000,,00054,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-20T13:33:43.740Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-20T13:33:43.740Z",
+  "rampUp": {
+    "startIndex": 355,
+    "endIndex": 692,
+    "startTime": 2.847992,
+    "endTime": 5.543957,
+    "startPosition": 6.955786112459509,
+    "endPosition": 42.232140545927436,
+    "velocity": 13.084871069716385,
+    "duration": 2.6959649999999997,
+    "markerSetAt": "2025-10-20T13:33:43.740Z"
+  },
+  "rampDown": {
+    "startIndex": 1636,
+    "endIndex": 1960,
+    "startTime": 13.096164,
+    "endTime": 15.688285,
+    "startPosition": 42.298801165447294,
+    "endPosition": 6.852763314455928,
+    "velocity": 13.674530568207024,
+    "duration": 2.5921210000000006,
+    "markerSetAt": "2025-10-20T13:33:43.740Z"
+  },
+  "voltageAssignment": 10,
+  "voltageAssignedAt": "2025-10-20T13:33:43.740Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-20T13:33:43.740Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 337,
+      "rampDown": 324
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-06,00001,00000,,00054,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 355,
+      "endIndex": 692,
+      "startTime": 2.847992,
+      "endTime": 5.543957,
+      "startPosition": 6.955786112459509,
+      "endPosition": 42.232140545927436,
+      "velocity": 13.084871069716385,
+      "duration": 2.6959649999999997
+    },
+    "rampDown": {
+      "startIndex": 1636,
+      "endIndex": 1960,
+      "startTime": 13.096164,
+      "endTime": 15.688285,
+      "startPosition": 42.298801165447294,
+      "endPosition": 6.852763314455928,
+      "velocity": 13.674530568207024,
+      "duration": 2.5921210000000006
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003540000,
+    "createdDate": "2025-09-16T06:19:00.000Z"
+  }
+}

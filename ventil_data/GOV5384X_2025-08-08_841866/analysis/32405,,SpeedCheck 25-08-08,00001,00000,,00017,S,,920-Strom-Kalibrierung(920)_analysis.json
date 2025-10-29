@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-08,00001,00000,,00017,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-06T11:57:22.005Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T11:57:22.005Z",
+  "rampUp": {
+    "startIndex": 77,
+    "endIndex": 434,
+    "startTime": 0.624,
+    "endTime": 3.479984,
+    "startPosition": 7.77422869826982,
+    "endPosition": 41.607808420146476,
+    "velocity": 11.846557866527496,
+    "duration": 2.855984,
+    "markerSetAt": "2025-10-06T11:57:22.005Z"
+  },
+  "rampDown": {
+    "startIndex": 894,
+    "endIndex": 1296,
+    "startTime": 7.159936,
+    "endTime": 10.376037,
+    "startPosition": 41.286511320231405,
+    "endPosition": 8.028844932463203,
+    "velocity": 10.340989411641052,
+    "duration": 3.216101,
+    "markerSetAt": "2025-10-06T11:57:22.005Z"
+  },
+  "voltageAssignment": 5,
+  "voltageAssignedAt": "2025-10-06T11:57:22.005Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T11:57:22.005Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 357,
+      "rampDown": 402
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-08,00001,00000,,00017,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 77,
+      "endIndex": 434,
+      "startTime": 0.624,
+      "endTime": 3.479984,
+      "startPosition": 7.77422869826982,
+      "endPosition": 41.607808420146476,
+      "velocity": 11.846557866527496,
+      "duration": 2.855984
+    },
+    "rampDown": {
+      "startIndex": 894,
+      "endIndex": 1296,
+      "startTime": 7.159936,
+      "endTime": 10.376037,
+      "startPosition": 41.286511320231405,
+      "endPosition": 8.028844932463203,
+      "velocity": 10.340989411641052,
+      "duration": 3.216101
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003540000,
+    "createdDate": "2025-09-16T06:19:00.000Z"
+  }
+}

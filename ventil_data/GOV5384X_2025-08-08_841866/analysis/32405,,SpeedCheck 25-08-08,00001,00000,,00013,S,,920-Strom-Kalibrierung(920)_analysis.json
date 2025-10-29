@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-08,00001,00000,,00013,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-06T11:57:21.997Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T11:57:21.997Z",
+  "rampUp": {
+    "startIndex": 442,
+    "endIndex": 1234,
+    "startTime": 3.543983,
+    "endTime": 9.880013,
+    "startPosition": 8.395706109592984,
+    "endPosition": 41.17808278633966,
+    "velocity": 5.173961719996066,
+    "duration": 6.33603,
+    "markerSetAt": "2025-10-06T11:57:21.997Z"
+  },
+  "rampDown": {
+    "startIndex": 2251,
+    "endIndex": 3165,
+    "startTime": 18.016153,
+    "endTime": 25.327623,
+    "startPosition": 40.97106537264473,
+    "endPosition": 8.627079704087418,
+    "velocity": 4.423732254739103,
+    "duration": 7.31147,
+    "markerSetAt": "2025-10-06T11:57:21.997Z"
+  },
+  "voltageAssignment": 2,
+  "voltageAssignedAt": "2025-10-06T11:57:21.997Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T11:57:21.997Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 792,
+      "rampDown": 914
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-08,00001,00000,,00013,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 442,
+      "endIndex": 1234,
+      "startTime": 3.543983,
+      "endTime": 9.880013,
+      "startPosition": 8.395706109592984,
+      "endPosition": 41.17808278633966,
+      "velocity": 5.173961719996066,
+      "duration": 6.33603
+    },
+    "rampDown": {
+      "startIndex": 2251,
+      "endIndex": 3165,
+      "startTime": 18.016153,
+      "endTime": 25.327623,
+      "startPosition": 40.97106537264473,
+      "endPosition": 8.627079704087418,
+      "velocity": 4.423732254739103,
+      "duration": 7.31147
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003540000,
+    "createdDate": "2025-09-16T06:19:00.000Z"
+  }
+}

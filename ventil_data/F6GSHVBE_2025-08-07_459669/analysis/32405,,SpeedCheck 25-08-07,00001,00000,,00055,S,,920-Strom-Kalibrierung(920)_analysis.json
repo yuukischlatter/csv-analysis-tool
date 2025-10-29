@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-07,00001,00000,,00055,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-06T09:37:39.922Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T09:37:39.922Z",
+  "rampUp": {
+    "startIndex": 838,
+    "endIndex": 1212,
+    "startTime": 6.711942,
+    "endTime": 9.704005,
+    "startPosition": 7.490285840728064,
+    "endPosition": 41.86623094028359,
+    "velocity": 11.489044548712885,
+    "duration": 2.992063000000001,
+    "markerSetAt": "2025-10-06T09:37:39.922Z"
+  },
+  "rampDown": {
+    "startIndex": 1829,
+    "endIndex": 2233,
+    "startTime": 14.640236,
+    "endTime": 17.872164,
+    "startPosition": 41.678325941114636,
+    "endPosition": 7.660019873756073,
+    "velocity": 10.525700469613973,
+    "duration": 3.2319280000000017,
+    "markerSetAt": "2025-10-06T09:37:39.922Z"
+  },
+  "voltageAssignment": 5,
+  "voltageAssignedAt": "2025-10-06T09:37:39.922Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T09:37:39.922Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 374,
+      "rampDown": 404
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-07,00001,00000,,00055,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 838,
+      "endIndex": 1212,
+      "startTime": 6.711942,
+      "endTime": 9.704005,
+      "startPosition": 7.490285840728064,
+      "endPosition": 41.86623094028359,
+      "velocity": 11.489044548712885,
+      "duration": 2.992063000000001
+    },
+    "rampDown": {
+      "startIndex": 1829,
+      "endIndex": 2233,
+      "startTime": 14.640236,
+      "endTime": 17.872164,
+      "startPosition": 41.678325941114636,
+      "endPosition": 7.660019873756073,
+      "velocity": 10.525700469613973,
+      "duration": 3.2319280000000017
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003600000,
+    "createdDate": "2025-09-16T06:20:00.000Z"
+  }
+}

@@ -11,7 +11,7 @@ const SpeedCheckChart = ({ analysis, regressionData, testFormData, width = 1100,
     }
 
     renderPlotlyChart();
-  }, [analysis, regressionData, testFormData, width, height]);
+  }, [analysis, regressionData, width, height]);
 
   const renderPlotlyChart = () => {
     if (!analysis) return;
@@ -36,6 +36,7 @@ const SpeedCheckChart = ({ analysis, regressionData, testFormData, width = 1100,
           font: { size: 14, color: 'black' }
         },
         range: [0, 4.5],
+        fixedrange: false,
         showgrid: true,
         gridcolor: '#ccc',
         gridwidth: 1,
@@ -49,6 +50,7 @@ const SpeedCheckChart = ({ analysis, regressionData, testFormData, width = 1100,
           font: { size: 14, color: 'black' }
         },
         range: [0, 13],
+        fixedrange: false,
         showgrid: true,
         gridcolor: '#ccc',
         gridwidth: 1,
@@ -64,6 +66,7 @@ const SpeedCheckChart = ({ analysis, regressionData, testFormData, width = 1100,
         bordercolor: '#ccc',
         borderwidth: 1
       },
+      dragmode: 'zoom',
       margin: { t: 50, r: 20, b: 70, l: 80 },
       plot_bgcolor: 'white',
       paper_bgcolor: 'white',
@@ -86,7 +89,7 @@ const SpeedCheckChart = ({ analysis, regressionData, testFormData, width = 1100,
       }
     };
 
-    Plotly.newPlot(plotRef.current, traces, layout, config);
+    Plotly.react(plotRef.current, traces, layout, config);
     plotRef.current.on('plotly_click', handlePointClick);
   };
 

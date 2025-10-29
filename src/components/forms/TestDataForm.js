@@ -59,15 +59,6 @@ const TestDataForm = ({ onFormDataChange, isCollapsed = true, onToggleCollapse, 
         installedIn: initialData.installedIn || ''
       };
       setFormData(newFormData);
-
-      // Call onFormDataChange when loading initial data
-      if (onFormDataChange) {
-        const processedFormData = { ...newFormData };
-        if (newFormData.date) {
-          processedFormData.dateFormatted = formatDateForPDF(newFormData.date);
-        }
-        onFormDataChange(processedFormData);
-      }
     }
   }, [initialData]);
 

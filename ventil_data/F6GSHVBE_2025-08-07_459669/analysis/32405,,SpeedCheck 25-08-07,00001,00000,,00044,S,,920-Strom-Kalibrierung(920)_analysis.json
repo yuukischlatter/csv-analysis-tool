@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-07,00001,00000,,00044,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-06T09:37:39.793Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T09:37:39.793Z",
+  "rampUp": {
+    "startIndex": 3416,
+    "endIndex": 14404,
+    "startTime": 27.335478,
+    "endTime": 115.257538,
+    "startPosition": 5.715483542252694,
+    "endPosition": 25.807257466161268,
+    "velocity": 0.22851800701562922,
+    "duration": 87.92206,
+    "markerSetAt": "2025-10-06T09:37:39.793Z"
+  },
+  "rampDown": {
+    "startIndex": 19097,
+    "endIndex": 24197,
+    "startTime": 152.79306,
+    "endTime": 193.570648,
+    "startPosition": 26.501418742048227,
+    "endPosition": 5.134417549778925,
+    "velocity": 0.5239888438783897,
+    "duration": 40.77758800000001,
+    "markerSetAt": "2025-10-06T09:37:39.793Z"
+  },
+  "voltageAssignment": 0.2,
+  "voltageAssignedAt": "2025-10-06T09:37:39.793Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T09:37:39.793Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 10988,
+      "rampDown": 5100
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-07,00001,00000,,00044,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 3416,
+      "endIndex": 14404,
+      "startTime": 27.335478,
+      "endTime": 115.257538,
+      "startPosition": 5.715483542252694,
+      "endPosition": 25.807257466161268,
+      "velocity": 0.22851800701562922,
+      "duration": 87.92206
+    },
+    "rampDown": {
+      "startIndex": 19097,
+      "endIndex": 24197,
+      "startTime": 152.79306,
+      "endTime": 193.570648,
+      "startPosition": 26.501418742048227,
+      "endPosition": 5.134417549778925,
+      "velocity": 0.5239888438783897,
+      "duration": 40.77758800000001
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003600000,
+    "createdDate": "2025-09-16T06:20:00.000Z"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-07,00001,00000,,00039,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-13T13:48:51.015Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-13T13:48:51.015Z",
+  "rampUp": {
+    "startIndex": 382,
+    "endIndex": 705,
+    "startTime": 3.063989,
+    "endTime": 5.647956,
+    "startPosition": 6.934051814796772,
+    "endPosition": 42.417038984124886,
+    "velocity": 13.731981549813954,
+    "duration": 2.583967,
+    "markerSetAt": "2025-10-13T13:48:51.015Z"
+  },
+  "rampDown": {
+    "startIndex": 1530,
+    "endIndex": 1850,
+    "startTime": 12.248124,
+    "endTime": 14.808244,
+    "startPosition": 42.326163907218316,
+    "endPosition": 6.855294089684473,
+    "velocity": 13.855159061893135,
+    "duration": 2.5601199999999995,
+    "markerSetAt": "2025-10-13T13:48:51.015Z"
+  },
+  "voltageAssignment": 9,
+  "voltageAssignedAt": "2025-10-13T13:48:51.015Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-13T13:48:51.015Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 323,
+      "rampDown": 320
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-07,00001,00000,,00039,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 382,
+      "endIndex": 705,
+      "startTime": 3.063989,
+      "endTime": 5.647956,
+      "startPosition": 6.934051814796772,
+      "endPosition": 42.417038984124886,
+      "velocity": 13.731981549813954,
+      "duration": 2.583967
+    },
+    "rampDown": {
+      "startIndex": 1530,
+      "endIndex": 1850,
+      "startTime": 12.248124,
+      "endTime": 14.808244,
+      "startPosition": 42.326163907218316,
+      "endPosition": 6.855294089684473,
+      "velocity": 13.855159061893135,
+      "duration": 2.5601199999999995
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003600000,
+    "createdDate": "2025-09-16T06:20:00.000Z"
+  }
+}

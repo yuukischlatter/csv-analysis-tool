@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-27,00001,00000,,00019,S,,060-60E1-R260(60).csv",
+  "analysisTimestamp": "2025-10-06T11:54:15.994Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T11:54:15.994Z",
+  "rampUp": {
+    "startIndex": 345,
+    "endIndex": 761,
+    "startTime": 2.767993,
+    "endTime": 6.09595,
+    "startPosition": 8.079430067731348,
+    "endPosition": 41.22894124533248,
+    "velocity": 9.96091932005165,
+    "duration": 3.327957,
+    "markerSetAt": "2025-10-06T11:54:15.994Z"
+  },
+  "rampDown": {
+    "startIndex": 1253,
+    "endIndex": 1729,
+    "startTime": 10.032021,
+    "endTime": 13.840199,
+    "startPosition": 41.05916671990081,
+    "endPosition": 8.321969442534119,
+    "velocity": 8.596551231945222,
+    "duration": 3.808178,
+    "markerSetAt": "2025-10-06T11:54:15.994Z"
+  },
+  "voltageAssignment": 4,
+  "voltageAssignedAt": "2025-10-06T11:54:15.994Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T11:54:15.994Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 416,
+      "rampDown": 476
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-27,00001,00000,,00019,S,,060-60E1-R260(60).csv",
+    "rampUp": {
+      "startIndex": 345,
+      "endIndex": 761,
+      "startTime": 2.767993,
+      "endTime": 6.09595,
+      "startPosition": 8.079430067731348,
+      "endPosition": 41.22894124533248,
+      "velocity": 9.96091932005165,
+      "duration": 3.327957
+    },
+    "rampDown": {
+      "startIndex": 1253,
+      "endIndex": 1729,
+      "startTime": 10.032021,
+      "endTime": 13.840199,
+      "startPosition": 41.05916671990081,
+      "endPosition": 8.321969442534119,
+      "velocity": 8.596551231945222,
+      "duration": 3.808178
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003540000,
+    "createdDate": "2025-09-16T06:19:00.000Z"
+  }
+}

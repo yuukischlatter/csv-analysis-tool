@@ -1,0 +1,68 @@
+{
+  "fileName": "32404,,SpeedCheck 25-10-07,00001,00000,,00007,S,,921-Force Calibration(921).csv",
+  "analysisTimestamp": "2025-10-07T08:56:19.579Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-07T08:56:19.579Z",
+  "rampUp": {
+    "startIndex": 594,
+    "endIndex": 2011,
+    "startTime": 4.759967,
+    "endTime": 16.096292,
+    "startPosition": 7.601549652442188,
+    "endPosition": 34.46558874130062,
+    "velocity": 2.369730850946708,
+    "duration": 11.336324999999999,
+    "markerSetAt": "2025-10-07T08:56:19.579Z"
+  },
+  "rampDown": {
+    "startIndex": 2842,
+    "endIndex": 4378,
+    "startTime": 22.743811,
+    "endTime": 35.030922,
+    "startPosition": 34.4044971713273,
+    "endPosition": 7.667738027712417,
+    "velocity": 2.176000456381886,
+    "duration": 12.287110999999996,
+    "markerSetAt": "2025-10-07T08:56:19.579Z"
+  },
+  "voltageAssignment": 0.75,
+  "voltageAssignedAt": "2025-10-07T08:56:19.579Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-07T08:56:19.579Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 1417,
+      "rampDown": 1536
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32404,,SpeedCheck 25-10-07,00001,00000,,00007,S,,921-Force Calibration(921).csv",
+    "rampUp": {
+      "startIndex": 594,
+      "endIndex": 2011,
+      "startTime": 4.759967,
+      "endTime": 16.096292,
+      "startPosition": 7.601549652442188,
+      "endPosition": 34.46558874130062,
+      "velocity": 2.369730850946708,
+      "duration": 11.336324999999999
+    },
+    "rampDown": {
+      "startIndex": 2842,
+      "endIndex": 4378,
+      "startTime": 22.743811,
+      "endTime": 35.030922,
+      "startPosition": 34.4044971713273,
+      "endPosition": 7.667738027712417,
+      "velocity": 2.176000456381886,
+      "duration": 12.287110999999996
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1759819198000,
+    "createdDate": "2025-10-07T06:39:58.000Z"
+  }
+}

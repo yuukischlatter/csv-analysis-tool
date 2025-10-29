@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-28,00001,00000,,00088,S,,060-60E1-R260(60).csv",
+  "analysisTimestamp": "2025-10-06T12:04:43.694Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T12:04:43.694Z",
+  "rampUp": {
+    "startIndex": 344,
+    "endIndex": 687,
+    "startTime": 2.759993,
+    "endTime": 5.503958,
+    "startPosition": 7.891130267626738,
+    "endPosition": 41.3606934037305,
+    "velocity": 12.197518239519734,
+    "duration": 2.7439649999999998,
+    "markerSetAt": "2025-10-06T12:04:43.694Z"
+  },
+  "rampDown": {
+    "startIndex": 1279,
+    "endIndex": 1671,
+    "startTime": 10.24003,
+    "endTime": 13.376177,
+    "startPosition": 41.17886226511005,
+    "endPosition": 8.091152618589964,
+    "velocity": 10.550433269397159,
+    "duration": 3.1361469999999994,
+    "markerSetAt": "2025-10-06T12:04:43.694Z"
+  },
+  "voltageAssignment": 5,
+  "voltageAssignedAt": "2025-10-06T12:04:43.694Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T12:04:43.694Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 343,
+      "rampDown": 392
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-28,00001,00000,,00088,S,,060-60E1-R260(60).csv",
+    "rampUp": {
+      "startIndex": 344,
+      "endIndex": 687,
+      "startTime": 2.759993,
+      "endTime": 5.503958,
+      "startPosition": 7.891130267626738,
+      "endPosition": 41.3606934037305,
+      "velocity": 12.197518239519734,
+      "duration": 2.7439649999999998
+    },
+    "rampDown": {
+      "startIndex": 1279,
+      "endIndex": 1671,
+      "startTime": 10.24003,
+      "endTime": 13.376177,
+      "startPosition": 41.17886226511005,
+      "endPosition": 8.091152618589964,
+      "velocity": 10.550433269397159,
+      "duration": 3.1361469999999994
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003540000,
+    "createdDate": "2025-09-16T06:19:00.000Z"
+  }
+}

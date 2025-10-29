@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-05,00001,00000,,00017,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-20T13:22:53.283Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-20T13:22:53.284Z",
+  "rampUp": {
+    "startIndex": 59,
+    "endIndex": 419,
+    "startTime": 0.48,
+    "endTime": 3.359985,
+    "startPosition": 7.6940436159286225,
+    "endPosition": 41.59600488448055,
+    "velocity": 11.771575639648098,
+    "duration": 2.879985,
+    "markerSetAt": "2025-10-20T13:22:53.284Z"
+  },
+  "rampDown": {
+    "startIndex": 1422,
+    "endIndex": 1823,
+    "startTime": 11.384084,
+    "endTime": 14.592234,
+    "startPosition": 41.317174192900445,
+    "endPosition": 7.978927921855397,
+    "velocity": 10.391735508328804,
+    "duration": 3.20815,
+    "markerSetAt": "2025-10-20T13:22:53.284Z"
+  },
+  "voltageAssignment": 5,
+  "voltageAssignedAt": "2025-10-20T13:22:53.284Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-20T13:22:53.284Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 360,
+      "rampDown": 401
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-05,00001,00000,,00017,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 59,
+      "endIndex": 419,
+      "startTime": 0.48,
+      "endTime": 3.359985,
+      "startPosition": 7.6940436159286225,
+      "endPosition": 41.59600488448055,
+      "velocity": 11.771575639648098,
+      "duration": 2.879985
+    },
+    "rampDown": {
+      "startIndex": 1422,
+      "endIndex": 1823,
+      "startTime": 11.384084,
+      "endTime": 14.592234,
+      "startPosition": 41.317174192900445,
+      "endPosition": 7.978927921855397,
+      "velocity": 10.391735508328804,
+      "duration": 3.20815
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003600000,
+    "createdDate": "2025-09-16T06:20:00.000Z"
+  }
+}

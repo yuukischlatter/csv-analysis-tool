@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-28,00001,00000,,00012,S,,060-60E1-R260(60).csv",
+  "analysisTimestamp": "2025-10-06T11:59:43.463Z",
+  "detectionMethod": "automatic",
+  "detectionTimestamp": "2025-10-06T11:59:43.463Z",
+  "rampUp": {
+    "startIndex": 405,
+    "endIndex": 948,
+    "startTime": 3.247987,
+    "endTime": 7.591931,
+    "startPosition": 8.048180055209283,
+    "endPosition": 41.31776133275347,
+    "velocity": 7.658842120787974,
+    "duration": 4.343944,
+    "markerSetAt": "2025-10-06T11:59:43.463Z"
+  },
+  "rampDown": {
+    "startIndex": 1799,
+    "endIndex": 2406,
+    "startTime": 14.400225,
+    "endTime": 19.256063,
+    "startPosition": 41.147733729798944,
+    "endPosition": 8.27285215689853,
+    "velocity": 6.770176758965273,
+    "duration": 4.855838,
+    "markerSetAt": "2025-10-06T11:59:43.463Z"
+  },
+  "voltageAssignment": 3,
+  "voltageAssignedAt": "2025-10-06T11:59:43.463Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-06T11:59:43.463Z",
+  "isManuallyAdjusted": false,
+  "manualAdjustmentAt": null,
+  "analysisQuality": {
+    "detectionConfidence": "high",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 543,
+      "rampDown": 607
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-28,00001,00000,,00012,S,,060-60E1-R260(60).csv",
+    "rampUp": {
+      "startIndex": 405,
+      "endIndex": 948,
+      "startTime": 3.247987,
+      "endTime": 7.591931,
+      "startPosition": 8.048180055209283,
+      "endPosition": 41.31776133275347,
+      "velocity": 7.658842120787974,
+      "duration": 4.343944
+    },
+    "rampDown": {
+      "startIndex": 1799,
+      "endIndex": 2406,
+      "startTime": 14.400225,
+      "endTime": 19.256063,
+      "startPosition": 41.147733729798944,
+      "endPosition": 8.27285215689853,
+      "velocity": 6.770176758965273,
+      "duration": 4.855838
+    },
+    "detectionMethod": "automatic",
+    "createdAt": 1758003540000,
+    "createdDate": "2025-09-16T06:19:00.000Z"
+  }
+}

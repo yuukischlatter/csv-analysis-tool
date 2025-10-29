@@ -1,0 +1,68 @@
+{
+  "fileName": "32405,,SpeedCheck 25-08-05,00001,00000,,00053,S,,920-Strom-Kalibrierung(920).csv",
+  "analysisTimestamp": "2025-10-20T13:28:42.363Z",
+  "detectionMethod": "manual",
+  "detectionTimestamp": "2025-10-20T13:28:42.363Z",
+  "rampUp": {
+    "startIndex": 760,
+    "endIndex": 3116,
+    "startTime": 6.08795,
+    "endTime": 24.935652,
+    "startPosition": 8.145564286003667,
+    "endPosition": 41.573551846652904,
+    "velocity": 1.7735842576802856,
+    "duration": 18.847702,
+    "markerSetAt": "2025-10-20T13:28:42.363Z"
+  },
+  "rampDown": {
+    "startIndex": 6201,
+    "endIndex": 8353,
+    "startTime": 49.613865,
+    "endTime": 66.829964,
+    "startPosition": 36.92450762871612,
+    "endPosition": 8.279796604125657,
+    "velocity": 1.6638328476497755,
+    "duration": 17.216099000000007,
+    "markerSetAt": "2025-10-20T13:28:42.363Z"
+  },
+  "voltageAssignment": 0.75,
+  "voltageAssignedAt": "2025-10-20T13:28:42.363Z",
+  "isApproved": true,
+  "approvedAt": "2025-10-20T13:28:42.363Z",
+  "isManuallyAdjusted": true,
+  "manualAdjustmentAt": "2025-10-20T13:28:42.363Z",
+  "analysisQuality": {
+    "detectionConfidence": "low",
+    "requiresReview": false,
+    "markerDistance": {
+      "rampUp": 2356,
+      "rampDown": 2152
+    }
+  },
+  "completeAnalysisData": {
+    "fileName": "32405,,SpeedCheck 25-08-05,00001,00000,,00053,S,,920-Strom-Kalibrierung(920).csv",
+    "rampUp": {
+      "startIndex": 760,
+      "endIndex": 3116,
+      "startTime": 6.08795,
+      "endTime": 24.935652,
+      "startPosition": 8.145564286003667,
+      "endPosition": 41.573551846652904,
+      "velocity": 1.7735842576802856,
+      "duration": 18.847702
+    },
+    "rampDown": {
+      "startIndex": 6201,
+      "endIndex": 8353,
+      "startTime": 49.613865,
+      "endTime": 66.829964,
+      "startPosition": 36.92450762871612,
+      "endPosition": 8.279796604125657,
+      "velocity": 1.6638328476497755,
+      "duration": 17.216099000000007
+    },
+    "detectionMethod": "manual",
+    "createdAt": 1758003600000,
+    "createdDate": "2025-09-16T06:20:00.000Z"
+  }
+}

@@ -12,9 +12,9 @@ build/
 dist/
 .webpack/
 
-ventil_data/
+#ventil_data/
 
-*.db
+#*.db
 
 # Electron
 app/
